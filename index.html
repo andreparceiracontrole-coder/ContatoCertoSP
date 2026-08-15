@@ -1,197 +1,35 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head><style>
-@font-face {
-  font-family: "Optimistic";
-  font-style: normal;
-  font-weight: 400 600;
-  font-display: swap;
-  src: url("/fonts/OptimisticAI_VF_Optimized.woff2") format("woff2");
-}
-@font-face {
-  font-family: "Optimistic Mono";
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url("/fonts/OptimisticMono_W_TextRegular.woff2") format("woff2");
-}
-:where(html) {
-  font-family: "Optimistic", system-ui, sans-serif;
-}
-:where(code, pre, kbd, samp) {
-  font-family: "Optimistic Mono", ui-monospace, monospace;
-}
-</style>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Contato Certo SP - 50 Vagas Ouro Grátis | 31 Cidades SP e PR</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700;800;900&display=swap" rel="stylesheet">
-<style>*{font-family:'Inter',sans-serif} select{background-image:url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");background-position:right 12px center;background-repeat:no-repeat;background-size:16px;padding-right:40px;appearance:none}</style>
-</head>
-<body class="bg-[#F8F9FB]">
-<header class="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-slate-100">
-  <div class="max-w-[1160px] mx-auto px-5 h-[64px] flex items-center justify-between">
-    <div class="flex items-center gap-3"><div class="w-9 h-9 rounded-xl bg-[#0F2C59] flex items-center justify-center text-white font-black">CC</div><div><div class="font-black text-[#0F2C59] leading-none">Contato Certo SP</div><div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">31 CIDADES • SP e PR</div></div></div>
-    <a href="https://wa.me/5518991488302?text=Quero%20vaga%20Ouro%20Grátis" target="_blank" class="hidden md:flex bg-[#25D366] text-white font-bold px-5 py-2.5 rounded-full text-sm">(18) 99148-8302</a>
-  </div>
-</header>
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Contato Certo SP - Encontre profissionais em São Paulo em 5 minutos</title><script src="https://cdn.tailwindcss.com"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><link rel="icon" href="/icon-192.png"><style>body{background:#F8FAFF}</style></head><body>
+<header class="bg-white border-b sticky top-0 z-50"><div class="max-w-[1100px] mx-auto px-4 h-[64px] flex justify-between items-center"><div class="flex items-center gap-2"><div class="w-9 h-9 rounded-full bg-[#0F2C59] grid place-items-center text-white font-black">C</div><b class="text-[18px] font-black text-[#0F2C59]">ContatoCerto SP</b></div><nav class="flex gap-2"><a href="/cadastro.html" class="h-9 px-5 rounded-full bg-[#FF7A00] text-white font-black text-[13px] grid place-items-center">Quero me cadastrar</a><a href="/login.html" class="h-9 px-3 rounded-full text-[#0F2C59] font-bold text-[13px] grid place-items-center">Entrar</a></nav></div></header>
+<main class="max-w-[1100px] mx-auto px-4 pt-8">
+<div class="bg-white rounded-[20px] border p-6 md:p-10"><h1 class="text-[28px] md:text-[38px] font-black text-[#0F2C59] leading-[1.1]">Encontre eletricista, encanador e pedreiro em <span class="text-[#FF7A00]">São Paulo</span> e região em 5 minutos</h1>
+<div class="mt-6 flex flex-col md:flex-row gap-2 max-w-[900px]">
+<input id="q" list="profissoes" placeholder="O que você precisa? Ex: Pedreiro, Pintor..." class="flex-[2] h-12 px-4 rounded-full border-2 border-zinc-200 bg-slate-50 text-[14px]">
+<!-- CIDADE VAGA MAS COM SUA LISTA PRÉ-CONFIGURADA -->
+<input id="cidade" list="cidades" placeholder="Digite a cidade que quiser - Ex: Assis, Cândido Mota, Ourinhos, qualquer cidade" class="flex-1 h-12 px-4 rounded-full border-2 border-zinc-200 bg-slate-50 text-[14px]">
+<datalist id="profissoes"></datalist><datalist id="cidades"></datalist>
+<button onclick="buscar()" class="h-12 px-8 rounded-full bg-[#FF7A00] text-white font-black">Buscar</button>
+</div><p class="mt-2 text-[10px] text-zinc-500">✅ Campo vago - sugestões abaixo, mas aceita qualquer cidade</p></div>
 
-<section class="max-w-[1160px] mx-auto px-5 pt-8 md:pt-12 pb-8 grid lg:grid-cols-[1.1fr_0.9fr] gap-10">
-  <div>
-    <span class="inline-flex bg-[#FFD60A] text-[#0F2C59] font-extrabold text-[11px] px-4 py-2 rounded-full">🏆 50 VAGAS GRÁTIS - PLANO OURO - 90 DIAS - 31 CIDADES</span>
-    <h1 class="mt-6 font-black text-[32px] md:text-[48px] leading-[0.92] text-[#0F2C59]">Ganhe até <span class="bg-yellow-200 px-1">15 clientes por mês</span> na sua cidade sem pagar comissão</h1>
-    <p class="mt-4 text-slate-600 text-[17px] font-medium">De Tarumã a Londrina, de Ourinhos a Bauru. Seu perfil no topo do Google. Cliente te chama direto no WhatsApp.</p>
-    <ul class="mt-7 space-y-3 font-bold text-[15px]">
-      <li class="flex gap-3"><span class="w-7 h-7 bg-green-500 rounded-full flex items-center justify-center text-white text-sm">✓</span> Cobrimos 30 cidades: Tarumã, Assis, Cândido Mota, Ourinhos, Londrina, Marília, Bauru e mais</li>
-      <li class="flex gap-3"><span class="w-7 h-7 bg-green-500 rounded-full flex items-center justify-center text-white text-sm">✓</span> Cliente te chama direto no WhatsApp - sem intermediário</li>
-      <li class="flex gap-3"><span class="w-7 h-7 bg-green-500 rounded-full flex items-center justify-center text-white text-sm">✓</span> Selo Ouro + Verificado por 90 dias grátis</li>
-    </ul>
-    <div class="mt-8 grid grid-cols-2 md:grid-cols-3 gap-2 text-[10px] font-bold text-slate-600">
-      <span class="bg-white border rounded-full px-2.5 py-1 text-center">Tarumã</span><span class="bg-white border rounded-full px-2.5 py-1 text-center">Assis</span><span class="bg-white border rounded-full px-2.5 py-1 text-center">Florínea</span><span class="bg-white border rounded-full px-2.5 py-1 text-center">Cândido Mota</span><span class="bg-white border rounded-full px-2.5 py-1 text-center">Platina</span><span class="bg-white border rounded-full px-2.5 py-1 text-center">Palmital</span><span class="bg-white border rounded-full px-2.5 py-1 text-center">Maracaí</span><span class="bg-white border rounded-full px-2.5 py-1 text-center">Paraguaçu Paulista</span><span class="bg-white border rounded-full px-2.5 py-1 text-center">Echaporã</span><span class="bg-white border rounded-full px-2.5 py-1 text-center">Ibirarema</span><span class="bg-white border rounded-full px-2.5 py-1 text-center">Itambaracá (PR)</span><span class="bg-white border rounded-full px-2.5 py-1 text-center">Andirá (PR)</span><span class="bg-white border rounded-full px-2.5 py-1 text-center">Bandeirantes (PR)</span><span class="bg-white border rounded-full px-2.5 py-1 text-center">Cambará (PR)</span><span class="bg-white border rounded-full px-2.5 py-1 text-center">Santa Mariana (PR)</span><span class="bg-white border rounded-full px-2.5 py-1 text-center">Sertaneja</span><span class="bg-white border rounded-full px-2.5 py-1 text-center">Cornélio Procópio</span><span class="bg-white border rounded-full px-2.5 py-1 text-center">Ourinhos</span><span class="bg-white border rounded-full px-2.5 py-1 text-center">Marília</span><span class="bg-white border rounded-full px-2.5 py-1 text-center">Piraju</span><span class="bg-white border rounded-full px-2.5 py-1 text-center">Ipaussu</span><span class="bg-white border rounded-full px-2.5 py-1 text-center">Londrina</span><span class="bg-white border rounded-full px-2.5 py-1 text-center">Chavantes</span><span class="bg-white border rounded-full px-2.5 py-1 text-center">Santa Cruz do Rio Pardo</span><span class="bg-white border rounded-full px-2.5 py-1 text-center">Jaú</span><span class="bg-white border rounded-full px-2.5 py-1 text-center">Avaré</span><span class="bg-white border rounded-full px-2.5 py-1 text-center">Maringá</span><span class="bg-white border rounded-full px-2.5 py-1 text-center">Bauru</span><span class="bg-white border rounded-full px-2.5 py-1 text-center">Barretos</span><span class="bg-white border rounded-full px-2.5 py-1 text-center">Botucatu</span>
-    </div>
-  </div>
+<div class="mt-8"><h2 class="font-black text-[#0F2C59]">Categorias em ordem alfabética</h2><div id="categorias" class="mt-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3"></div></div>
+<div class="mt-10"><h2 class="font-black text-[18px] text-[#0F2C59]">Profissionais em Destaque</h2><div id="grid" class="mt-4 grid md:grid-cols-3 gap-4"></div></div>
 
-  <div id="form" class="bg-white rounded-[24px] shadow-2xl border p-6 md:p-7 h-fit lg:sticky lg:top-[80px]">
-    <h3 class="font-black text-xl text-[#0F2C59]">Garanta sua vaga Ouro grátis</h3>
-    <p class="text-sm text-slate-500 mt-1">Escolha até 3 cidades onde quer aparecer</p>
-    <form class="mt-6 space-y-4" onsubmit="handleSubmit(event)">
-      <input id="nome" required placeholder="Seu nome completo" class="w-full h-12 px-4 rounded-xl border border-slate-200 font-medium outline-none focus:border-[#0F2C59]">
-      <input id="zap" required placeholder="WhatsApp (18) 9XXXX-XXXX" class="w-full h-12 px-4 rounded-xl border border-slate-200 font-medium outline-none focus:border-[#0F2C59]">
-      <select id="prof" required class="w-full h-12 px-4 rounded-xl border border-slate-200 font-medium bg-white outline-none"><option value="">Qual sua profissão?</option><option>Eletricista</option><option>Encanador</option><option>Pedreiro</option><option>Pintor</option><option>Ar-condicionado</option><option>Diarista</option><option>Gesseiro</option><option>Serralheiro</option><option>Advogado</option><option>Mecânico</option><option>Outros</option></select>
-      <div>
-        <label class="text-xs font-bold text-slate-600">CIDADE PRINCIPAL *</label>
-        <select id="cidade" required class="w-full h-12 px-4 rounded-xl border border-slate-200 font-medium bg-white outline-none mt-1">
-          <option value="Tarumã" >Tarumã</option>
-<option value="Assis" >Assis</option>
-<option value="Florínea" >Florínea</option>
-<option value="Cândido Mota" selected>Cândido Mota</option>
-<option value="Platina" >Platina</option>
-<option value="Palmital" >Palmital</option>
-<option value="Maracaí" >Maracaí</option>
-<option value="Paraguaçu Paulista" >Paraguaçu Paulista</option>
-<option value="Echaporã" >Echaporã</option>
-<option value="Ibirarema" >Ibirarema</option>
-<option value="Itambaracá (PR)" >Itambaracá (PR)</option>
-<option value="Andirá (PR)" >Andirá (PR)</option>
-<option value="Bandeirantes (PR)" >Bandeirantes (PR)</option>
-<option value="Cambará (PR)" >Cambará (PR)</option>
-<option value="Santa Mariana (PR)" >Santa Mariana (PR)</option>
-<option value="Sertaneja" >Sertaneja</option>
-<option value="Cornélio Procópio" >Cornélio Procópio</option>
-<option value="Ourinhos" >Ourinhos</option>
-<option value="Marília" >Marília</option>
-<option value="Piraju" >Piraju</option>
-<option value="Ipaussu" >Ipaussu</option>
-<option value="Londrina" >Londrina</option>
-<option value="Chavantes" >Chavantes</option>
-<option value="Santa Cruz do Rio Pardo" >Santa Cruz do Rio Pardo</option>
-<option value="Jaú" >Jaú</option>
-<option value="Avaré" >Avaré</option>
-<option value="Maringá" >Maringá</option>
-<option value="Bauru" >Bauru</option>
-<option value="Barretos" >Barretos</option>
-<option value="Botucatu" >Botucatu</option>
-        </select>
-      </div>
-      <div class="grid grid-cols-2 gap-2">
-        <div><label class="text-[10px] font-bold text-slate-500">CIDADE 2</label><select id="cidade2" class="w-full h-11 px-3 rounded-xl border border-slate-200 text-sm bg-white mt-1"><option value="">+ Cidade 2</option><option>Tarumã</option>
-<option>Assis</option>
-<option>Florínea</option>
-<option>Cândido Mota</option>
-<option>Platina</option>
-<option>Palmital</option>
-<option>Maracaí</option>
-<option>Paraguaçu Paulista</option>
-<option>Echaporã</option>
-<option>Ibirarema</option>
-<option>Itambaracá (PR)</option>
-<option>Andirá (PR)</option>
-<option>Bandeirantes (PR)</option>
-<option>Cambará (PR)</option>
-<option>Santa Mariana (PR)</option>
-<option>Sertaneja</option>
-<option>Cornélio Procópio</option>
-<option>Ourinhos</option>
-<option>Marília</option>
-<option>Piraju</option>
-<option>Ipaussu</option>
-<option>Londrina</option>
-<option>Chavantes</option>
-<option>Santa Cruz do Rio Pardo</option>
-<option>Jaú</option>
-<option>Avaré</option>
-<option>Maringá</option>
-<option>Bauru</option>
-<option>Barretos</option>
-<option>Botucatu</option></select></div>
-        <div><label class="text-[10px] font-bold text-slate-500">CIDADE 3</label><select id="cidade3" class="w-full h-11 px-3 rounded-xl border border-slate-200 text-sm bg-white mt-1"><option value="">+ Cidade 3</option><option>Tarumã</option>
-<option>Assis</option>
-<option>Florínea</option>
-<option>Cândido Mota</option>
-<option>Platina</option>
-<option>Palmital</option>
-<option>Maracaí</option>
-<option>Paraguaçu Paulista</option>
-<option>Echaporã</option>
-<option>Ibirarema</option>
-<option>Itambaracá (PR)</option>
-<option>Andirá (PR)</option>
-<option>Bandeirantes (PR)</option>
-<option>Cambará (PR)</option>
-<option>Santa Mariana (PR)</option>
-<option>Sertaneja</option>
-<option>Cornélio Procópio</option>
-<option>Ourinhos</option>
-<option>Marília</option>
-<option>Piraju</option>
-<option>Ipaussu</option>
-<option>Londrina</option>
-<option>Chavantes</option>
-<option>Santa Cruz do Rio Pardo</option>
-<option>Jaú</option>
-<option>Avaré</option>
-<option>Maringá</option>
-<option>Bauru</option>
-<option>Barretos</option>
-<option>Botucatu</option></select></div>
-      </div>
-      <button type="submit" class="w-full h-[56px] bg-[#FF7A00] hover:bg-[#e56e00] text-white font-black rounded-xl text-[16px] shadow-[0_10px_20px_-10px_#FF7A00]">GARANTIR MINHA VAGA AGORA →</button>
-      <div class="text-center">
-        <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden"><div class="h-full w-[74%] bg-[#FF7A00]"></div></div>
-        <p class="text-xs font-bold text-red-600 mt-2">Restam 37 vagas Ouro • 31 cidades liberadas</p>
-        <p class="text-[11px] text-slate-400 mt-1">✓ Sem cartão ✓ Sem fidelidade ✓ Ativação imediata</p>
-      </div>
-    </form>
-  </div>
-</section>
+<div class="mt-10 bg-white rounded-[20px] border p-6 grid md:grid-cols-3 gap-6"><div><div class="w-12 h-12 rounded-full bg-[#FFF7ED] text-[#FF7A00] font-black grid place-items-center">01</div><b class="mt-2 block text-[#0F2C59]">Busque</b><p class="text-[13px] text-zinc-600">Digite o que precisa e a cidade que quiser</p></div><div><div class="w-12 h-12 rounded-full bg-[#FFF7ED] text-[#FF7A00] font-black grid place-items-center">02</div><b class="mt-2 block text-[#0F2C59]">Compare</b><p class="text-[13px]">Veja fotos e avaliações 5.0</p></div><div><div class="w-12 h-12 rounded-full bg-[#FFF7ED] text-[#FF7A00] font-black grid place-items-center">03</div><b class="mt-2 block text-[#0F2C59]">Chame no WhatsApp</b><p class="text-[13px]">Converse direto</p></div></div>
 
-<footer class="bg-[#0F2C59] text-white py-8 mt-10">
-  <div class="max-w-[1160px] mx-auto px-5 flex flex-col md:flex-row justify-between gap-3 text-sm">
-    <div><b>Contato Certo SP</b> • 31 cidades SP/PR<div class="text-xs opacity-60 mt-1">Tarumã, Assis, Florínea, Cândido Mota, Palmital, Ourinhos, Londrina, Marília, Bauru, Barretos, Botucatu e mais</div></div>
-    <a href="https://wa.me/5518991488302" class="bg-[#25D366] px-5 py-2.5 rounded-full font-bold h-fit text-center">WhatsApp (18) 99148-8302</a>
-  </div>
-</footer>
-
+<div class="mt-10 bg-[#FF7A00] rounded-[20px] p-8 text-center text-white"><h2 class="text-[22px] font-black">É profissional? Cadastre-se grátis</h2><a href="/cadastro.html" class="mt-4 inline-grid h-12 px-8 rounded-full bg-white text-[#FF7A00] font-black place-items-center">Quero me cadastrar</a></div>
+</main>
 <script>
-function handleSubmit(e){
-  e.preventDefault();
-  const nome=document.getElementById('nome').value;
-  const zap=document.getElementById('zap').value;
-  const prof=document.getElementById('prof').value;
-  const cidade=document.getElementById('cidade').value;
-  const cidade2=document.getElementById('cidade2').value;
-  const cidade3=document.getElementById('cidade3').value;
-  try{
-    const leads=JSON.parse(localStorage.getItem('leads_cc')||'[]');
-    leads.push({data:new Date().toLocaleString('pt-BR'), nome, zap, prof, cidade, cidade2, cidade3});
-    localStorage.setItem('leads_cc', JSON.stringify(leads));
-  }catch(err){}
-  const cidades = [cidade, cidade2, cidade3].filter(Boolean).join(', ');
-  const msg = `Olá! Quero minha vaga Ouro Grátis no Contato Certo SP%0A%0ANome: ${nome}%0AWhatsApp: ${zap}%0AProfissão: ${prof}%0ACidades: ${cidades}`;
-  window.open(`https://wa.me/5518991488302?text=${msg}`, '_blank');
-  e.target.innerHTML = '<div class="text-center py-6"><div class="text-4xl">✅</div><div class="font-black text-lg mt-2 text-green-600">Vaga reservada!</div><div class="text-sm text-slate-600 mt-1">Te chamei no WhatsApp agora, confira.</div></div>';
+const U="https://rjrcdikhpvlrvivvqmlb.supabase.co";const K="sb_publishable_1fCXyxX4f7WyO64N9HBEVg_2AZeGTtL";let sb=supabase.createClient(U,K);
+// PROFISSÕES ORDEM ALFABÉTICA
+const PROFISSOES=["Animador de festa","Boleira","Cantor","Dançarino","Diarista","Doceira","Eletricista","Encanador","Faxineira","Fotógrafo","Gesseiro","Locutor","Montador de móveis","Pedreiro","Personal traine","Pintor","Professor","Radialista","Recepcionista","Salgadeira","Segurança","Técnico de celular","Técnico eletrônico"].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+// SUAS 30 CIDADES PRÉ-CONFIGURADAS
+const CIDADES=["Tarumã","Assis","Florinia","Cândido Mota","Platina","Palmital","Maracaí","Paraguaçu Paulista","Echaporã","Ibirarema","Itambaracá (PR)","Andirá (PR)","Bandeirantes (PR)","Cambará (PR)","Santa Mariana (PR)","Sertaneja","Cornélio Procópio","Ourinhos","Marília","Piraju","Ipaussu","Londrina","Chavantes","Santa Cruz do Rio Pardo","Jaú","Avaré","Maringá","Bauru","Barretos","Botucatu"];
+const ICONS={"Animador de festa":"🎉","Boleira":"🎂","Cantor":"🎤","Dançarino":"💃","Diarista":"🧹","Doceira":"🍩","Eletricista":"⚡","Encanador":"🔧","Faxineira":"🧼","Fotógrafo":"📸","Gesseiro":"🏗️","Locutor":"🎙️","Montador de móveis":"🪑","Pedreiro":"🧱","Personal traine":"💪","Pintor":"🎨","Professor":"📚","Radialista":"📻","Recepcionista":"💁","Salgadeira":"🥟","Segurança":"🛡️","Técnico de celular":"📱","Técnico eletrônico":"🔌"};
+function render(){
+document.getElementById('categorias').innerHTML=PROFISSOES.map(p=>`<button onclick="document.getElementById('q').value='${p}';buscar()" class="bg-white rounded-[14px] border p-3 text-center hover:border-[#FF7A00]"><div class="w-12 h-12 rounded-full bg-[#F8FAFF] grid place-items-center text-[22px] mx-auto">${ICONS[p]||'🔧'}</div><div class="mt-2 text-[11px] font-bold text-[#0F2C59]">${p}</div></button>`).join('');
+document.getElementById('profissoes').innerHTML=PROFISSOES.map(p=>`<option value="${p}">`).join('');
+document.getElementById('cidades').innerHTML=CIDADES.map(c=>`<option value="${c}">`).join('');
 }
-</script>
-<script>(function(){var loc=location.href.replace(/#.*$/,"");var ATTR_NAMES=["data-product-id","data-productid","data-product_id","product-id","productid","product_id","data-source-entity-id","source-entity-id","source_entity_id","data-product","data-metadata","data-meta"];var DATASET_KEYS=["productId","productid","product_id","sourceEntityId","sourceentityid","source_entity_id","product","metadata","meta"];function readProductId(value){if(typeof value!=="string"||value.length===0)return null;if(/^[0-9]{6,}$/.test(value))return value;var match=value.match(/(?:product(?:_|-)?id|source(?:_|-)?entity(?:_|-)?id)["'=:\s]+([0-9]{6,})/i);return match?match[1]:null}function extractProductId(start){for(var node=start;node&&node!==document.body;node=node.parentElement){for(var i=0;i<ATTR_NAMES.length;i++){var attrValue=node.getAttribute&&node.getAttribute(ATTR_NAMES[i]);var attrProductId=readProductId(attrValue);if(attrProductId)return attrProductId}var dataset=node.dataset||null;if(dataset){for(var j=0;j<DATASET_KEYS.length;j++){var dataValue=dataset[DATASET_KEYS[j]];var dataProductId=readProductId(dataValue);if(dataProductId)return dataProductId}}}return null}function isInlineMediaSlotElement(node){return !!(node&&node.getAttribute&&node.getAttribute("data-clippy-inline-media-slot")!==null)}function findInlineMediaSlot(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(isInlineMediaSlotElement(node))return node}return null}function readInlineMediaUrl(node){if(!node)return null;return node.getAttribute&&((node.getAttribute("data-clippy-inline-media-url")||node.getAttribute("data-url")||node.getAttribute("data_url")))||node.href||null}function stripHash(url){return String(url).replace(/#.*$/,"")}function urlsMatch(a,b){if(!a||!b)return false;try{return stripHash(new URL(a,loc).href)===stripHash(new URL(b,loc).href)}catch(_){return stripHash(a)===stripHash(b)}}function isFirstPartyReelUrl(value){try{var url=new URL(value,loc);if(url.protocol!=="https:")return false;var host=url.hostname.toLowerCase();var supported=host==="instagram.com"||host.endsWith(".instagram.com")||host==="facebook.com"||host.endsWith(".facebook.com");return supported&&/\/reels?\//i.test(url.pathname)}catch(_){return false}}function isInlineMediaUrlClick(node,href){var slot=findInlineMediaSlot(node);if(!slot)return false;var slotUrl=readInlineMediaUrl(slot);if(slotUrl)return urlsMatch(href,slotUrl);return isFirstPartyReelUrl(href)}function findDataHref(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(node.getAttribute){var href=node.getAttribute("data-href")||node.getAttribute("data-url");if(href)return{href:href,node:node}}}return null}var nativeOpen=window.open;window.open=function(url){if(parent!==window&&typeof url==="string"&&/^https?:\/\//.test(url)){parent.postMessage({type:"ecto:usercontent-link-click",href:url},"*");return null}return nativeOpen?nativeOpen.apply(window,arguments):null};document.addEventListener("click",function(e){var target=e.target instanceof Element?e.target:null;if(!target)return;if(parent===window)return;var a=target.closest?target.closest("a[href]"):null;if(a&&a.href&&/^https?:\/\//.test(a.href)&&a.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(a,a.href))return;var productId=extractProductId(target)||extractProductId(a);if(productId){e.preventDefault();parent.postMessage({type:"ecto-artifact-link-click",productId:productId},"*");return}e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:a.href},"*");return}var dataHref=findDataHref(target);if(dataHref&&/^https?:\/\//.test(dataHref.href)&&dataHref.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(dataHref.node,dataHref.href))return;e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:dataHref.href},"*")}},true)})();</script><script>(function(){var FOCUS_TYPE="ecto:artifact-focus-request";var CLOSE_TYPE="ecto:artifact-close-request";function focusArtifactDocument(){var body=document.body;if(!body)return;try{window.focus();}catch(e){}if(!body.hasAttribute("tabindex"))body.setAttribute("tabindex","-1");try{body.focus({preventScroll:true});}catch(e){try{body.focus();}catch(e2){}}}window.addEventListener("message",function(event){if(event.source!==window.parent)return;var data=event.data;if(!data||typeof data!=="object"||data.type!==FOCUS_TYPE)return;if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",focusArtifactDocument,{once:true});return;}focusArtifactDocument();});window.addEventListener("keydown",function(event){if(event.key!=="Escape")return;window.setTimeout(function(){if(event.defaultPrevented)return;window.parent.postMessage({type:CLOSE_TYPE},"*");},0);});})();</script></body>
-  </html>
-  
+async function carregar(){let g=document.getElementById('grid');g.innerHTML='Carregando...';try{let r=await sb.from('profissionais').select('*').eq('status','aprovado').order('created_at',{ascending:false}).limit(6);g.innerHTML=r.data.map(p=>`<div class="bg-white rounded-[16px] border p-4 flex gap-3"><img src="${p.foto||'https://i.pravatar.cc/150'}" class="w-[70px] h-[70px] rounded-full border-2"><div><b class="text-[13px] text-[#0F2C59]">${p.nome} - ${p.profissao}</b><div class="text-[11px] text-zinc-600">${p.cidade} • ★ 5.0</div><a href="https://wa.me/${p.whatsapp}" target="_blank" class="mt-2 inline-grid h-8 px-3 rounded-full bg-green-600 text-white text-[11px] font-bold place-items-center">WhatsApp</a></div></div>`).join('');}catch(e){g.innerHTML='Nenhum profissional ainda';}}
+function buscar(){carregar();}
+render();carregar();
+</script></body></html>
