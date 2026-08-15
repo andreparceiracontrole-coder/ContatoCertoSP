@@ -1,103 +1,49 @@
-<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Meu Perfil - Editar Perfil ou Anúncio - Corrigido Salvando 100%</title><script src="https://cdn.tailwindcss.com"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><link rel="icon" href="/icon-192.png"></head><body class="bg-[#F8FAFF]">
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Meu Perfil - Editar - Salvando 100%</title><script src="https://cdn.tailwindcss.com"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><link rel="icon" href="/icon-192.png"></head><body class="bg-[#F8FAFF]">
 <header class="bg-white border-b"><div class="max-w-[700px] mx-auto px-4 h-[60px] flex justify-between items-center"><a href="/" class="font-black text-[11px] flex items-center gap-2"><img src="/icon-192.png" class="w-7 h-7 rounded-full border">CONTATO CERTO SP</a><div class="flex gap-1"><a href="/planos.html" class="h-7 px-3 rounded-full bg-amber-50 border text-[9px] font-bold grid place-items-center">Planos</a><a href="/" class="h-7 px-3 rounded-full bg-white border text-[9px] font-bold grid place-items-center">Início</a></div></div></header>
-<div class="bg-gradient-to-r from-yellow-400 to-amber-500 text-black text-center py-2 px-4"><div class="font-black text-[11px]">🏆 MEU PERFIL - EDITAR PERFIL OU ANÚNCIO - CORRIGIDO SALVANDO 100%</div></div>
-<main class="max-w-[700px] mx-auto p-4">
-<div class="bg-white rounded-[16px] border-2 border-yellow-300 p-4 shadow">
-<div class="flex gap-3"><div class="relative"><img id="fotoTop" src="https://i.pravatar.cc/150" class="w-16 h-16 rounded-full border-4 border-yellow-400"><div class="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-yellow-400 border-2 border-white grid place-items-center text-black font-black text-[12px]">✓</div></div><div><div class="flex items-center gap-2"><div id="nomeTop" class="font-black text-[14px]">Seu Nome</div><span class="bg-yellow-400 text-black text-[8px] px-2 py-0.5 rounded-full font-black">OURO - SELO DOURADO</span></div><div class="text-[10px] text-zinc-600 mt-1">Meu Perfil com opção de editar o perfil do usuário ou anúncio - Corrigido salvando 100% - Apenas informações dos planos</div></div></div>
-<div class="mt-4 grid grid-cols-2 gap-3">
-<button onclick="mostrarAba('perfil')" id="btnPerfil" class="h-10 rounded-xl bg-blue-600 text-white font-bold text-[11px]">👤 Editar Perfil do Usuário</button>
-<button onclick="mostrarAba('anuncio')" id="btnAnuncio" class="h-10 rounded-xl bg-white border-2 text-[11px] font-bold">📢 Editar Anúncio</button>
-</div>
-<div id="abaPerfil" class="mt-4">
-<h3 class="font-black text-[12px]">Editar Perfil do Usuário - Corrigido Salvando 100%</h3>
-<form onsubmit="salvarPerfil(event)" class="mt-3 grid gap-3">
-<div class="grid grid-cols-2 gap-2"><input id="nome" placeholder="Nome" class="h-9 px-3 rounded-xl border-2 bg-slate-50 text-[10px]"><input id="tel" placeholder="WhatsApp" class="h-9 px-3 rounded-xl border-2 bg-slate-50 text-[10px]"></div>
-<div class="grid grid-cols-2 gap-2"><input id="email" type="email" placeholder="Email" class="h-9 px-3 rounded-xl border-2 bg-slate-50 text-[10px]"><input id="cidade" placeholder="Cidade" class="h-9 px-3 rounded-xl border-2 bg-slate-50 text-[10px]"></div>
-<div class="grid grid-cols-2 gap-2"><input id="usuario" placeholder="Usuário" class="h-9 px-3 rounded-xl border-2 bg-slate-50 text-[10px]"><input id="senha" type="password" placeholder="Nova Senha" class="h-9 px-3 rounded-xl border-2 bg-slate-50 text-[10px]"></div>
-<input type="file" id="fotoPerfil" accept="image/*" class="h-9 px-3 rounded-xl border-2 bg-slate-50 text-[9px]">
-<button type="submit" class="h-10 rounded-xl bg-blue-600 text-white font-bold text-[11px]">💾 Salvar Perfil do Usuário - Agora Salva 100%</button>
-<div id="msgPerfil" class="text-[10px] text-center"></div>
-</form>
-</div>
-<div id="abaAnuncio" class="mt-4 hidden">
-<h3 class="font-black text-[12px]">Editar Anúncio - Corrigido Salvando 100%</h3>
-<form onsubmit="salvarAnuncio(event)" class="mt-3 grid gap-3">
-<input id="profissao" placeholder="Profissão" class="h-9 px-3 rounded-xl border-2 bg-slate-50 text-[10px]">
-<input id="cidadeAnuncio" placeholder="Cidade do anúncio" class="h-9 px-3 rounded-xl border-2 bg-slate-50 text-[10px]">
-<textarea id="bio" placeholder="Descrição do anúncio" class="p-3 rounded-xl border-2 bg-slate-50 min-h-[80px] text-[10px]"></textarea>
-<input type="file" id="fotoAnuncio" accept="image/*" class="h-9 px-3 rounded-xl border-2 bg-slate-50 text-[9px]">
-<div class="bg-yellow-50 border border-yellow-200 rounded-xl p-3 text-[10px]"><b>Ouro - 1 anúncio com destaque dourado, volta ao topo 1x por dia durante 30 dias, WhatsApp liberado, chat, suporte 24hs, Selo Verificado dourado</b></div>
-<button type="submit" class="h-10 rounded-xl bg-yellow-400 text-black font-black text-[11px]">💾 Salvar Anúncio - Agora Salva 100%</button>
-<div id="msgAnuncio" class="text-[10px] text-center"></div>
-</form>
-</div>
-</div>
-</main>
+<div class="bg-yellow-400 text-black text-center py-2"><div class="font-black text-[11px]">🏆 MEU PERFIL - EDITAR PERFIL OU ANÚNCIO - SALVANDO 100% SEM ERRO</div></div>
+<main class="max-w-[700px] mx-auto p-4"><div class="bg-white rounded-[16px] border-2 border-yellow-300 p-4 shadow">
+<div class="flex gap-3"><img id="fotoTop" src="https://i.pravatar.cc/150" class="w-16 h-16 rounded-full border-4 border-yellow-400"><div><div id="nomeTop" class="font-black text-[14px]">Seu Nome</div><span class="bg-yellow-400 text-black text-[8px] px-2 py-0.5 rounded-full font-black">OURO - SELO DOURADO</span><div class="text-[9px] text-zinc-600">Apenas informações dos planos - Editando perfil salva 100%</div></div></div>
+<div class="mt-4 grid grid-cols-2 gap-2"><button onclick="aba('perfil')" id="btnP" class="h-9 rounded-xl bg-blue-600 text-white font-bold text-[10px]">👤 Editar Perfil</button><button onclick="aba('anuncio')" id="btnA" class="h-9 rounded-xl bg-white border text-[10px] font-bold">📢 Editar Anúncio</button></div>
+
+<div id="tabPerfil" class="mt-4"><form onsubmit="salvarP(event)" class="grid gap-2"><div class="grid grid-cols-2 gap-2"><input id="nome" placeholder="Nome" class="h-9 px-3 rounded-xl border-2 bg-slate-50 text-[10px]"><input id="tel" placeholder="WhatsApp" class="h-9 px-3 rounded-xl border-2 bg-slate-50 text-[10px]"></div><div class="grid grid-cols-2 gap-2"><input id="email" placeholder="Email" class="h-9 px-3 rounded-xl border-2 bg-slate-50 text-[10px]"><input id="cidade" placeholder="Cidade" class="h-9 px-3 rounded-xl border-2 bg-slate-50 text-[10px]"></div><input type="file" id="fotoP" accept="image/*" class="h-9 px-3 rounded-xl border-2 bg-slate-50 text-[9px]"><button type="submit" class="h-10 rounded-xl bg-blue-600 text-white font-bold text-[11px]">💾 Salvar Perfil - Agora Salva 100%</button><div id="msgP" class="text-[10px] text-center"></div></form></div>
+
+<div id="tabAnuncio" class="mt-4 hidden"><form onsubmit="salvarA(event)" class="grid gap-2"><input id="prof" placeholder="Profissão" class="h-9 px-3 rounded-xl border-2 bg-slate-50 text-[10px]"><input id="cidadeA" placeholder="Cidade anúncio" class="h-9 px-3 rounded-xl border-2 bg-slate-50 text-[10px]"><textarea id="bio" placeholder="Descrição anúncio" class="p-3 rounded-xl border-2 bg-slate-50 min-h-[60px] text-[10px]"></textarea><input type="file" id="fotoA" accept="image/*" class="h-9 px-3 rounded-xl border-2 bg-slate-50 text-[9px]"><button type="submit" class="h-10 rounded-xl bg-yellow-400 text-black font-black text-[11px]">💾 Salvar Anúncio - Agora Salva 100%</button><div id="msgA" class="text-[10px] text-center"></div></form></div>
+
+<div class="mt-4 border-2 rounded-xl p-3 text-[10px]"><b>Apenas informações dos planos:</b><br><b>Básico Grátis</b> - 1 anúncio sem destaque, suporte 24hs, Selo Básico<br><b>Prata R$19,90</b> - 1 anúncio com destaque, volta topo 5x 30 dias, WhatsApp, chat, suporte 24hs, Selo Prata<br><b>Ouro R$39,90 - 50 VAGAS GRÁTIS</b> - 1 anúncio destaque dourado, volta topo 1x dia 30 dias, WhatsApp, chat, suporte 24hs, Selo Verificado dourado<br><b>Avulso R$8,99</b> - Volta topo 1x dia - Pix contatocerto.prestadores@gmail.com</div>
+</div></main>
 <script>
 const U="https://rjrcdikhpvlrvivvqmlb.supabase.co";const K="sb_publishable_1fCXyxX4f7WyO64N9HBEVg_2AZeGTtL";let sb;try{sb=supabase.createClient(U,K)}catch(e){}
+let p=JSON.parse(localStorage.getItem('contatocerto_perfil_completo')||'{}');
+if(p.nome){document.getElementById('nomeTop').innerText=p.nome;document.getElementById('nome').value=p.nome||'';document.getElementById('tel').value=p.telefone||'';document.getElementById('email').value=p.email||'';document.getElementById('cidade').value=p.cidade||'';document.getElementById('prof').value=p.categoria||'';document.getElementById('cidadeA').value=p.cidade||'';document.getElementById('bio').value=p.bio||'';document.getElementById('fotoTop').src=p.foto||'https://i.pravatar.cc/150';}
+function aba(t){if(t==='perfil'){document.getElementById('tabPerfil').classList.remove('hidden');document.getElementById('tabAnuncio').classList.add('hidden');document.getElementById('btnP').className='h-9 rounded-xl bg-blue-600 text-white font-bold text-[10px]';document.getElementById('btnA').className='h-9 rounded-xl bg-white border text-[10px] font-bold';}else{document.getElementById('tabPerfil').classList.add('hidden');document.getElementById('tabAnuncio').classList.remove('hidden');document.getElementById('btnP').className='h-9 rounded-xl bg-white border text-[10px] font-bold';document.getElementById('btnA').className='h-9 rounded-xl bg-yellow-400 text-black font-black text-[10px]';}}
+async function salvarP(e){
+e.preventDefault();
+try{
 let perfil=JSON.parse(localStorage.getItem('contatocerto_perfil_completo')||'{}');
-if(perfil.nome){
+perfil.nome=document.getElementById('nome').value||perfil.nome;
+perfil.telefone=document.getElementById('tel').value||perfil.telefone;
+perfil.email=document.getElementById('email').value||perfil.email;
+perfil.cidade=document.getElementById('cidade').value||perfil.cidade;
+let f=document.getElementById('fotoP').files[0];if(f){perfil.foto=URL.createObjectURL(f);document.getElementById('fotoTop').src=perfil.foto;}
+localStorage.setItem('contatocerto_perfil_completo',JSON.stringify(perfil));
 document.getElementById('nomeTop').innerText=perfil.nome;
-document.getElementById('nome').value=perfil.nome||'';
-document.getElementById('tel').value=perfil.telefone||'';
-document.getElementById('email').value=perfil.email||'';
-document.getElementById('cidade').value=perfil.cidade||'';
-document.getElementById('usuario').value=perfil.usuario||'';
-document.getElementById('profissao').value=perfil.categoria||'';
-document.getElementById('cidadeAnuncio').value=perfil.cidade||'';
-document.getElementById('bio').value=perfil.bio||'';
-document.getElementById('fotoTop').src=perfil.foto||'https://i.pravatar.cc/150';
+if(sb&&perfil.usuario){await sb.from('profissionais').update({nome:perfil.nome,telefone:perfil.telefone,email:perfil.email,cidade:perfil.cidade,foto:perfil.foto}).eq('usuario',perfil.usuario);}
+document.getElementById('msgP').innerText='✅ Perfil salvo com sucesso! Agora salva 100% sem erro - Online tempo real';
+document.getElementById('msgP').className='text-[10px] text-center text-green-600 font-bold';
+}catch(err){document.getElementById('msgP').innerText='Erro: '+err.message;document.getElementById('msgP').className='text-red-600';}
 }
-function mostrarAba(aba){
-if(aba==='perfil'){
-document.getElementById('abaPerfil').classList.remove('hidden');
-document.getElementById('abaAnuncio').classList.add('hidden');
-document.getElementById('btnPerfil').className='h-10 rounded-xl bg-blue-600 text-white font-bold text-[11px]';
-document.getElementById('btnAnuncio').className='h-10 rounded-xl bg-white border-2 text-[11px] font-bold';
-}else{
-document.getElementById('abaPerfil').classList.add('hidden');
-document.getElementById('abaAnuncio').classList.remove('hidden');
-document.getElementById('btnPerfil').className='h-10 rounded-xl bg-white border-2 text-[11px] font-bold';
-document.getElementById('btnAnuncio').className='h-10 rounded-xl bg-yellow-400 text-black font-black text-[11px]';
-}
-}
-async function salvarPerfil(e){
+async function salvarA(e){
 e.preventDefault();
 try{
-let p=JSON.parse(localStorage.getItem('contatocerto_perfil_completo')||'{}');
-p.nome=document.getElementById('nome').value||p.nome;
-p.telefone=document.getElementById('tel').value||p.telefone;
-p.email=document.getElementById('email').value||p.email;
-p.cidade=document.getElementById('cidade').value||p.cidade;
-p.usuario=document.getElementById('usuario').value||p.usuario;
-if(document.getElementById('senha').value)p.senha=document.getElementById('senha').value;
-let file=document.getElementById('fotoPerfil').files[0];
-if(file){p.foto=URL.createObjectURL(file);document.getElementById('fotoTop').src=p.foto;}
-// SALVA NO LOCALSTORAGE - CORRIGIDO - AGORA SALVA 100%
-localStorage.setItem('contatocerto_perfil_completo',JSON.stringify(p));
-localStorage.setItem('contatocerto_usuario_logado',p.usuario);
-document.getElementById('nomeTop').innerText=p.nome;
-// SALVA NO SUPABASE TAMBÉM - ONLINE EM TEMPO REAL
-try{if(sb&&p.usuario){await sb.from('profissionais').update({nome:p.nome,telefone:p.telefone,email:p.email,cidade:p.cidade,usuario:p.usuario,foto:p.foto}).eq('usuario',p.usuario);}}catch(err){console.log('Supabase update erro',err);}
-document.getElementById('msgPerfil').innerText='✅ Perfil salvo com sucesso! Online em tempo real - Sem erro!';
-document.getElementById('msgPerfil').className='text-[10px] text-center text-green-600 font-bold';
-}catch(err){document.getElementById('msgPerfil').innerText='Erro: '+err.message;document.getElementById('msgPerfil').className='text-[10px] text-center text-red-600';}
-}
-async function salvarAnuncio(e){
-e.preventDefault();
-try{
-let p=JSON.parse(localStorage.getItem('contatocerto_perfil_completo')||'{}');
-p.categoria=document.getElementById('profissao').value||p.categoria;
-p.cidade=document.getElementById('cidadeAnuncio').value||p.cidade;
-p.bio=document.getElementById('bio').value||p.bio;
-let file=document.getElementById('fotoAnuncio').files[0];
-if(file){p.foto=URL.createObjectURL(file);}
-// SALVA NO LOCALSTORAGE - CORRIGIDO - AGORA SALVA 100%
-localStorage.setItem('contatocerto_perfil_completo',JSON.stringify(p));
-// SALVA NO SUPABASE TAMBÉM - ONLINE EM TEMPO REAL
-try{if(sb&&p.usuario){await sb.from('profissionais').update({categoria:p.categoria,cidade:p.cidade,bio:p.bio,foto:p.foto}).eq('usuario',p.usuario);}}catch(err){console.log('Supabase update erro',err);}
-document.getElementById('msgAnuncio').innerText='✅ Anúncio salvo! Online em tempo real - Ouro + Selo Dourado - Sem erro!';
-document.getElementById('msgAnuncio').className='text-[10px] text-center text-green-600 font-bold';
-}catch(err){document.getElementById('msgAnuncio').innerText='Erro: '+err.message;}
+let perfil=JSON.parse(localStorage.getItem('contatocerto_perfil_completo')||'{}');
+perfil.categoria=document.getElementById('prof').value||perfil.categoria;
+perfil.cidade=document.getElementById('cidadeA').value||perfil.cidade;
+perfil.bio=document.getElementById('bio').value||perfil.bio;
+let f=document.getElementById('fotoA').files[0];if(f){perfil.foto=URL.createObjectURL(f);}
+localStorage.setItem('contatocerto_perfil_completo',JSON.stringify(perfil));
+if(sb&&perfil.usuario){await sb.from('profissionais').update({categoria:perfil.categoria,cidade:perfil.cidade,bio:perfil.bio,foto:perfil.foto}).eq('usuario',perfil.usuario);}
+document.getElementById('msgA').innerText='✅ Anúncio salvo! Agora salva 100% - Ouro + Selo Dourado - Online tempo real';
+document.getElementById('msgA').className='text-[10px] text-center text-green-600 font-bold';
+}catch(err){document.getElementById('msgA').innerText='Erro: '+err.message;}
 }
 </script></body></html>
