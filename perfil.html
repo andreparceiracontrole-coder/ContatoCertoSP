@@ -1,170 +1,20 @@
-<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Meu Perfil - Foto Salvando 100%</title><script src="https://cdn.tailwindcss.com"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><link rel="icon" href="/icon-192.png"><style>html,body{overflow-x:hidden}*{box-sizing:border-box}</style></head><body class="bg-[#F8FAFF]">
-<header class="bg-white border-b"><div class="max-w-[700px] mx-auto px-4 h-[60px] flex justify-between items-center"><a href="/" class="font-black text-[11px] flex items-center gap-2"><img src="/icon-192.png" class="w-7 h-7 rounded-full border">CONTATO CERTO SP</a><a href="/" class="h-7 px-3 rounded-full bg-white border text-[9px] font-bold grid place-items-center">Início</a></div></header>
-<div class="bg-yellow-400 text-black text-center py-2"><div class="font-black text-[11px]">🏆 MEU PERFIL - FOTO PERFIL SALVANDO 100% - CORRIGIDO</div></div>
-<main class="max-w-[700px] mx-auto p-4"><div class="bg-white rounded-[16px] border-2 border-yellow-300 p-4 shadow">
-<div class="flex gap-3"><div class="relative"><img id="fotoTop" src="https://i.pravatar.cc/150" class="w-20 h-20 rounded-full border-4 border-yellow-400 object-cover"><div class="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-yellow-400 border-2 border-white grid place-items-center text-black font-black text-[12px]">✓</div></div><div><div id="nomeTop" class="font-black text-[14px]">Seu Nome</div><span class="bg-yellow-400 text-black text-[8px] px-2 py-0.5 rounded-full font-black">OURO - SELO DOURADO</span><div class="text-[9px] text-zinc-600 mt-1">Foto perfil salvando 100% - Supabase + localStorage - Online tempo real - Apenas planos</div></div></div>
-
-<div class="mt-4 grid grid-cols-2 gap-2"><button onclick="aba('perfil')" id="btnP" class="h-9 rounded-xl bg-blue-600 text-white font-bold text-[10px]">👤 Editar Perfil + Foto Perfil</button><button onclick="aba('anuncio')" id="btnA" class="h-9 rounded-xl bg-white border text-[10px] font-bold">📢 Editar Anúncio + Foto Anúncio</button></div>
-
-<div id="tabPerfil" class="mt-4">
-<h3 class="font-black text-[11px]">Editar Perfil - Foto Perfil Salvando 100%</h3>
-<form onsubmit="salvarP(event)" class="mt-2 grid gap-2">
-<div class="grid grid-cols-2 gap-2"><input id="nome" placeholder="Nome" class="h-9 px-3 rounded-xl border-2 bg-slate-50 text-[10px]"><input id="tel" placeholder="WhatsApp" class="h-9 px-3 rounded-xl border-2 bg-slate-50 text-[10px]"></div>
-<div class="grid grid-cols-2 gap-2"><input id="email" placeholder="Email" class="h-9 px-3 rounded-xl border-2 bg-slate-50 text-[10px]"><input id="cidade" placeholder="Cidade" class="h-9 px-3 rounded-xl border-2 bg-slate-50 text-[10px]"></div>
-
-<div class="border-2 border-blue-100 rounded-xl p-3 bg-blue-50/50">
-<label class="text-[9px] font-black text-blue-700">📸 FOTO PERFIL - Galeria Celular - Salvando 100%</label>
-<input type="file" id="fotoPerfilFile" accept="image/*" class="mt-1 h-9 px-2 rounded-xl border-2 bg-white text-[9px] w-full">
-<div class="mt-2 flex gap-3 items-center">
-<img id="previewPerfil" src="https://i.pravatar.cc/150" class="w-16 h-16 rounded-full border-2 object-cover">
-<div class="text-[8px] text-zinc-600">Preview foto perfil<br>Será salva no Supabase<br>e aparece no site online tempo real<br>Formato: base64 permanente</div>
-</div>
-<input id="fotoPerfilUrl" placeholder="URL foto perfil - será preenchido automaticamente" class="mt-2 h-8 px-3 rounded-xl border bg-white text-[8px] w-full">
-</div>
-
-<button type="submit" id="btnSalvarP" class="h-10 rounded-xl bg-blue-600 text-white font-bold text-[11px]">💾 Salvar Perfil + Foto Perfil - Agora Salva 100%</button>
-<div id="msgP" class="text-[10px] text-center font-bold"></div>
-</form>
-</div>
-
-<div id="tabAnuncio" class="mt-4 hidden">
-<h3 class="font-black text-[11px]">Editar Anúncio - Foto Anúncio Salvando 100%</h3>
-<form onsubmit="salvarA(event)" class="mt-2 grid gap-2">
-<input id="prof" placeholder="Profissão" class="h-9 px-3 rounded-xl border-2 bg-slate-50 text-[10px]">
-<input id="cidadeA" placeholder="Cidade anúncio" class="h-9 px-3 rounded-xl border-2 bg-slate-50 text-[10px]">
-<textarea id="bio" placeholder="Descrição anúncio" class="p-3 rounded-xl border-2 bg-slate-50 min-h-[60px] text-[10px]"></textarea>
-
-<div class="border-2 border-yellow-200 rounded-xl p-3 bg-yellow-50/50">
-<label class="text-[9px] font-black text-yellow-700">📸 FOTO ANÚNCIO - Galeria Celular - Salvando 100%</label>
-<input type="file" id="fotoAnuncioFile" accept="image/*" class="mt-1 h-9 px-2 rounded-xl border-2 bg-white text-[9px] w-full">
-<div class="mt-2 flex gap-3 items-center">
-<img id="previewAnuncio" src="https://i.pravatar.cc/150?img=5" class="w-16 h-16 rounded-[12px] border-2 object-cover">
-<div class="text-[8px] text-zinc-600">Preview foto anúncio<br>Salva no Supabase<br>Aparece no site tempo real</div>
-</div>
-<input id="fotoAnuncioUrl" placeholder="URL foto anúncio" class="mt-2 h-8 px-3 rounded-xl border bg-white text-[8px] w-full">
-</div>
-
-<button type="submit" id="btnSalvarA" class="h-10 rounded-xl bg-yellow-400 text-black font-black text-[11px]">💾 Salvar Anúncio + Foto Anúncio - Salva 100%</button>
-<div id="msgA" class="text-[10px] text-center font-bold"></div>
-</form>
-</div>
-
-<div class="mt-4 border-2 rounded-xl p-3 text-[10px] bg-zinc-50"><b>Apenas informações dos planos:</b><br><b>Básico Grátis</b> - 1 anúncio sem destaque, suporte 24hs, Selo Básico<br><b>Prata R$19,90</b> - 1 anúncio com destaque, volta topo 5x 30 dias, WhatsApp, chat, suporte 24hs, Selo Prata<br><b>Ouro R$39,90 - 50 VAGAS GRÁTIS</b> - 1 anúncio destaque dourado, volta topo 1x dia 30 dias, WhatsApp, chat, suporte 24hs, Selo Verificado dourado</div>
-</div></main>
-
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Meu Perfil - Contato Certo SP</title><script src="https://cdn.tailwindcss.com"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><style>html,body{overflow-x:hidden;max-width:100vw}*{box-sizing:border-box}</style></head><body class="bg-[#F8FAFF]">
+<header class="bg-white border-b sticky top-0 z-50"><div class="max-w-[800px] mx-auto px-4 h-[64px] flex justify-between items-center"><div class="flex items-center gap-2"><div class="w-9 h-9 rounded-full bg-[#0F2C59] grid place-items-center text-white font-black">C</div><b class="text-[#0F2C59]">Meu Perfil</b></div><nav class="flex gap-2"><a href="/index.html" class="h-8 px-3 rounded-full border text-[12px] font-bold grid place-items-center">Início</a><a href="/planos.html" class="h-8 px-3 rounded-full bg-[#FFD60A] text-[12px] font-bold grid place-items-center">Planos</a><a href="/profissionais.html" class="h-8 px-3 rounded-full bg-[#0F2C59] text-white text-[12px] font-bold grid place-items-center">Profissionais</a></nav></div></header>
+<main class="max-w-[700px] mx-auto p-4"><div class="bg-white rounded-[20px] border p-5"><div class="flex justify-between items-center"><h1 class="font-black text-[#0F2C59]">Editar Perfil e Anúncio - 1h</h1><div id="tempo" class="text-[10px] font-bold px-3 py-1 rounded-full bg-zinc-100">Verificando...</div></div>
+<div class="mt-4 bg-[#0F2C59] text-white rounded-[16px] p-4 flex gap-3"><div class="relative"><img id="fotoTop" src="https://i.pravatar.cc/150" class="w-14 h-14 rounded-full border-4 border-white object-cover"><div id="seloFoto" class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-zinc-800 border-2 border-white grid place-items-center text-[10px] font-black text-white">B</div></div><div><div id="seloTxt" class="text-[10px] bg-white/20 px-2 py-1 rounded-full inline-block">BASIC</div><div id="nomeTop" class="font-black mt-1">Seu Nome</div><div class="text-[10px] opacity-70">PIN 80% • Fotos galeria • Cidade vaga • Profissão vaga alfabética</div></div></div>
+<form onsubmit="salvar(event)" class="mt-5 grid gap-3"><div class="grid md:grid-cols-2 gap-3"><div><label class="text-[10px] font-bold">Nome</label><input required id="nome" placeholder="Nome" class="w-full h-11 px-4 rounded-xl border-2 bg-slate-50"></div><div><label class="text-[10px] font-bold">WhatsApp</label><input required id="tel" placeholder="Telefone" class="w-full h-11 px-4 rounded-xl border-2 bg-slate-50"></div></div><div class="grid md:grid-cols-2 gap-3"><div><label class="text-[10px] font-bold">Cidade - VAGA - 30 cidades pré-configuradas</label><input required id="cidade" list="cidadeList" placeholder="Ex: Cândido Mota, Assis, ou qualquer cidade" class="w-full h-11 px-4 rounded-xl border-2 bg-slate-50"><datalist id="cidadeList"></datalist><div class="text-[9px] text-green-600 font-bold mt-1">✅ Campo vago - aceita qualquer cidade</div></div><div><label class="text-[10px] font-bold">Profissão - VAGA - ordem alfabética</label><input required id="profissao" list="profList" placeholder="Ex: Pedreiro, Eletricista..." class="w-full h-11 px-4 rounded-xl border-2 bg-slate-50"><datalist id="profList"></datalist><div class="text-[9px] text-green-600 font-bold mt-1">✅ Campo vago - aceita qualquer profissão</div></div></div><div><label class="text-[10px] font-bold">Descrição</label><textarea required id="bio" placeholder="Descrição do seu serviço" class="w-full p-3 rounded-xl border-2 bg-slate-50 min-h-[80px]"></textarea></div><div class="grid md:grid-cols-2 gap-3"><div><label class="text-[10px] font-bold">Foto Perfil - Galeria celular - 150x150</label><input type="file" id="fotoPerfilFile" accept="image/*" class="w-full h-11 px-3 rounded-xl border-2 bg-slate-50 text-[11px]"><img id="previewPerfil" src="https://i.pravatar.cc/150" class="mt-2 w-16 h-16 rounded-full border-2 object-cover"></div><div><label class="text-[10px] font-bold">Foto Anúncio - Galeria</label><input type="file" id="fotoAnuncioFile" accept="image/*" class="w-full h-11 px-3 rounded-xl border-2 bg-slate-50 text-[11px]"><img id="previewAnuncio" src="https://i.pravatar.cc/150?img=5" class="mt-2 w-16 h-16 rounded-[12px] border-2 object-cover"></div></div><button id="btnSalvar" class="h-12 rounded-full bg-[#FF7A00] text-white font-black">Salvar Perfil e Anúncio - 1h</button></form></div></main>
 <script>
-const U="https://rjrcdikhpvlrvivvqmlb.supabase.co";const K="sb_publishable_1fCXyxX4f7WyO64N9HBEVg_2AZeGTtL";let sb;try{sb=supabase.createClient(U,K)}catch(e){}
-
-// CARREGA PERFIL SALVO
-let p=JSON.parse(localStorage.getItem('contatocerto_perfil_completo')||'{}');
-function carregarPerfil(){
-if(p.nome){
-document.getElementById('nomeTop').innerText=p.nome;
-document.getElementById('nome').value=p.nome||'';
-document.getElementById('tel').value=p.telefone||'';
-document.getElementById('email').value=p.email||'';
-document.getElementById('cidade').value=p.cidade||'';
-document.getElementById('prof').value=p.categoria||'';
-document.getElementById('cidadeA').value=p.cidade||'';
-document.getElementById('bio').value=p.bio||'';
-document.getElementById('fotoTop').src=p.foto||'https://i.pravatar.cc/150';
-document.getElementById('previewPerfil').src=p.foto||'https://i.pravatar.cc/150';
-document.getElementById('previewAnuncio').src=p.foto||'https://i.pravatar.cc/150?img=5';
-document.getElementById('fotoPerfilUrl').value=p.foto||'';
-}
-}
-carregarPerfil();
-
-function aba(t){
-if(t==='perfil'){document.getElementById('tabPerfil').classList.remove('hidden');document.getElementById('tabAnuncio').classList.add('hidden');document.getElementById('btnP').className='h-9 rounded-xl bg-blue-600 text-white font-bold text-[10px]';document.getElementById('btnA').className='h-9 rounded-xl bg-white border text-[10px] font-bold';}else{document.getElementById('tabPerfil').classList.add('hidden');document.getElementById('tabAnuncio').classList.remove('hidden');document.getElementById('btnP').className='h-9 rounded-xl bg-white border text-[10px] font-bold';document.getElementById('btnA').className='h-9 rounded-xl bg-yellow-400 text-black font-black text-[10px]';}
-}
-
-// FOTO PERFIL - SALVANDO 100% - BASE64 PERMANENTE
-document.getElementById('fotoPerfilFile')?.addEventListener('change',function(e){
-let file=e.target.files[0];
-if(file){
-if(file.size>2*1024*1024){alert('Foto muito grande! Máximo 2MB');return;}
-let reader=new FileReader();
-reader.onload=function(ev){
-let base64=ev.target.result;
-document.getElementById('previewPerfil').src=base64;
-document.getElementById('fotoTop').src=base64;
-document.getElementById('fotoPerfilUrl').value=base64;
-// SALVA AUTOMATICAMENTE NO LOCALSTORAGE AO SELECIONAR
+const U="https://rjrcdikhpvlrvivvqmlb.supabase.co";const K="sb_publishable_1fCXyxX4f7WyO64N9HBEVg_2AZeGTtL";let sb=supabase.createClient(U,K);
+const PROFISSOES=["Animador de festa","Boleira","Cantor","Dançarino","Diarista","Doceira","Eletricista","Encanador","Faxineira","Fotógrafo","Gesseiro","Locutor","Montador de móveis","Pedreiro","Personal traine","Pintor","Professor","Radialista","Recepcionista","Salgadeira","Segurança","Técnico de celular","Técnico eletrônico"].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+const CIDADES=["Tarumã","Assis","Florinia","Cândido Mota","Platina","Palmital","Maracaí","Paraguaçu Paulista","Echaporã","Ibirarema","Itambaracá (PR)","Andirá (PR)","Bandeirantes (PR)","Cambará (PR)","Santa Mariana (PR)","Sertaneja","Cornélio Procópio","Ourinhos","Marília","Piraju","Ipaussu","Londrina","Chavantes","Santa Cruz do Rio Pardo","Jaú","Avaré","Maringá","Bauru","Barretos","Botucatu"];
+document.getElementById('profList').innerHTML=PROFISSOES.map(p=>`<option value="${p}">`).join('');
+document.getElementById('cidadeList').innerHTML=CIDADES.map(c=>`<option value="${c}">`).join('');
 let perfil=JSON.parse(localStorage.getItem('contatocerto_perfil_completo')||'{}');
-perfil.foto=base64;
-localStorage.setItem('contatocerto_perfil_completo',JSON.stringify(perfil));
-document.getElementById('msgP').innerText='📸 Foto perfil selecionada! Clique em Salvar para salvar 100% no Supabase';
-document.getElementById('msgP').className='text-[10px] text-center font-bold text-blue-600';
-};
-reader.readAsDataURL(file);
-}
-});
-
-// FOTO ANUNCIO - SALVANDO 100%
-document.getElementById('fotoAnuncioFile')?.addEventListener('change',function(e){
-let file=e.target.files[0];
-if(file){
-let reader=new FileReader();
-reader.onload=function(ev){
-let base64=ev.target.result;
-document.getElementById('previewAnuncio').src=base64;
-document.getElementById('fotoAnuncioUrl').value=base64;
-let perfil=JSON.parse(localStorage.getItem('contatocerto_perfil_completo')||'{}');
-perfil.foto=base64;
-localStorage.setItem('contatocerto_perfil_completo',JSON.stringify(perfil));
-document.getElementById('msgA').innerText='📸 Foto anúncio selecionada! Clique em Salvar';
-document.getElementById('msgA').className='text-[10px] text-center font-bold text-yellow-600';
-};
-reader.readAsDataURL(file);
-}
-});
-
-async function salvarP(e){
-e.preventDefault();
-let btn=document.getElementById('btnSalvarP');let msg=document.getElementById('msgP');
-btn.innerText='Salvando foto perfil...';btn.disabled=true;
-try{
-let perfil=JSON.parse(localStorage.getItem('contatocerto_perfil_completo')||'{}');
-perfil.nome=document.getElementById('nome').value||perfil.nome;
-perfil.telefone=document.getElementById('tel').value||perfil.telefone;
-perfil.email=document.getElementById('email').value||perfil.email;
-perfil.cidade=document.getElementById('cidade').value||perfil.cidade;
-perfil.foto=document.getElementById('fotoPerfilUrl').value||document.getElementById('previewPerfil').src||perfil.foto;
-
-// SALVA NO LOCALSTORAGE - 100% PERMANENTE
-localStorage.setItem('contatocerto_perfil_completo',JSON.stringify(perfil));
-document.getElementById('nomeTop').innerText=perfil.nome;
-document.getElementById('fotoTop').src=perfil.foto;
-
-// SALVA NO SUPABASE - ONLINE TEMPO REAL - FOTO SALVANDO 100%
-if(sb&&perfil.usuario){
-let r=await sb.from('profissionais').update({nome:perfil.nome,telefone:perfil.telefone,email:perfil.email,cidade:perfil.cidade,foto:perfil.foto}).eq('usuario',perfil.usuario);
-if(r.error){msg.innerText='Erro Supabase: '+r.error.message;msg.className='text-[10px] text-center font-bold text-red-600';btn.innerText='💾 Salvar Perfil + Foto';btn.disabled=false;return;}
-}
-msg.innerText='✅ Perfil + Foto Perfil salvo com sucesso! Foto salvando 100% - Supabase + LocalStorage - Online tempo real!';
-msg.className='text-[10px] text-center font-bold text-green-600';
-btn.innerText='✅ Salvo! Foto Perfil Salvando 100%';
-setTimeout(()=>{btn.innerText='💾 Salvar Perfil + Foto Perfil - Agora Salva 100%';btn.disabled=false;},2000);
-}catch(err){document.getElementById('msgP').innerText='Erro: '+err.message;document.getElementById('msgP').className='text-red-600';btn.disabled=false;}
-}
-
-async function salvarA(e){
-e.preventDefault();
-let btn=document.getElementById('btnSalvarA');let msg=document.getElementById('msgA');
-btn.innerText='Salvando foto anúncio...';btn.disabled=true;
-try{
-let perfil=JSON.parse(localStorage.getItem('contatocerto_perfil_completo')||'{}');
-perfil.categoria=document.getElementById('prof').value||perfil.categoria;
-perfil.cidade=document.getElementById('cidadeA').value||perfil.cidade;
-perfil.bio=document.getElementById('bio').value||perfil.bio;
-perfil.foto=document.getElementById('fotoAnuncioUrl').value||document.getElementById('previewAnuncio').src||perfil.foto;
-localStorage.setItem('contatocerto_perfil_completo',JSON.stringify(perfil));
-if(sb&&perfil.usuario){let r=await sb.from('profissionais').update({categoria:perfil.categoria,cidade:perfil.cidade,bio:perfil.bio,foto:perfil.foto}).eq('usuario',perfil.usuario);if(r.error){msg.innerText='Erro: '+r.error.message;btn.disabled=false;return;}}
-msg.innerText='✅ Anúncio + Foto Anúncio salvo! Foto salvando 100% - Ouro + Selo Dourado!';
-msg.className='text-[10px] text-center font-bold text-green-600';
-btn.innerText='✅ Salvo! Foto Anúncio 100%';
-setTimeout(()=>{btn.innerText='💾 Salvar Anúncio + Foto Anúncio - Salva 100%';btn.disabled=false;},2000);
-}catch(err){document.getElementById('msgA').innerText='Erro: '+err.message;btn.disabled=false;}
-}
+if(perfil.nome){document.getElementById('nome').value=perfil.nome;document.getElementById('tel').value=perfil.telefone;document.getElementById('cidade').value=perfil.cidade;document.getElementById('profissao').value=perfil.profissao;document.getElementById('bio').value=perfil.bio||'';document.getElementById('fotoTop').src=perfil.foto;document.getElementById('previewPerfil').src=perfil.foto;document.getElementById('previewAnuncio').src=perfil.foto_anuncio||perfil.foto;document.getElementById('nomeTop').innerText=perfil.nome;document.getElementById('seloTxt').innerText=(perfil.plano||'basic').toUpperCase();}
+let fotoPerfil="",fotoAnuncio="";
+document.getElementById('fotoPerfilFile')?.addEventListener('change',e=>{let f=e.target.files[0];let r=new FileReader();r.onload=ev=>{let img=new Image();img.onload=()=>{let c=document.createElement('canvas');c.width=150;c.height=150;c.getContext('2d').drawImage(img,0,0,150,150);fotoPerfil=c.toDataURL('image/jpeg',0.7);document.getElementById('previewPerfil').src=fotoPerfil;document.getElementById('fotoTop').src=fotoPerfil;};img.src=ev.target.result;};r.readAsDataURL(f);});
+document.getElementById('fotoAnuncioFile')?.addEventListener('change',e=>{let f=e.target.files[0];let r=new FileReader();r.onload=ev=>{let img=new Image();img.onload=()=>{let c=document.createElement('canvas');c.width=300;c.height=200;c.getContext('2d').drawImage(img,0,0,300,200);fotoAnuncio=c.toDataURL('image/jpeg',0.7);document.getElementById('previewAnuncio').src=fotoAnuncio;};img.src=ev.target.result;};r.readAsDataURL(f);});
+function verificarTempo(){let ult=localStorage.getItem('contatocerto_ultima_edicao');let el=document.getElementById('tempo');let btn=document.getElementById('btnSalvar');if(ult){let diff=Math.floor((new Date()-new Date(ult))/1000/60);let rest=60-diff;if(rest>0){el.innerText='Aguarde '+rest+' min - 1h';btn.disabled=true;btn.classList.add('opacity-50');}else{el.innerText='Pode editar agora';btn.disabled=false;btn.classList.remove('opacity-50');}}else{el.innerText='Pode editar agora';}}
+async function salvar(e){e.preventDefault();let ult=localStorage.getItem('contatocerto_ultima_edicao');if(ult){let diff=Math.floor((new Date()-new Date(ult))/1000/60);if(diff<60){alert('Só pode editar a cada 1h - aguarde '+(60-diff)+' min');return}}let nome=document.getElementById('nome').value,cidade=document.getElementById('cidade').value,prof=document.getElementById('profissao').value,bio=document.getElementById('bio').value,tel=document.getElementById('tel').value;let update={nome,cidade,profissao:prof,categoria:prof,bio,telefone:tel.replace(/\D/g,'')};if(fotoPerfil)update.foto=fotoPerfil;if(fotoAnuncio)update.foto_anuncio=fotoAnuncio;let r=await sb.from('profissionais').update(update).eq('usuario',perfil.usuario).select();if(r.error){alert('Erro: '+r.error.message);return}localStorage.setItem('contatocerto_perfil_completo',JSON.stringify({...perfil,...update}));localStorage.setItem('contatocerto_ultima_edicao',new Date().toISOString());alert('Perfil atualizado! Selo + PIN maior 80% ok. Próxima edição em 1h.');verificarTempo();}
+verificarTempo();
 </script></body></html>
