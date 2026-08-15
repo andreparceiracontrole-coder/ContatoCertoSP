@@ -1,4 +1,29 @@
-<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Login - Apos Login Total Acesso</title><script src="https://cdn.tailwindcss.com"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><link rel="icon" href="/icon-192.png"></head><body class="bg-slate-50 min-h-screen grid place-items-center p-4"><div class="bg-white rounded-[20px] p-6 w-full max-w-[380px] border-2"><h1 class="font-black text-[16px]">Login - Apos login total acesso a plataforma e anuncios e planos</h1><form onsubmit="login(event)" class="mt-4 grid gap-3"><input required id="usuario" placeholder="Usuario" class="h-10 px-3 rounded-xl border bg-slate-50"><input required id="senha" type="password" placeholder="Senha" class="h-10 px-3 rounded-xl border bg-slate-50"><button type="submit" class="h-10 rounded-xl bg-black text-white font-black">Entrar - Total acesso liberado - 100% funcionando</button><a href="/cadastro.html" class="text-center text-[11px] text-blue-600 underline">Nao tem conta? Cadastro obrigatorio</a><a href="/" class="text-center text-[10px] text-zinc-500 underline">Voltar - 100% funcionando</a></form></div><script>
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Login - Sem Erro - Funciona 100%</title><script src="https://cdn.tailwindcss.com"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><link rel="icon" href="/icon-192.png"></head><body class="bg-[#F8FAFF] min-h-screen grid place-items-center p-4">
+<div class="bg-white rounded-[16px] border-2 border-blue-100 p-6 w-full max-w-[400px] shadow-xl">
+<div class="text-center"><img src="/icon-192.png" class="w-12 h-12 rounded-full border-2 mx-auto"><h1 class="mt-3 text-[16px] font-black">Login - Sem Erro</h1><p class="text-[9px] text-zinc-500 mt-1">Acesso com usuário e senha - Supabase verificado</p></div>
+<form onsubmit="login(event)" class="mt-5 grid gap-3">
+<input required id="usuario" placeholder="Usuário" class="h-10 px-3 rounded-xl border-2 bg-slate-50 text-[11px]">
+<input required id="senha" type="password" placeholder="Senha" class="h-10 px-3 rounded-xl border-2 bg-slate-50 text-[11px]">
+<button type="submit" id="btnLogin" class="h-10 rounded-xl bg-slate-900 text-white font-black text-[11px]">Entrar - Login Sem Erro</button>
+<div id="msg" class="text-[10px] text-center"></div>
+<a href="/cadastro.html" class="text-center text-[10px] text-blue-600 font-bold underline block">Não tem cadastro? Cadastro obrigatório - Já ganha Ouro + Selo Dourado</a>
+<a href="/" class="text-center text-[9px] text-zinc-500 underline block">Voltar ao Início</a>
+</form>
+</div>
+<script>
 const U="https://rjrcdikhpvlrvivvqmlb.supabase.co";const K="sb_publishable_1fCXyxX4f7WyO64N9HBEVg_2AZeGTtL";let sb;try{sb=supabase.createClient(U,K)}catch(e){}
-async function login(e){e.preventDefault();let u=document.getElementById('usuario').value.toLowerCase();let s=document.getElementById('senha').value;try{let r=await sb.from('profissionais').select('*').eq('usuario',u).eq('senha',s).maybeSingle();if(!r.data){alert('Usuario ou senha incorretos - Tente novamente');return}localStorage.setItem('contatocerto_cadastro_feito','1');localStorage.setItem('contatocerto_usuario_logado',u);localStorage.setItem('contatocerto_perfil_completo',JSON.stringify(r.data));alert('Login OK! Total acesso a plataforma e anuncios e planos liberado - 100% funcionando');location.href='/?login=ok&acesso=total';}catch(err){alert('Erro: '+err.message)}}
+async function login(e){
+e.preventDefault();
+let btn=document.getElementById('btnLogin');let msg=document.getElementById('msg');
+btn.innerText='Entrando...';btn.disabled=true;
+let u=document.getElementById('usuario').value.trim().toLowerCase();let s=document.getElementById('senha').value;
+try{
+let r=await sb.from('profissionais').select('*').eq('usuario',u).eq('senha',s).maybeSingle();
+if(r.error){msg.innerText='Erro Supabase: '+r.error.message;msg.className='text-[10px] text-center text-red-600';btn.disabled=false;btn.innerText='Entrar';return;}
+if(!r.data){msg.innerText='Usuário ou senha incorretos';msg.className='text-[10px] text-center text-red-600';btn.disabled=false;btn.innerText='Entrar';return;}
+localStorage.setItem('contatocerto_cadastro_feito','1');localStorage.setItem('contatocerto_usuario_logado',u);localStorage.setItem('contatocerto_senha_logada',s);localStorage.setItem('contatocerto_perfil_completo',JSON.stringify(r.data));
+msg.innerText='✅ Login OK!';msg.className='text-[10px] text-center text-green-600';
+setTimeout(()=>{location.href='/';},800);
+}catch(err){document.getElementById('msg').innerText='Erro: '+err.message;btn.disabled=false;}
+}
 </script></body></html>
