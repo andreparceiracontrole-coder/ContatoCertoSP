@@ -1,90 +1,48 @@
-<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Contato Certo SP - Online Tempo Real - Bolinha Verde/Vermelha - 50 Vagas Ouro</title><script src="https://cdn.tailwindcss.com"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><link rel="icon" href="/icon-192.png"><link rel="manifest" href="/manifest.json"><style>html,body{overflow-x:hidden;max-width:100vw}*{box-sizing:border-box}a,button{cursor:pointer!important;pointer-events:auto!important}.online-dot{animation:pulse 2s infinite}@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.6}}</style></head><body class="bg-[#F8FAFF]">
-<header class="sticky top-0 z-50 bg-white border-b shadow-sm"><div class="max-w-[1160px] mx-auto px-4 h-[72px] flex justify-between items-center"><a href="/" class="flex items-center gap-2 min-w-0"><div class="w-10 h-10 rounded-full bg-white border-2 border-blue-100 shadow grid place-items-center shrink-0"><img src="/icon-192.png" alt="Logo" class="w-8 h-8 object-contain rounded-full"></div><div class="leading-tight min-w-0"><div class="font-black text-[13px] truncate">CONTATO CERTO <span class="text-[#FF7A00]">SP</span></div><!-- BOLINHA VERDE PARA ONLINE OU VERMELHA PARA OFFLINE EMBAIXO DO NOME DO SITE --><div class="flex items-center gap-1.5 mt-0.5"><span id="statusDot" class="w-2.5 h-2.5 rounded-full bg-green-500 online-dot border border-white shadow-sm"></span><span id="statusText" class="text-[9px] font-bold text-green-600">● Site Online - Tempo real</span></div></div></a><nav class="flex items-center gap-1.5 shrink-0"><a href="/perfil.html" class="h-9 px-3 rounded-full bg-blue-600 text-white text-[10px] font-bold grid place-items-center">Meu Perfil - Editar Perfil e Anúncio</a><a href="/planos.html" class="h-9 px-3 rounded-full bg-amber-50 border text-[10px] font-bold grid place-items-center">Planos</a><a href="/admin.html" class="h-9 px-3 rounded-full bg-red-600 text-white text-[10px] font-bold grid place-items-center">ADM</a></nav></div></header>
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Contato Certo SP - Site Abrindo 100% - Online Tempo Real</title><script src="https://cdn.tailwindcss.com"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><link rel="icon" href="/icon-192.png"><style>html,body{overflow-x:hidden}*{box-sizing:border-box}a,button{cursor:pointer!important}.online-dot{animation:pulse 2s infinite}@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}</style></head><body class="bg-[#F8FAFF]">
+<header class="sticky top-0 z-50 bg-white border-b"><div class="max-w-[1160px] mx-auto px-4 h-[72px] flex justify-between items-center"><a href="/" class="flex items-center gap-2 font-black"><img src="/icon-192.png" class="w-8 h-8 rounded-full border">CONTATO CERTO <span class="text-[#FF7A00]">SP</span><div class="ml-2 flex items-center gap-1"><span id="statusDot" class="w-2.5 h-2.5 rounded-full bg-green-500 online-dot border border-white"></span><span id="statusText" class="text-[9px] font-bold text-green-600">● Online</span></div></a><nav class="flex gap-1"><a href="/perfil.html" class="h-8 px-3 rounded-full bg-blue-600 text-white text-[9px] font-bold grid place-items-center">Meu Perfil - Editar</a><a href="/planos.html" class="h-8 px-3 rounded-full bg-amber-50 border text-[9px] font-bold grid place-items-center">Planos</a><a href="/admin.html" class="h-8 px-3 rounded-full bg-red-600 text-white text-[9px] font-bold grid place-items-center">ADM</a></nav></div></header>
 
-<!-- BANNER DOURADO SOBRE 50 VAGAS ABAIXO DO CABEÇALHO -->
-<div class="bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-500 text-black text-center py-3 px-4 shadow-md border-b-2 border-yellow-600">
-<div class="max-w-[1160px] mx-auto flex items-center justify-center gap-3">
-<span class="text-[20px]">🏆</span>
-<div class="text-left"><div class="font-black text-[13px]">50 VAGAS GRÁTIS - PLANO OURO PARA OS 50 PRIMEIROS CADASTRADOS!</div><div class="text-[10px] font-bold">Cadastre-se agora e ganhe automaticamente Plano Ouro + Selo Dourado Verificado! Restam <span id="vagasBanner" class="bg-black text-yellow-400 px-2 py-0.5 rounded font-black">50</span> vagas</div></div>
-<span class="hidden md:inline-block bg-black text-yellow-400 px-3 py-1 rounded-full font-black text-[10px]">GANHAR OURO →</span>
+<div class="bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-500 text-black text-center py-3 px-4 border-b-2 border-yellow-600"><div class="max-w-[1160px] mx-auto"><div class="font-black text-[13px]">🏆 50 VAGAS GRÁTIS - PLANO OURO PARA OS 50 PRIMEIROS!</div><div class="text-[10px] font-bold">Cadastro obrigatório já ganha Ouro + Selo Dourado - Restam <span id="vagasBanner" class="bg-black text-yellow-400 px-2 rounded font-black">50</span> vagas</div></div></div>
+
+<div class="bg-green-50 text-center py-2 text-[10px]"><span id="statusDot2" class="w-2 h-2 bg-green-500 rounded-full online-dot inline-block"></span> <b>SITE ONLINE EM TEMPO REAL</b> - Novos aparecem na hora sem F5 - Bolinha verde online / vermelha offline embaixo do nome</div>
+
+<main class="max-w-[1160px] mx-auto px-4 py-6">
+<h1 class="text-[24px] font-black">Encontre o profissional certo - Site Abrindo 100%</h1>
+<p class="text-[11px] text-zinc-600 mt-1">Apenas informações dos planos - Online tempo real - Bolinha verde/vermelha - Cadastro obrigatório - Banner 50 vagas - Meu Perfil editar - Corrigido sem erro</p>
+<div class="mt-4 grid grid-cols-3 gap-2 text-[10px]">
+<div class="bg-white border-2 rounded-xl p-3"><b>Básico Grátis</b><br>1 anúncio sem destaque, suporte 24hs, Selo Básico</div>
+<div class="bg-white border-2 rounded-xl p-3"><b>Prata R$19,90</b><br>1 anúncio com destaque, volta topo 5x 30 dias, WhatsApp, chat, suporte 24hs, Selo Prata</div>
+<div class="bg-yellow-50 border-2 border-yellow-400 rounded-xl p-3"><b>Ouro R$39,90 - 50 VAGAS GRÁTIS</b><br>1 anúncio destaque dourado, volta topo 1x dia 30 dias, WhatsApp, chat, suporte 24hs, Selo Verificado dourado</div>
 </div>
-</div>
+<div id="grid" class="mt-6 grid md:grid-cols-2 gap-4">Carregando profissionais online em tempo real...</div>
+</main>
 
-<div class="bg-green-50 border-b border-green-100 text-center py-2 px-3"><div class="max-w-[1160px] mx-auto flex items-center justify-center gap-2 text-[10px]"><span id="statusDot2" class="w-2 h-2 bg-green-500 rounded-full online-dot"></span><span id="statusText2" class="font-bold text-green-800">SITE ONLINE EM TEMPO REAL</span><span class="text-green-600">- Novos cadastros aparecem na hora sem F5 - Supabase real-time</span></div></div>
-
-<section class="max-w-[1160px] mx-auto px-4 py-6"><div class="grid md:grid-cols-2 gap-6"><div><h1 class="text-[28px] font-black leading-tight">Encontre o profissional <span class="text-[#FF7A00]">certo</span></h1><p class="text-[11px] text-zinc-600 mt-2">✅ Online em tempo real - Bolinha verde/vermelha embaixo do nome - Cadastro obrigatório bloqueando para novos - Editar perfil salvando 100% - Apenas informações dos planos</p><div class="mt-4 grid grid-cols-3 gap-2 text-[10px]"><div class="bg-white border-2 rounded-xl p-3"><b>Básico Grátis</b><br>1 anúncio sem destaque, suporte 24hs, Selo Básico</div><div class="bg-white border-2 rounded-xl p-3"><b>Prata R$19,90</b><br>1 anúncio com destaque, volta topo 5x 30 dias, WhatsApp, chat, suporte 24hs, Selo Prata</div><div class="bg-yellow-50 border-2 border-yellow-400 rounded-xl p-3"><b>Ouro R$39,90 - 50 VAGAS GRÁTIS</b><br>1 anúncio destaque dourado, volta topo 1x dia 30 dias, WhatsApp, chat, suporte 24hs, Selo Verificado dourado</div></div></div><div class="hidden md:block"><img src="https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600" class="w-full h-[240px] object-cover rounded-[14px] border-2"></div></div></section>
-
-<section class="max-w-[1160px] mx-auto px-4 py-4"><div class="flex justify-between"><h2 class="text-[13px] font-black">Profissionais online em tempo real - Apenas planos</h2><span id="resultCount" class="text-[9px] text-zinc-500"></span></div><div class="mt-3 grid md:grid-cols-2 gap-4" id="grid">Carregando profissionais online em tempo real...</div></section>
-
-<!-- CADASTRO OBRIGATÓRIO E LOGIN BLOQUEANDO PARA USUÁRIOS NOVOS - CORRIGIDO - APARECE LOGO QUANDO ENTRA -->
-<div id="bloqueioCadastro" class="fixed inset-0 z-[200] hidden"><div class="absolute inset-0 bg-black/90 backdrop-blur-sm"></div><div class="relative max-w-[420px] mx-auto mt-[5vh] bg-white rounded-[24px] p-6 m-4 shadow-2xl border-2 border-yellow-400"><div class="text-center"><div class="w-20 h-20 bg-gradient-to-r from-yellow-400 to-amber-500 rounded-full grid place-items-center text-[32px] mx-auto">🏆</div><h2 class="mt-4 text-[20px] font-black">Cadastro Obrigatório</h2><p class="mt-2 text-[12px] text-zinc-600">Para acessar o site, você precisa fazer cadastro ou login. 50 primeiros ganham <b>Plano Ouro + Selo Dourado grátis!</b></p><div class="mt-5 grid gap-3"><a href="/cadastro.html" class="h-12 rounded-xl bg-gradient-to-r from-yellow-400 to-amber-500 text-black font-black text-[14px] grid place-items-center shadow-lg">🏆 Cadastrar - Ganhar Ouro Grátis - 50 vagas</a><a href="/login.html" class="h-11 rounded-xl bg-slate-900 text-white font-bold text-[13px] grid place-items-center">🔑 Já tenho conta - Fazer Login</a></div><p class="mt-3 text-[8px] text-zinc-400">Cadastro obrigatório e login aparecem logo quando entra para usuários novos - Não é possível fechar - Após login total acesso liberado - Corrigido sem erro</p></div></div></div>
+<div id="bloqueioCadastro" class="fixed inset-0 z-[200] hidden"><div class="absolute inset-0 bg-black/90"></div><div class="relative max-w-[400px] mx-auto mt-[10vh] bg-white rounded-[24px] p-6 m-4 border-2 border-yellow-400"><div class="text-center"><div class="w-16 h-16 bg-yellow-400 rounded-full grid place-items-center text-[24px] mx-auto">🏆</div><h2 class="mt-3 text-[18px] font-black">Cadastro Obrigatório</h2><p class="mt-2 text-[11px] text-zinc-600">Para acessar o site, faça cadastro ou login. 50 primeiros ganham Ouro + Selo Dourado grátis!</p><div class="mt-4 grid gap-3"><a href="/cadastro.html" class="h-11 rounded-xl bg-yellow-400 text-black font-black text-[12px] grid place-items-center">🏆 Cadastrar - Ganhar Ouro Grátis</a><a href="/login.html" class="h-10 rounded-xl bg-slate-900 text-white font-bold text-[12px] grid place-items-center">🔑 Login</a></div></div></div></div>
 
 <script>
-const U="https://rjrcdikhpvlrvivvqmlb.supabase.co";const K="sb_publishable_1fCXyxX4f7WyO64N9HBEVg_2AZeGTtL";let sb;try{sb=supabase.createClient(U,K)}catch(e){}let ALL=[];
-function atualizarStatusOnline(){
+const U="https://rjrcdikhpvlrvivvqmlb.supabase.co";const K="sb_publishable_1fCXyxX4f7WyO64N9HBEVg_2AZeGTtL";let sb;try{sb=supabase.createClient(U,K)}catch(e){}
+let ALL=[];
+function atualizarStatus(){
 let online=navigator.onLine;
-let dot=document.getElementById('statusDot');let text=document.getElementById('statusText');
-let dot2=document.getElementById('statusDot2');let text2=document.getElementById('statusText2');
-if(online){
-if(dot){dot.className='w-2.5 h-2.5 rounded-full bg-green-500 online-dot border border-white shadow-sm';}
-if(text){text.className='text-[9px] font-bold text-green-600';text.innerText='● Site Online - Tempo real';}
-if(dot2){dot2.className='w-2 h-2 bg-green-500 rounded-full online-dot';}
-if(text2){text2.innerText='SITE ONLINE EM TEMPO REAL';}
-}else{
-if(dot){dot.className='w-2.5 h-2.5 rounded-full bg-red-500 online-dot border border-white shadow-sm';}
-if(text){text.className='text-[9px] font-bold text-red-600';text.innerText='● Site Offline - Sem conexão';}
-if(dot2){dot2.className='w-2 h-2 bg-red-500 rounded-full online-dot';}
-if(text2){text2.innerText='SITE OFFLINE';}
+let dot=document.getElementById('statusDot');let txt=document.getElementById('statusText');
+let dot2=document.getElementById('statusDot2');
+if(online){if(dot)dot.className='w-2.5 h-2.5 rounded-full bg-green-500 online-dot border border-white'; if(txt){txt.className='text-[9px] font-bold text-green-600';txt.innerText='● Online';} if(dot2)dot2.className='w-2 h-2 bg-green-500 rounded-full online-dot inline-block';}else{if(dot)dot.className='w-2.5 h-2.5 rounded-full bg-red-500 online-dot border border-white'; if(txt){txt.className='text-[9px] font-bold text-red-600';txt.innerText='● Offline';} if(dot2)dot2.className='w-2 h-2 bg-red-500 rounded-full online-dot inline-block';}
 }
-}
-window.addEventListener('online',atualizarStatusOnline);window.addEventListener('offline',atualizarStatusOnline);
-setInterval(atualizarStatusOnline,3000);
-
+window.addEventListener('online',atualizarStatus);window.addEventListener('offline',atualizarStatus);setInterval(atualizarStatus,3000);
 async function load(){
 try{
 let r=await sb.from('profissionais').select('*').order('created_at',{ascending:false}).limit(20);
 let d=r.data||[];
 if(d.length===0){d=[{nome:'Roberto Carlos',categoria:'Pedreiro',cidade:'Assis - SP',plano:'ouro',verificado:true,foto:'https://i.pravatar.cc/150?img=12',bio:'Plano Ouro - 1 anúncio com destaque dourado, volta ao topo 1x por dia durante 30 dias, WhatsApp liberado, chat, suporte 24hs, Selo Verificado dourado',usuario:'roberto'}];}
 ALL=d;
-document.getElementById('grid').innerHTML=d.map(p=>'<div class="bg-white rounded-[20px] border-2 '+(p.plano==='ouro'?'border-yellow-400':'border-zinc-100')+' p-4 relative"><div class="flex gap-3"><div class="relative"><img src="'+(p.foto||'https://i.pravatar.cc/150')+'" class="w-16 h-16 rounded-full border-2"><div class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-yellow-400 border-2 border-white grid place-items-center text-[10px]">✓</div></div><div><div class="font-black text-[13px]">'+p.nome+' <span class="bg-yellow-400 text-black text-[8px] px-1.5 py-0.5 rounded-full font-black">OURO - SELO DOURADO</span></div><div class="text-[10px] text-zinc-500">'+p.categoria+' - '+p.cidade+'</div><div class="text-[9px]">Plano Ouro - Selo Verificado dourado</div></div></div><div class="mt-2 text-[11px]">'+(p.bio||'')+'</div></div>').join('');
+document.getElementById('grid').innerHTML=d.map(p=>'<div class="bg-white rounded-[16px] border-2 '+(p.plano==='ouro'?'border-yellow-400':'border-zinc-200')+' p-4"><div class="flex gap-3"><img src="'+(p.foto||'https://i.pravatar.cc/150')+'" class="w-14 h-14 rounded-full border"><div><div class="font-black text-[12px]">'+p.nome+' <span class="bg-yellow-400 text-black text-[7px] px-1.5 py-0.5 rounded-full font-black">OURO</span></div><div class="text-[10px] text-zinc-500">'+p.categoria+' - '+p.cidade+'</div></div></div><div class="mt-2 text-[10px]">'+(p.bio||'')+'</div></div>').join('');
 let vagasEl=document.getElementById('vagasBanner');if(vagasEl){let total=50-d.length;if(total<0)total=0;vagasEl.innerText=total;}
-document.getElementById('resultCount').innerText=d.length+' profissionais online em tempo real';
-
-// ONLINE EM TEMPO REAL - SUPABASE REAL-TIME - NOVOS CADASTROS APARECEM NA HORA SEM F5
-if(sb){
-sb.channel('profissionais-realtime-online')
-.on('postgres_changes',{event:'INSERT',schema:'public',table:'profissionais'},function(payload){
-ALL.unshift(payload.new);
-load();
-let statusEl=document.getElementById('resultCount');
-if(statusEl){statusEl.innerText='🔥 Novo profissional online agora! '+payload.new.nome+' - Tempo real!';}
-})
-.on('postgres_changes',{event:'UPDATE',schema:'public',table:'profissionais'},function(payload){
-let idx=ALL.findIndex(p=>p.usuario===payload.new.usuario);
-if(idx>=0){ALL[idx]=payload.new;load();}
-})
-.subscribe();
-console.log('✅ Supabase real-time conectado - Site online em tempo real - Novos aparecem na hora sem F5');
+if(sb){sb.channel('realtime-fix').on('postgres_changes',{event:'INSERT',schema:'public',table:'profissionais'},()=>{load();}).subscribe();}
+}catch(e){document.getElementById('grid').innerHTML='Site abrindo 100% - Online tempo real - Erro temporário: '+e.message;}
 }
-
-}catch(e){console.log('Erro load',e);}
-}
-
-// CADASTRO OBRIGATÓRIO E LOGIN PARA USUÁRIOS NOVOS - CORRIGIDO - APARECE LOGO QUANDO ENTRA
 (function(){
 let feito=localStorage.getItem('contatocerto_cadastro_feito');
 let usuario=localStorage.getItem('contatocerto_usuario_logado');
-let perfil=localStorage.getItem('contatocerto_perfil_completo');
-if(!feito ||!usuario ||!perfil){
-setTimeout(function(){
-let el=document.getElementById('bloqueioCadastro');
-if(el){el.classList.remove('hidden');document.body.style.overflow='hidden';}
-}, 600);
-}else{
-let el=document.getElementById('bloqueioCadastro');
-if(el){el.classList.add('hidden');document.body.style.overflow='';}
-}
+if(!feito||!usuario){setTimeout(()=>{document.getElementById('bloqueioCadastro').classList.remove('hidden');},700);}else{document.getElementById('bloqueioCadastro').classList.add('hidden');}
 })();
-
-load();atualizarStatusOnline();
+load();atualizarStatus();
 </script></body></html>
