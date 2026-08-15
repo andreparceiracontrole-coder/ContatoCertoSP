@@ -1,4 +1,1 @@
-const CACHE_NAME='contato-certo-sp-v2';
-const urlsToCache=['/','/index.html','/manifest.json','/icon-192.png','/icon-512.png'];
-self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(urlsToCache)));});
-self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>{return r||fetch(e.request).catch(()=>caches.match('/index.html'));}));});
+const CACHE_NAME='contatocerto-sp-v3';const urlsToCache=['/','/index.html','/manifest.json','/icon-192.png','/icon-512.png'];self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(urlsToCache)));self.skipWaiting();});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.map(n=>{if(n!==CACHE_NAME)return caches.delete(n)}))));self.clients.claim();});self.addEventListener('fetch',e=>{e.respondWith(caches.match(e.request).then(r=>{if(r)return r;return fetch(e.request).catch(()=>{if(e.request.destination==='document')return caches.match('/index.html')})}))});
