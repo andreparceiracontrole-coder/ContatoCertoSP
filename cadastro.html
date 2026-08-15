@@ -1,45 +1,30 @@
-<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Cadastro - Foto Salvando 100%</title><script src="https://cdn.tailwindcss.com"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><link rel="icon" href="/icon-192.png"></head><body class="bg-[#F8FAFF]">
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Cadastro Obrigatório - 1 por Telefone - Sem Duplicidade</title><script src="https://cdn.tailwindcss.com"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><link rel="icon" href="/icon-192.png"></head><body class="bg-[#F8FAFF]">
 <header class="bg-white border-b"><div class="max-w-[600px] mx-auto px-4 h-[60px] flex justify-between items-center"><a href="/" class="font-black text-[12px]">CONTATO CERTO SP</a><a href="/login.html" class="h-7 px-3 rounded-full border bg-white text-[10px] font-bold grid place-items-center">Login</a></div></header>
-<div class="bg-yellow-400 text-black text-center py-3"><div class="font-black text-[12px]">🏆 50 VAGAS GRÁTIS - FOTO PERFIL SALVANDO 100% - JÁ GANHA OURO</div></div>
-<main class="max-w-[600px] mx-auto p-4"><div class="bg-white rounded-[16px] border-2 border-yellow-300 p-5 shadow"><h1 class="font-black text-[15px]">Cadastro - Foto Perfil Salvando 100% - Corrigido</h1><form onsubmit="cadastrar(event)" class="mt-4 grid gap-3">
+<div class="bg-yellow-400 text-black text-center py-3"><div class="font-black text-[12px]">🏆 CADASTRO OBRIGATÓRIO - 1 CADASTRO POR TELEFONE - SEM DUPLICIDADE - 50 VAGAS OURO</div></div>
+<main class="max-w-[600px] mx-auto p-4"><div class="bg-white rounded-[16px] border-2 border-yellow-300 p-5 shadow"><h1 class="font-black text-[15px]">Cadastro Obrigatório Separado</h1><p class="text-[10px] text-zinc-600 mt-1">Só é permitido um cadastro por telefone - Não sendo possível cadastrar novamente o mesmo telefone para evitar duplicidade - Após cadastro faça login - Foto salvando 100%</p><form onsubmit="cadastrar(event)" class="mt-4 grid gap-3">
 <input required id="nome" placeholder="Nome completo *" class="h-10 px-3 rounded-xl border-2 bg-slate-50 text-[11px]">
-<div class="grid grid-cols-2 gap-2"><input required id="cidade" placeholder="Cidade *" class="h-10 px-3 rounded-xl border-2 bg-slate-50 text-[11px]"><input required id="tel" placeholder="WhatsApp *" class="h-10 px-3 rounded-xl border-2 bg-slate-50 text-[11px]"></div>
+<div class="grid grid-cols-2 gap-2"><input required id="cidade" placeholder="Cidade *" class="h-10 px-3 rounded-xl border-2 bg-slate-50 text-[11px]"><input required id="tel" placeholder="WhatsApp * (1 por telefone)" class="h-10 px-3 rounded-xl border-2 bg-slate-50 text-[11px]"></div>
 <div class="grid grid-cols-2 gap-2"><input required id="email" type="email" placeholder="Email *" class="h-10 px-3 rounded-xl border-2 bg-slate-50 text-[11px]"><input required id="prof" placeholder="Profissão *" class="h-10 px-3 rounded-xl border-2 bg-slate-50 text-[11px]"></div>
 <div class="grid grid-cols-2 gap-2"><input required id="usuario" placeholder="Usuário *" class="h-10 px-3 rounded-xl border-2 bg-slate-50 text-[11px]"><input required id="senha" type="password" placeholder="Senha *" class="h-10 px-3 rounded-xl border-2 bg-slate-50 text-[11px]"></div>
-
-<div class="border-2 border-blue-200 rounded-xl p-3 bg-blue-50/30">
-<label class="text-[9px] font-black">📸 Foto Perfil - Galeria Celular - Salvando 100%</label>
-<input type="file" id="fotoFile" accept="image/*" class="mt-1 h-9 px-2 rounded-xl border-2 bg-white text-[9px] w-full">
-<div class="mt-2 flex gap-2 items-center"><img id="previewFoto" src="https://i.pravatar.cc/150" class="w-16 h-16 rounded-full border-2 object-cover"><div class="text-[8px] text-zinc-600">Preview foto perfil<br>Será salva no Supabase<br>Base64 permanente</div></div>
-<input id="fotoUrl" placeholder="URL foto - preenchido automaticamente" class="mt-2 h-8 px-3 rounded-xl border bg-white text-[8px] w-full">
-</div>
-
+<div class="border-2 border-blue-100 rounded-xl p-3"><label class="text-[9px] font-black">📸 Foto Perfil - Galeria - Salvando 100%</label><input type="file" id="fotoFile" accept="image/*" class="mt-1 h-9 px-2 rounded-xl border-2 bg-white text-[9px] w-full"><div class="mt-2 flex gap-2 items-center"><img id="previewFoto" src="https://i.pravatar.cc/150" class="w-16 h-16 rounded-full border-2 object-cover"><div class="text-[8px] text-zinc-600">Preview foto perfil</div></div><input id="fotoUrl" placeholder="URL foto" class="mt-2 h-8 px-3 rounded-xl border bg-white text-[8px] w-full"></div>
 <textarea id="bio" placeholder="Descrição do anúncio" class="p-3 rounded-xl border-2 bg-slate-50 min-h-[60px] text-[11px]"></textarea>
-<button type="submit" id="btn" class="h-11 rounded-xl bg-yellow-400 text-black font-black text-[12px]">🏆 Finalizar Cadastro - Foto Salvando 100% - Ganhar Ouro</button>
+<button type="submit" id="btn" class="h-11 rounded-xl bg-yellow-400 text-black font-black text-[12px]">🏆 Finalizar Cadastro Obrigatório - 1 por Telefone</button>
 <div id="msg" class="text-[10px] text-center font-bold"></div>
 </form></div></main>
 <script>
 const U="https://rjrcdikhpvlrvivvqmlb.supabase.co";const K="sb_publishable_1fCXyxX4f7WyO64N9HBEVg_2AZeGTtL";let sb;try{sb=supabase.createClient(U,K)}catch(e){}
-document.getElementById('fotoFile')?.addEventListener('change',function(e){
-let file=e.target.files[0];
-if(file){
-if(file.size>2*1024*1024){alert('Foto muito grande! Máximo 2MB');return;}
-let reader=new FileReader();
-reader.onload=function(ev){
-document.getElementById('previewFoto').src=ev.target.result;
-document.getElementById('fotoUrl').value=ev.target.result;
-};
-reader.readAsDataURL(file);
-}
-});
+document.getElementById('fotoFile')?.addEventListener('change',function(e){let file=e.target.files[0];if(file){let reader=new FileReader();reader.onload=function(ev){document.getElementById('previewFoto').src=ev.target.result;document.getElementById('fotoUrl').value=ev.target.result;};reader.readAsDataURL(file);}});
 async function cadastrar(e){
 e.preventDefault();
-let btn=document.getElementById('btn');let msg=document.getElementById('msg');btn.innerText='Cadastrando foto...';btn.disabled=true;
+let btn=document.getElementById('btn');let msg=document.getElementById('msg');btn.innerText='Verificando telefone...';btn.disabled=true;
+let tel=document.getElementById('tel').value.replace(/\D/g,'');
 let foto=document.getElementById('fotoUrl').value||document.getElementById('previewFoto').src||'https://i.pravatar.cc/150';
-let obj={nome:document.getElementById('nome').value.trim(),cidade:document.getElementById('cidade').value.trim(),telefone:document.getElementById('tel').value.replace(/\D/g,''),whatsapp:'55'+document.getElementById('tel').value.replace(/\D/g,''),email:document.getElementById('email').value.trim(),categoria:document.getElementById('prof').value.trim(),usuario:document.getElementById('usuario').value.toLowerCase().trim(),senha:document.getElementById('senha').value,foto:foto,bio:document.getElementById('bio').value.trim(),plano:'ouro',created_at:new Date().toISOString()};
+// VERIFICA SE TELEFONE JÁ EXISTE - SÓ 1 CADASTRO POR TELEFONE
+try{let check=await sb.from('profissionais').select('telefone').eq('telefone',tel).maybeSingle();if(check.data){msg.innerText='❌ Telefone já cadastrado! Só é permitido um cadastro por telefone para evitar duplicidade!';msg.className='text-[10px] text-center font-bold text-red-600';btn.disabled=false;btn.innerText='Finalizar Cadastro';return;}}catch(err){}
+let obj={nome:document.getElementById('nome').value.trim(),cidade:document.getElementById('cidade').value.trim(),telefone:tel,whatsapp:'55'+tel,email:document.getElementById('email').value.trim(),categoria:document.getElementById('prof').value.trim(),usuario:document.getElementById('usuario').value.toLowerCase().trim(),senha:document.getElementById('senha').value,foto:foto,bio:document.getElementById('bio').value.trim(),plano:'ouro',visualizacoes:0,rating:'5.0',preco:'80',created_at:new Date().toISOString()};
 if(!obj.nome||!obj.usuario||!obj.senha){msg.innerText='Preencha nome, usuário e senha!';btn.disabled=false;return;}
 try{let r=await sb.from('profissionais').insert([obj]);if(r.error){msg.innerText='Erro Supabase: '+r.error.message;btn.disabled=false;return;}}catch(err){msg.innerText='Erro: '+err.message;btn.disabled=false;return;}
 localStorage.setItem('contatocerto_cadastro_feito','1');localStorage.setItem('contatocerto_usuario_logado',obj.usuario);localStorage.setItem('contatocerto_perfil_completo',JSON.stringify(obj));
-msg.innerText='✅ Cadastro feito! Foto perfil salvando 100% - Ganhou Ouro + Selo Dourado!';setTimeout(()=>{location.href='/';},800);
+msg.innerText='✅ Cadastro obrigatório feito! Agora faça login para anunciar! Ganhou Ouro!';setTimeout(()=>{location.href='/login.html';},1000);
 }
 </script></body></html>
