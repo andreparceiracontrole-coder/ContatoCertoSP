@@ -1,25 +1,13 @@
 {
-  "name": "Contato Certo SP",
+  "name": "Contato Certo SP - Encontre o profissional certo no lugar certo",
   "short_name": "Contato Certo SP",
-  "description": "Encontre quem precisa do seu servico. Encontre o profissional certo para voce - 39 profissoes A-Z",
+  "description": "Aqui você encontra o profissional que precisa mais perto de você!",
   "start_url": "/",
-  "scope": "/",
   "display": "standalone",
   "background_color": "#F8FAFF",
-  "theme_color": "#0F172A",
-  "orientation": "any",
+  "theme_color": "#FF7A00",
   "icons": [
-    {
-      "src": "/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    }
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ]
 }
