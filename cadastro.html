@@ -1,27 +1,46 @@
-<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Cadastro - Sem Erro - Já Ganha Ouro</title><script src="https://cdn.tailwindcss.com"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><link rel="icon" href="/icon-192.png"></head><body class="bg-[#F8FAFF]">
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Cadastro - Sem Erro - Já Ganha Ouro + Selo Dourado - 50 Vagas</title><script src="https://cdn.tailwindcss.com"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><link rel="icon" href="/icon-192.png"></head><body class="bg-[#F8FAFF]">
 <header class="bg-white border-b"><div class="max-w-[600px] mx-auto px-4 h-[60px] flex justify-between items-center"><a href="/" class="font-black text-[12px] flex items-center gap-2"><img src="/icon-192.png" class="w-7 h-7 rounded-full border">CONTATO CERTO SP</a><a href="/login.html" class="h-7 px-3 rounded-full border bg-white text-[10px] font-bold grid place-items-center">Login</a></div></header>
-<div class="bg-yellow-400 text-black text-center py-3"><div class="font-black text-[12px]">🏆 50 VAGAS GRÁTIS - CADASTRO JÁ GANHA OURO + SELO DOURADO!</div></div>
-<main class="max-w-[600px] mx-auto p-4"><div class="bg-white rounded-[16px] border-2 border-yellow-300 p-5 shadow"><h1 class="font-black text-[15px]">Cadastro Obrigatório - Sem Erro - Já Ganha Ouro</h1><form onsubmit="cadastrar(event)" class="mt-4 grid gap-3">
+<div class="bg-gradient-to-r from-yellow-400 to-amber-500 text-black text-center py-3"><div class="font-black text-[12px]">🏆 50 VAGAS GRÁTIS - CADASTRO JÁ GANHA OURO + SELO DOURADO!</div></div>
+<main class="max-w-[600px] mx-auto p-4"><div class="bg-white rounded-[16px] border-2 border-yellow-300 p-5 shadow"><h1 class="font-black text-[15px]">Cadastro Obrigatório - Sem Erro Supabase Verificado</h1><p class="text-[10px] text-zinc-600 mt-1">Apenas informações dos planos - Cadastro já ganha Ouro + Selo Dourado automaticamente - Corrigido sem erro CPF</p><form onsubmit="cadastrar(event)" class="mt-4 grid gap-3">
 <input required id="nome" placeholder="Nome completo *" class="h-10 px-3 rounded-xl border-2 bg-slate-50 text-[11px]">
 <div class="grid grid-cols-2 gap-2"><input required id="cidade" placeholder="Cidade *" class="h-10 px-3 rounded-xl border-2 bg-slate-50 text-[11px]"><input required id="tel" placeholder="WhatsApp *" class="h-10 px-3 rounded-xl border-2 bg-slate-50 text-[11px]"></div>
 <div class="grid grid-cols-2 gap-2"><input required id="email" type="email" placeholder="Email *" class="h-10 px-3 rounded-xl border-2 bg-slate-50 text-[11px]"><input required id="prof" placeholder="Profissão *" class="h-10 px-3 rounded-xl border-2 bg-slate-50 text-[11px]"></div>
 <div class="grid grid-cols-2 gap-2"><input required id="usuario" placeholder="Usuário *" class="h-10 px-3 rounded-xl border-2 bg-slate-50 text-[11px]"><input required id="senha" type="password" placeholder="Senha *" class="h-10 px-3 rounded-xl border-2 bg-slate-50 text-[11px]"></div>
 <input type="file" id="foto" accept="image/*" class="h-9 px-3 rounded-xl border-2 bg-slate-50 text-[10px]">
-<textarea id="bio" placeholder="Descrição do anúncio" class="p-3 rounded-xl border-2 bg-slate-50 min-h-[60px] text-[11px]"></textarea>
-<button type="submit" id="btn" class="h-11 rounded-xl bg-yellow-400 text-black font-black text-[12px]">🏆 Finalizar Cadastro - Já Ganhar Ouro + Selo Dourado</button>
+<textarea id="bio" placeholder="Descrição do anúncio - Ex: Pinturas em geral" class="p-3 rounded-xl border-2 bg-slate-50 min-h-[60px] text-[11px]"></textarea>
+<button type="submit" id="btn" class="h-11 rounded-xl bg-gradient-to-r from-yellow-400 to-amber-500 text-black font-black text-[12px]">🏆 Finalizar Cadastro - Já Ganhar Ouro + Selo Dourado - Sem Erro</button>
 <div id="msg" class="text-[10px] text-center"></div>
+<p class="text-[8px] text-zinc-500 text-center">Supabase verificado - Apenas campos existentes na tabela - Sem CPF - Já ganha Ouro + Selo Dourado</p>
 </form></div></main>
 <script>
 const U="https://rjrcdikhpvlrvivvqmlb.supabase.co";const K="sb_publishable_1fCXyxX4f7WyO64N9HBEVg_2AZeGTtL";let sb;try{sb=supabase.createClient(U,K)}catch(e){}
 async function cadastrar(e){
 e.preventDefault();
 let btn=document.getElementById('btn');let msg=document.getElementById('msg');
-btn.innerText='Cadastrando...';btn.disabled=true;
-let obj={nome:document.getElementById('nome').value.trim(),cidade:document.getElementById('cidade').value.trim(),telefone:document.getElementById('tel').value.replace(/\D/g,''),whatsapp:'55'+document.getElementById('tel').value.replace(/\D/g,''),email:document.getElementById('email').value.trim(),categoria:document.getElementById('prof').value.trim(),usuario:document.getElementById('usuario').value.toLowerCase().trim(),senha:document.getElementById('senha').value,foto:document.getElementById('foto').files[0]?URL.createObjectURL(document.getElementById('foto').files[0]):'https://i.pravatar.cc/150',bio:document.getElementById('bio').value.trim(),plano:'ouro',verificado:true,preco:0,created_at:new Date().toISOString()};
-if(!obj.nome||!obj.usuario||!obj.senha){msg.innerText='Preencha nome, usuário e senha!';msg.className='text-red-600';btn.disabled=false;btn.innerText='🏆 Finalizar';return;}
-try{let r=await sb.from('profissionais').insert([obj]);if(r.error){msg.innerText='Erro: '+r.error.message;msg.className='text-red-600';btn.disabled=false;return;}}catch(err){msg.innerText='Erro: '+err.message;btn.disabled=false;return;}
+btn.innerText='Cadastrando...';btn.disabled=true;msg.innerText='';
+// APENAS CAMPOS QUE EXISTEM NA TABELA SUPABASE - SEM CPF - CORRIGIDO SEM ERRO
+let obj={
+nome:document.getElementById('nome').value.trim(),
+cidade:document.getElementById('cidade').value.trim(),
+telefone:document.getElementById('tel').value.replace(/\D/g,''),
+whatsapp:'55'+document.getElementById('tel').value.replace(/\D/g,''),
+email:document.getElementById('email').value.trim(),
+categoria:document.getElementById('prof').value.trim(),
+usuario:document.getElementById('usuario').value.toLowerCase().trim(),
+senha:document.getElementById('senha').value,
+foto:document.getElementById('foto').files[0]?URL.createObjectURL(document.getElementById('foto').files[0]):'https://i.pravatar.cc/150',
+bio:document.getElementById('bio').value.trim(),
+plano:'ouro',
+verificado:true,
+created_at:new Date().toISOString()
+};
+if(!obj.nome||!obj.cidade||!obj.usuario||!obj.senha){msg.innerText='Preencha nome, cidade, usuário e senha!';msg.className='text-[10px] text-center text-red-600';btn.disabled=false;btn.innerText='🏆 Finalizar Cadastro';return;}
+try{
+let r=await sb.from('profissionais').insert([obj]);
+if(r.error){msg.innerText='Erro Supabase: '+r.error.message;msg.className='text-[10px] text-center text-red-600';console.log('Supabase erro',r.error);btn.disabled=false;btn.innerText='🏆 Tentar novamente';return;}
+}catch(err){msg.innerText='Erro: '+err.message;msg.className='text-[10px] text-center text-red-600';btn.disabled=false;return;}
 localStorage.setItem('contatocerto_cadastro_feito','1');localStorage.setItem('contatocerto_usuario_logado',obj.usuario);localStorage.setItem('contatocerto_senha_logada',obj.senha);localStorage.setItem('contatocerto_perfil_completo',JSON.stringify(obj));
-msg.innerText='✅ Cadastro feito! Ganhou Ouro + Selo Dourado!';msg.className='text-green-600';
-setTimeout(()=>{location.href='/';},800);
+msg.innerText='✅ Cadastro feito! Você ganhou Plano Ouro + Selo Dourado grátis! - Supabase verificado';msg.className='text-[10px] text-center text-green-600 font-bold';
+setTimeout(()=>{location.href='/';},1000);
 }
 </script></body></html>
