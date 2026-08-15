@@ -1,64 +1,19 @@
-<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><title>ADM - Contato Certo SP</title><script src="https://cdn.tailwindcss.com"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><link rel="icon" href="/icon-192.png"><style>html,body{overflow-x:hidden}</style></head><body class="bg-[#F8FAFF] overflow-x-hidden">
-<header class="bg-white border-b p-3 flex justify-between items-center"><div class="flex items-center gap-2"><img src="/icon-192.png" class="w-8 h-8 rounded-full border-2"><b class="text-[11px]">CONTATO CERTO SP - ADM - AndreSousa84 / 20112024</b></div><button onclick="window.location.href='/index.html'" class="px-3 py-1 rounded-full border bg-white text-[10px] font-bold">Início</button></header>
-<div id="loginBox" class="max-w-[380px] mx-auto mt-6 bg-white rounded-[14px] p-5 border-2 border-red-200 shadow-xl"><div class="text-center"><div class="w-12 h-12 bg-red-100 rounded-full grid place-items-center text-[20px] mx-auto">🔒</div><h2 class="mt-2 font-black text-[13px]">ADM - Login</h2></div><form onsubmit="event.preventDefault();if(document.getElementById('admU').value==='AndreSousa84' && document.getElementById('admP').value==='20112024'){document.getElementById('loginBox').classList.add('hidden');document.getElementById('panelBox').classList.remove('hidden');carregarUsuarios()}else{alert('Erro login ADM - Use AndreSousa84 / 20112024')}" class="mt-4 grid gap-2"><input id="admU" placeholder="Usuário ADM - AndreSousa84" class="h-9 px-3 rounded-xl border-2 bg-slate-50 text-[11px]"><input id="admP" type="password" placeholder="Senha ADM - 20112024" class="h-9 px-3 rounded-xl border-2 bg-slate-50 text-[11px]"><button type="submit" class="h-9 rounded-xl bg-red-600 text-white font-black text-[11px]">Entrar ADM</button></form></div>
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ADM - Contato Certo SP</title><script src="https://cdn.tailwindcss.com"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><link rel="icon" href="/icon-192.png"><style>html,body{overflow-x:hidden}</style></head><body class="bg-[#F8FAFF]">
+<header class="bg-white border-b p-3 flex justify-between items-center"><div class="flex items-center gap-2"><img src="/icon-192.png" class="w-8 h-8 rounded-full border-2"><b class="text-[11px]">ADM - AndreSousa84 / 20112024</b></div><button onclick="location.href='/index.html'" class="px-3 py-1 rounded-full border bg-white text-[10px] font-bold">Início</button></header>
+<div id="loginBox" class="max-w-[380px] mx-auto mt-6 bg-white rounded-[14px] p-5 border-2 border-red-200 shadow-xl"><div class="text-center"><div class="w-12 h-12 bg-red-100 rounded-full grid place-items-center text-[20px] mx-auto">🔒</div><h2 class="mt-2 font-black text-[13px]">ADM Login</h2></div><form onsubmit="event.preventDefault();if(admU.value==='AndreSousa84'&&admP.value==='20112024'){loginBox.classList.add('hidden');panelBox.classList.remove('hidden');carregarUsuarios()}else{alert('Use AndreSousa84 / 20112024')}" class="mt-4 grid gap-2"><input id="admU" placeholder="AndreSousa84" class="h-9 px-3 rounded-xl border-2 bg-slate-50 text-[11px]"><input id="admP" type="password" placeholder="20112024" class="h-9 px-3 rounded-xl border-2 bg-slate-50 text-[11px]"><button class="h-9 rounded-xl bg-red-600 text-white font-black text-[11px]">Entrar ADM</button></form></div>
 <div id="panelBox" class="hidden max-w-[1100px] mx-auto p-3">
-<div class="bg-white rounded-[14px] border-2 border-red-200 p-4 shadow"><div class="flex justify-between items-center"><h2 class="font-black text-[13px]">ADM - Movimentações + Excluir/Bloquear Usuários + Notificações WhatsApp</h2><button onclick="window.location.href='/index.html'" class="h-7 px-3 rounded-full bg-slate-900 text-white text-[9px] font-bold">Ver Site</button></div>
-<div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-2"><div class="bg-zinc-800 text-white rounded-[12px] p-3 text-center"><div class="text-[8px]">BASIC R$0</div><div class="text-[10px] font-black">Selo B cinza - 3x topo 30d</div></div><div class="bg-zinc-400 text-white rounded-[12px] p-3 text-center"><div class="text-[8px]">PRATA R$19,90</div><div class="text-[10px] font-black">Selo P prata - 10x topo 30d</div></div><div class="bg-yellow-400 text-black rounded-[12px] p-3 text-center border-2 border-yellow-600"><div class="text-[8px] font-bold">OURO R$39,90 - TOPO SEMPRE</div><div class="text-[10px] font-black">Selo O dourado - Topo sempre 30d</div></div><div class="bg-blue-600 text-white rounded-[12px] p-3 text-center"><div class="text-[8px]">AVULSO R$8,99 - 5h</div><div class="text-[10px] font-black">Lista clientes 5h - 1 vez por dia</div></div></div>
+<div class="bg-white rounded-[14px] border-2 border-red-200 p-4 shadow"><h2 class="font-black text-[13px]">ADM - Excluir / Bloquear + Notificações WhatsApp (18)99148-8302</h2></div>
+<div class="mt-4 bg-white rounded-[14px] border-2 p-4 shadow"><h3 class="font-black text-[12px]">👥 Usuários Cadastrados</h3><div class="mt-3 flex gap-2"><input id="buscaUser" placeholder="Buscar por nome, cidade, profissão..." class="h-8 px-3 rounded-xl border-2 bg-slate-50 text-[10px] flex-1" oninput="filtrarUsuarios()"><button onclick="carregarUsuarios()" class="h-8 px-3 rounded-full bg-slate-900 text-white text-[9px] font-bold">Atualizar</button></div><div id="listaUsuarios" class="mt-4 grid gap-2">Carregando...</div></div>
+<div class="mt-4 bg-green-50 border-2 border-green-200 rounded-[14px] p-4"><h3 class="font-black text-[11px]">📲 Notificação WhatsApp ADM - Funcionando</h3><div class="text-[9px] mt-2">Quando alguém se cadastra, o site envia automaticamente mensagem no WhatsApp (18)99148-8302</div></div>
 </div>
-
-<div class="mt-4 bg-white rounded-[14px] border-2 p-4 shadow">
-<h3 class="font-black text-[12px]">👥 Usuários Cadastrados - Excluir / Bloquear / Desbloquear</h3>
-<p class="text-[9px] text-zinc-500 mt-1">Lista em tempo real do Supabase - Clique em Excluir ou Bloquear</p>
-<div class="mt-3 flex gap-2"><input id="buscaUser" placeholder="Buscar usuário por nome, cidade, profissão..." class="h-8 px-3 rounded-xl border-2 bg-slate-50 text-[10px] flex-1" oninput="filtrarUsuarios()"><button onclick="carregarUsuarios()" class="h-8 px-3 rounded-full bg-slate-900 text-white text-[9px] font-bold">Atualizar</button></div>
-<div id="listaUsuarios" class="mt-4 grid gap-2">Carregando usuários...</div>
-</div>
-
-<div class="mt-4 bg-green-50 border-2 border-green-200 rounded-[14px] p-4"><h3 class="font-black text-[11px]">📲 Notificação WhatsApp ADM - Funcionando</h3><div class="text-[9px] mt-2">Quando alguém se cadastra, o site envia automaticamente mensagem no WhatsApp do ADM (18)99148-8302: "NOVO CADASTRO - Nome, profissão, cidade, telefone, usuário". Configurado no cadastro.html</div></div>
-
-</div>
-<div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-3 py-1 rounded-full text-[10px] hidden z-50"></div>
+<div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-3 py-1 rounded-full text-[10px] hidden"></div>
 <script>
 const U="https://rjrcdikhpvlrvivvqmlb.supabase.co";const K="sb_publishable_1fCXyxX4f7WyO64N9HBEVg_2AZeGTtL";let sb;try{sb=supabase.createClient(U,K)}catch(e){}
 let TODOS=[];
 function toast(m){let t=document.getElementById('toast');t.innerText=m;t.classList.remove('hidden');setTimeout(()=>t.classList.add('hidden'),3000)}
-async function carregarUsuarios(){
-try{
-let r=await sb.from('profissionais').select('*').order('created_at',{ascending:false}).limit(100);
-TODOS=r.data||[];
-renderUsuarios(TODOS);
-}catch(e){document.getElementById('listaUsuarios').innerHTML='Erro: '+e.message}
-}
-function renderUsuarios(lista){
-if(lista.length===0){document.getElementById('listaUsuarios').innerHTML='<div class="text-[11px] text-center py-6">Nenhum usuário encontrado</div>';return;}
-document.getElementById('listaUsuarios').innerHTML=lista.map(u=>{
-let bloqueado = u.status==='bloqueado';
-return `<div class="border-2 ${bloqueado?'border-red-200 bg-red-50':'border-zinc-100 bg-white'} rounded-[12px] p-3 flex justify-between items-center">
-<div class="flex gap-3 items-center"><img src="${u.foto||'https://i.pravatar.cc/150'}" class="w-10 h-10 rounded-full border"><div><div class="font-black text-[11px]">${u.nome} ${bloqueado?'<span class="bg-red-600 text-white text-[7px] px-1.5 py-0.5 rounded-full">BLOQUEADO</span>':''}</div><div class="text-[9px] text-zinc-600">${u.profissao||u.categoria} - ${u.cidade} - ${u.telefone} - ${u.usuario} - ${u.plano}</div><div class="text-[8px] text-zinc-500">${u.email} - ${new Date(u.created_at).toLocaleString('pt-BR')}</div></div></div>
-<div class="flex gap-1"><button onclick="toggleBloquear('${u.id}','${u.status}')" class="h-7 px-2 rounded-full ${bloqueado?'bg-green-600':'bg-amber-500'} text-white text-[8px] font-bold">${bloqueado?'Desbloquear':'Bloquear'}</button><button onclick="excluirUsuario('${u.id}','${u.nome}')" class="h-7 px-2 rounded-full bg-red-600 text-white text-[8px] font-bold">Excluir</button><a href="https://wa.me/55${(u.telefone||'').replace(/\D/g,'')}?text=Olá ${u.nome}" target="_blank" class="h-7 px-2 rounded-full bg-green-500 text-white text-[8px] font-bold grid place-items-center">Whats</a></div>
-</div>`;
-}).join('');
-}
-function filtrarUsuarios(){
-let q=document.getElementById('buscaUser').value.toLowerCase();
-let f=TODOS.filter(u=> (u.nome||'').toLowerCase().includes(q) || (u.cidade||'').toLowerCase().includes(q) || (u.profissao||'').toLowerCase().includes(q) || (u.usuario||'').toLowerCase().includes(q) );
-renderUsuarios(f);
-}
-async function excluirUsuario(id,nome){
-if(!confirm('Excluir usuário '+nome+'? Essa ação não pode ser desfeita!')) return;
-try{
-let r=await sb.from('profissionais').delete().eq('id',id);
-if(r.error){toast('Erro: '+r.error.message);return;}
-toast('Usuário '+nome+' excluído!');
-carregarUsuarios();
-}catch(e){toast('Erro: '+e.message)}
-}
-async function toggleBloquear(id,statusAtual){
-let novo = statusAtual==='bloqueado'?'aprovado':'bloqueado';
-try{
-let r=await sb.from('profissionais').update({status:novo}).eq('id',id);
-if(r.error){toast('Erro: '+r.error.message);return;}
-toast(novo==='bloqueado'?'Usuário bloqueado!':'Usuário desbloqueado!');
-carregarUsuarios();
-}catch(e){toast('Erro: '+e.message)}
-}
+async function carregarUsuarios(){try{let r=await sb.from('profissionais').select('*').order('created_at',{ascending:false}).limit(100);TODOS=r.data||[];renderUsuarios(TODOS);}catch(e){listaUsuarios.innerHTML='Erro: '+e.message}}
+function renderUsuarios(lista){if(lista.length===0){listaUsuarios.innerHTML='<div class="text-[11px] text-center py-6">Nenhum usuário</div>';return;}listaUsuarios.innerHTML=lista.map(u=>{let bloqueado=u.status==='bloqueado';return `<div class="border-2 ${bloqueado?'border-red-200 bg-red-50':'border-zinc-100 bg-white'} rounded-[12px] p-3 flex justify-between items-center"><div class="flex gap-3 items-center"><img src="${u.foto||'https://i.pravatar.cc/150'}" class="w-10 h-10 rounded-full border"><div><div class="font-black text-[11px]">${u.nome} ${bloqueado?'<span class="bg-red-600 text-white text-[7px] px-1.5 py-0.5 rounded-full">BLOQUEADO</span>':''}</div><div class="text-[9px] text-zinc-600">${u.profissao||u.categoria} - ${u.cidade} - ${u.telefone} - ${u.usuario} - ${u.plano}</div><div class="text-[8px] text-zinc-500">${u.email}</div></div></div><div class="flex gap-1"><button onclick="toggleBloquear('${u.id}','${u.status}')" class="h-7 px-2 rounded-full ${bloqueado?'bg-green-600':'bg-amber-500'} text-white text-[8px] font-bold">${bloqueado?'Desbloquear':'Bloquear'}</button><button onclick="excluirUsuario('${u.id}','${u.nome}')" class="h-7 px-2 rounded-full bg-red-600 text-white text-[8px] font-bold">Excluir</button></div></div>`;}).join('');}
+function filtrarUsuarios(){let q=buscaUser.value.toLowerCase();let f=TODOS.filter(u=> (u.nome||'').toLowerCase().includes(q) || (u.cidade||'').toLowerCase().includes(q) || (u.profissao||'').toLowerCase().includes(q) );renderUsuarios(f);}
+async function excluirUsuario(id,nome){if(!confirm('Excluir '+nome+'?')) return;let r=await sb.from('profissionais').delete().eq('id',id);if(r.error){toast('Erro: '+r.error.message);return;}toast('Excluído!');carregarUsuarios();}
+async function toggleBloquear(id,statusAtual){let novo=statusAtual==='bloqueado'?'aprovado':'bloqueado';let r=await sb.from('profissionais').update({status:novo}).eq('id',id);if(r.error){toast('Erro: '+r.error.message);return;}toast(novo==='bloqueado'?'Bloqueado!':'Desbloqueado!');carregarUsuarios();}
 </script></body></html>
