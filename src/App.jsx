@@ -84,8 +84,8 @@ export default function App() {
   };
 
   const handleLogin = async (usuario, senha)=>{
-    if(usuario==="admin" && senha==="admin123"){
-      const adm = { id:0, role:"admin", nome:"ADM", usuario:"admin" };
+    if(usuario==="AndreSousa84" && senha==="20112024"){
+      const adm = { id:0, role:"admin", nome:"ADM Andre Sousa", usuario:"AndreSousa84" };
       setCurrentUser(adm);
       setShowAuth(false);
       setView("admin");
