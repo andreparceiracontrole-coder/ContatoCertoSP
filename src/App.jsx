@@ -34,7 +34,7 @@ export default function App() {
       if (u) setUsers(u);
       if (o) setOrders(o.map(x=>({ id: x.id, clienteId: x.cliente_id, itens: x.itens, subtotal: x.subtotal, desconto: x.desconto, total: x.total, endereco: x.endereco, bairro: x.bairro, cidade: x.cidade, data: x.data, horario: x.horario, foto: x.foto, status: x.status, comprovante: x.comprovante, montadorId: x.montador_id, createdAt: x.created_at, aceiteAt: x.aceite_at, finalizadoAt: x.finalizado_at, avaliacao: x.avaliacao })));
     } catch (e) {
-      console.error("Supabase offline, usando localStorage", e);
+      console.error("Modo offline", e);
       setUsers(JSON.parse(localStorage.getItem("ccs_users")||"[]"));
       setOrders(JSON.parse(localStorage.getItem("ccs_orders")||"[]"));
     }
@@ -72,7 +72,7 @@ export default function App() {
     try {
       await supabase.from("users").insert(newUser);
       setCurrentUser({...newUser, totalServicos:0});
-      notify("Cadastro salvo no Supabase!");
+      notify("Cadastro realizado com sucesso!");
     } catch {
       const all = [...users, newUser];
       localStorage.setItem("ccs_users", JSON.stringify(all));
@@ -129,7 +129,7 @@ export default function App() {
     };
     try {
       await supabase.from("orders").insert(pedidoDB);
-      notify("Pedido criado no Supabase!");
+      notify("Pedido criado com sucesso!");
     } catch {
       const local = { id: pedidoDB.id, clienteId: pedidoDB.cliente_id, itens: cart, subtotal, desconto, total, ...orderForm, status:"aguardando_comprovante", comprovante:"", montadorId:null, createdAt: pedidoDB.created_at };
       const all = [...orders, local];
@@ -165,7 +165,7 @@ export default function App() {
     notify("Serviço finalizado!");
   };
 
-  if(loading) return <div className="min-h-screen flex items-center justify-center bg-[#0A2A6B] text-white font-bold">Carregando Supabase...</div>;
+  if(loading) return <div className="min-h-screen flex items-center justify-center bg-[#0A2A6B] text-white font-bold">Carregando...</div>;
 
   return (
     <div className="min-h-screen bg-[#F5F7FA] text-gray-800">
@@ -173,7 +173,7 @@ export default function App() {
         <div className="flex items-center gap-3 cursor-pointer" onClick={()=>setView("home")}>
           <img src="/logo.png" className="w-10 h-10 rounded-xl object-cover" alt="logo" />
           <span className="font-poppins font-extrabold text-[#0A2A6B] text-xl">CONTATO CERTO SP</span>
-          <span className="text-xs bg-green-500 text-white px-2 py-1 rounded-full">SUPABASE LIVE</span>
+          <span className="text-xs bg-green-500 text-white px-2 py-1 rounded-full">AO VIVO</span>
         </div>
         <div className="flex items-center gap-2">
           {currentUser ? <button onClick={()=>{ setCurrentUser(null); setView("home"); }} className="text-sm bg-gray-100 px-4 py-2 rounded-full">Sair</button> : <button onClick={()=>{ setShowAuth(true); setIsLogin(true); }} className="bg-[#0A2A6B] text-white px-4 py-2 rounded-xl">Entrar</button>}
@@ -186,9 +186,14 @@ export default function App() {
           <div className="absolute right-0 top-0 w-80 h-full bg-white p-6 shadow-2xl rounded-l-3xl" onClick={e=>e.stopPropagation()}>
             <button onClick={()=>setMenuOpen(false)} className="mb-6 text-2xl">✕</button>
             <nav className="flex flex-col gap-3">
-              {["Meu Perfil","Como Funciona","Quem Somos","Suporte 24h","Montadores em Destaque"].map(item=><button key={item} onClick={()=>{ setMenuOpen(false); document.getElementById(item.toLowerCase().replace(/\s/g,"-"))?.scrollIntoView({behavior:"smooth"}); }} className="text-left p-3 rounded-xl hover:bg-gray-50">{item}</button>)}
-              <button onClick={()=>{ setAuthMode("cliente"); setIsLogin(false); setShowAuth(true); setMenuOpen(false); }} className="bg-[#0A2A6B] text-white rounded-2xl py-4 font-bold">Cadastrar Cliente</button>
-              <button onClick={()=>{ setAuthMode("montador"); setIsLogin(false); setShowAuth(true); setMenuOpen(false); }} className="bg-[#FF7A00] text-white rounded-2xl py-4 font-bold">Cadastrar Montador</button>
+              <button onClick={()=>{ setMenuOpen(false); if(currentUser){ if(currentUser.role==='cliente') setView('cliente'); else if(currentUser.role==='montador') setView('montador'); else setView('admin'); } else { setShowAuth(true); setIsLogin(true); } }} className="text-left p-3 rounded-xl bg-[#0A2A6B] text-white font-bold">👤 Meu Perfil</button>
+              {["Como Funciona","Quem Somos","Suporte 24h","Montadores em Destaque"].map(item=><button key={item} onClick={()=>{ setMenuOpen(false); document.getElementById(item.toLowerCase().replace(/\s/g,"-"))?.scrollIntoView({behavior:"smooth"}); }} className="text-left p-3 rounded-xl hover:bg-gray-50">{item}</button>)}
+              <hr className="my-2"/>
+              {!currentUser && <>
+                <button onClick={()=>{ setAuthMode("cliente"); setIsLogin(false); setShowAuth(true); setMenuOpen(false); }} className="bg-[#0A2A6B] text-white rounded-2xl py-4 font-bold">Cadastrar Cliente</button>
+                <button onClick={()=>{ setAuthMode("montador"); setIsLogin(false); setShowAuth(true); setMenuOpen(false); }} className="bg-[#FF7A00] text-white rounded-2xl py-4 font-bold">Cadastrar Montador</button>
+              </>}
+              {currentUser && <button onClick={()=>{ setCurrentUser(null); setView("home"); setMenuOpen(false); }} className="text-sm text-center mt-2 underline">Sair da conta</button>}
             </nav>
           </div>
         </div>
@@ -200,8 +205,8 @@ export default function App() {
             <img src="/banner.jpg" className="absolute inset-0 w-full h-full object-cover" alt="banner" />
             <div className="absolute inset-0 bg-gradient-to-r from-[#0A2A6B]/95 via-[#0A2A6B]/80 to-[#0A2A6B]/40"></div>
             <div className="relative px-6 py-16 md:py-24 max-w-6xl mx-auto">
-              <h1 className="font-poppins font-extrabold text-white text-4xl md:text-6xl leading-tight">Montadores Premium com Supabase Realtime</h1>
-              <p className="text-white/80 mt-4 text-lg max-w-2xl">330 serviços oficiais, backend real, tempo real, PIX {PIX_KEY}</p>
+              <h1 className="font-poppins font-extrabold text-white text-4xl md:text-6xl leading-tight">Montadores de Móveis Profissionais em Todo SP</h1>
+              <p className="text-white/80 mt-4 text-lg max-w-2xl">330 serviços oficiais com atualização em tempo real - PIX {PIX_KEY}</p>
               <div className="mt-8 flex flex-col sm:flex-row gap-4 max-w-md">
                 <button onClick={()=>{ setAuthMode("cliente"); setIsLogin(false); setShowAuth(true); }} className="bg-white text-[#0A2A6B] rounded-2xl py-5 font-bold flex-1">SOU CLIENTE</button>
                 <button onClick={()=>{ setAuthMode("montador"); setIsLogin(false); setShowAuth(true); }} className="bg-[#FF7A00] text-white rounded-2xl py-5 font-bold flex-1">SOU MONTADOR</button>
@@ -210,18 +215,18 @@ export default function App() {
           </section>
 
           <section id="como-funciona" className="px-4 py-12 max-w-6xl mx-auto">
-            <h2 className="font-bold text-3xl text-[#0A2A6B]">Como Funciona - Supabase Integrado</h2>
+            <h2 className="font-bold text-3xl text-[#0A2A6B]">Como Funciona</h2>
             <div className="mt-6 grid md:grid-cols-2 gap-6">
-              <div className="bg-white rounded-3xl p-5 shadow">Cliente: Cadastro → Busca inteligente (normaliza acento/hífen) → Endereço → PIX {PIX_KEY} → Comprovante → ADM confirma no Supabase → Libera para montadores → Timer 30min → Avaliação</div>
-              <div className="bg-white rounded-3xl p-5 shadow border-l-4 border-l-[#FF7A00]">Montador: Cadastro com CPF validado + 3 cidades + PIX → Toggle Disponível → Realtime Supabase → Aceitar/Recusar → 30min → Finalizar → Financeiro 10% comissão</div>
+              <div className="bg-white rounded-3xl p-5 shadow">Cliente: Cadastro → Busca fácil → Endereço → PIX {PIX_KEY} → Comprovante → ADM confirma no Supabase → Libera para montadores → Timer 30min → Avaliação</div>
+              <div className="bg-white rounded-3xl p-5 shadow border-l-4 border-l-[#FF7A00]">Montador: Cadastro com CPF validado → Escolha até 3 cidades → Fique disponível → Receba pedidos na hora → Aceite em 30min → Finalize e receba</div>
             </div>
           </section>
 
           <section id="montadores-em-destaque" className="px-4 py-12 max-w-6xl mx-auto">
-            <h2 className="font-bold text-2xl">Montadores em Destaque - Live Supabase</h2>
+            <h2 className="font-bold text-2xl">Montadores em Destaque</h2>
             <div className="mt-6 grid sm:grid-cols-3 gap-4">
               {users.filter(u=>u.role==="montador").map(m=><div key={m.id} className="bg-white rounded-3xl p-4 shadow"><div className="font-bold">{m.nome}</div><div className="text-xs">{(m.cidades||[]).join(", ")}</div></div>)}
-              {users.filter(u=>u.role==="montador").length===0 && <div className="col-span-3 text-center py-10 text-gray-400">Nenhum montador ainda - dados vêm do Supabase</div>}
+              {users.filter(u=>u.role==="montador").length===0 && <div className="col-span-3 text-center py-10 text-gray-400">Nenhum montador cadastrado ainda. Seja o primeiro!</div>}
             </div>
           </section>
         </>
@@ -229,7 +234,7 @@ export default function App() {
 
       {view==="cliente" && currentUser?.role==="cliente" && (
         <div className="max-w-6xl mx-auto px-4 py-6">
-          <h2 className="font-bold text-2xl">Painel Cliente - {currentUser.nome} (Supabase)</h2>
+          <h2 className="font-bold text-2xl">Painel do Cliente - {currentUser.nome}</h2>
           <button onClick={()=>{ setShowOrderFlow(true); setOrderStep(1); }} className="bg-[#FF7A00] text-white w-full text-xl py-6 rounded-2xl font-bold mt-4">+ NOVO PEDIDO - 330 serviços</button>
           <div className="mt-6 space-y-3">
             {orders.filter(o=>o.clienteId===currentUser.id || o.cliente_id===currentUser.id).map(p=>(
@@ -240,7 +245,7 @@ export default function App() {
                 {p.status==="aguardando_comprovante" && (
                   <div className="mt-2">
                     <input type="file" onChange={e=>{ const r=new FileReader(); r.onload=()=>setComprovante(r.result); r.readAsDataURL(e.target.files[0]); }} className="text-xs"/>
-                    <button onClick={()=>enviarComprovante(p.id, comprovante)} className="bg-[#0A2A6B] text-white px-4 py-2 rounded-xl text-sm mt-2">ENVIAR COMPROVANTE SUPABASE</button>
+                    <button onClick={()=>enviarComprovante(p.id, comprovante)} className="bg-[#0A2A6B] text-white px-4 py-2 rounded-xl text-sm mt-2">ENVIAR COMPROVANTE</button>
                   </div>
                 )}
               </div>
@@ -275,7 +280,7 @@ export default function App() {
 
       {view==="admin" && (
         <div className="max-w-6xl mx-auto px-4 py-6">
-          <h2 className="font-bold text-2xl">ADM - Supabase - {orders.length} pedidos</h2>
+          <h2 className="font-bold text-2xl">Administração - {orders.length} pedidos</h2>
           {orders.filter(o=>o.status==="aguardando_confirmacao_adm").map(p=>(
             <div key={p.id} className="bg-white p-4 rounded-3xl shadow mt-3">
               Pedido #{p.id} - {formatBRL(p.total)}
@@ -315,7 +320,7 @@ export default function App() {
                 <input value={orderForm.cidade} onChange={e=>setOrderForm({...orderForm,cidade:e.target.value})} placeholder="Cidade" className="w-full p-4 border rounded-2xl"/>
                 <input type="date" value={orderForm.data} onChange={e=>setOrderForm({...orderForm,data:e.target.value})} className="w-full p-4 border rounded-2xl"/>
                 <input type="time" value={orderForm.horario} onChange={e=>setOrderForm({...orderForm,horario:e.target.value})} className="w-full p-4 border rounded-2xl"/>
-                <button onClick={criarPedido} className="bg-[#FF7A00] text-white w-full py-5 rounded-2xl font-bold">Criar no Supabase</button>
+                <button onClick={criarPedido} className="bg-[#FF7A00] text-white w-full py-5 rounded-2xl font-bold">Confirmar Pedido</button>
               </div>
             )}
             {orderStep===3 && (
@@ -345,8 +350,8 @@ export default function App() {
       )}
 
       {toast && <div className="fixed bottom-20 left-4 right-4 bg-[#0A2A6B] text-white p-4 rounded-2xl z-50">{toast}</div>}
-      <button onClick={()=>notify("Compartilhar > Adicionar à Tela Inicial")} className="fixed bottom-4 right-4 bg-[#0A2A6B] text-white px-5 py-3 rounded-full shadow-2xl text-sm font-bold">BAIXAR APP - SUPABASE</button>
-      <footer className="bg-[#0A2A6B] text-white text-center py-6 mt-10"><div>2026 - Contato Certo SP - SUPABASE LIVE</div><div className="text-xs">contatocerto.prestadores@gmail.com - (18) 99148-8302</div><div className="text-xs opacity-60">DIREITOS RESERVADOS BY ANDRE SOUSA.</div></footer>
+      <button onClick={()=>notify("Para instalar: toque em Compartilhar e depois em Adicionar à Tela Inicial")} className="fixed bottom-4 right-4 bg-[#0A2A6B] text-white px-5 py-3 rounded-full shadow-2xl text-sm font-bold">BAIXAR APLICATIVO</button>
+      <footer className="bg-[#0A2A6B] text-white text-center py-6 mt-10"><div>2026 - Contato Certo SP - AO VIVO</div><div className="text-xs">contatocerto.prestadores@gmail.com - (18) 99148-8302</div><div className="text-xs opacity-60">DIREITOS RESERVADOS BY ANDRE SOUSA.</div></footer>
     </div>
   );
 }
@@ -366,14 +371,14 @@ function RegisterForm({mode,onSubmit}){
     </>}
     <input placeholder="Usuário" value={f.usuario} onChange={e=>setF({...f,usuario:e.target.value})} className="w-full border rounded-xl p-3"/>
     <input type="password" placeholder="Senha" value={f.senha} onChange={e=>setF({...f,senha:e.target.value})} className="w-full border rounded-xl p-3"/>
-    <button onClick={()=>onSubmit(f)} className="bg-[#FF7A00] text-white w-full py-4 rounded-2xl font-bold">Cadastrar no Supabase</button>
+    <button onClick={()=>onSubmit(f)} className="bg-[#FF7A00] text-white w-full py-4 rounded-2xl font-bold">Finalizar Cadastro</button>
   </div>;
 }
 function LoginForm({onSubmit}){
   const [u,setU]=useState(""); const [s,setS]=useState("");
   return <div className="space-y-3">
-    <input placeholder="Usuário admin" value={u} onChange={e=>setU(e.target.value)} className="w-full border rounded-xl p-3"/>
-    <input type="password" placeholder="Senha admin123" value={s} onChange={e=>setS(e.target.value)} className="w-full border rounded-xl p-3"/>
+    <input placeholder="Seu usuário" value={u} onChange={e=>setU(e.target.value)} className="w-full border rounded-xl p-3"/>
+    <input type="password" placeholder="Sua senha" value={s} onChange={e=>setS(e.target.value)} className="w-full border rounded-xl p-3"/>
     <button onClick={()=>onSubmit(u,s)} className="bg-[#0A2A6B] text-white w-full py-4 rounded-2xl font-bold">Entrar</button>
   </div>;
 }
