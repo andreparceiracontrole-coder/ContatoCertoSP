@@ -1,0 +1,13 @@
+{
+  "name": "Contato Certo SP",
+  "short_name": "ContatoCertoSP",
+  "description": "Montadores de móveis premium em SP",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0A2A6B",
+  "theme_color": "#0A2A6B",
+  "icons": [
+    { "src": "/logo.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/logo.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
