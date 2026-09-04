@@ -1,0 +1,18 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* { font-family: "Inter", sans-serif; }
+h1,h2,h3,.font-poppins { font-family: "Poppins", sans-serif; }
+
+.btn-primary {
+  @apply bg-[#0A2A6B] text-white rounded-2xl px-6 py-4 font-bold text-lg shadow-lg hover:shadow-xl transition-all active:scale-95;
+}
+.btn-accent {
+  @apply bg-[#FF7A00] text-white rounded-2xl px-6 py-4 font-bold text-lg shadow-lg hover:shadow-xl transition-all active:scale-95;
+}
+.card-premium {
+  @apply bg-white rounded-3xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] border border-gray-100 p-5;
+}
