@@ -381,36 +381,14 @@ const criarPedido = async ()=>{
         </div>
       )}
 
+
       {view==="montador" && currentUser?.role==="montador" && (
-        <div className="max-w-6xl mx-auto px-4 py-6">
-          <h2 className="font-bold text-2xl">Painel Montador - {currentUser.nome} {isLive?"🟢 Ao Vivo":"🔴"} 🔊 Som alto ativado</h2>
-          <div className="mt-2 text-xs bg-green-100 p-2 rounded-xl">🔔 Você receberá SOM ALTO + vibração quando chegar pedido novo em suas cidades: {(currentUser.cidades||[]).join(", ")}</div>
-          <h3 className="font-bold mt-6">🔔🔔🔔 Pedidos Liberados ({orders.filter(o=>o.status==="aguardando_montador").length}) - COM SOM</h3>
-          <div className="mt-3 space-y-3">
-            {orders.filter(o=>o.status==="aguardando_montador").map(p=>(
-              <div key={p.id} className="bg-white rounded-3xl p-4 shadow border-l-4 border-l-[#FF7A00] animate-pulse">
-                <div className="flex justify-between"><span className="font-bold text-lg">🔔 #{p.id} - {p.cidade}</span><span className="font-bold text-[#FF7A00] text-lg">{formatBRL(p.total)}</span></div>
-                <div className="text-sm font-bold">{p.endereco} - {p.bairro}</div>
-                <div className="text-xs">{(p.itens||[]).map(i=>i.nome).join(", ")}</div>
-                <div className="text-xs text-gray-500">Cliente ID {p.cliente_id} - {p.data} {p.horario}</div>
-                <button type="button" onClick={()=>aceitarPedido(p.id)} className="bg-[#0A2A6B] text-white w-full py-4 rounded-xl mt-3 font-bold text-lg">🔔 ACEITAR AGORA - 30MIN ⏰</button>
-              </div>
-            ))}
-            {orders.filter(o=>o.status==="aguardando_montador").length===0 && <div className="text-center py-10 text-gray-400 bg-white rounded-3xl">Nenhum pedido no momento. Deixe o som ligado! 🔔🔊</div>}
-          </div>
-          <h3 className="font-bold mt-6">Meus Serviços Aceitos</h3>
-          <div className="mt-3 space-y-3">
-            {orders.filter(o=>o.montador_id==currentUser.id || o.montadorId==currentUser.id).map(p=>(
-              <div key={p.id} className="bg-white p-4 rounded-3xl shadow">
-                <div className="flex justify-between"><span>#{p.id} {p.cidade} - {p.status}</span><span className="text-xs bg-blue-100 px-2 py-1 rounded-full">{p.status}</span></div>
-                <div className="text-sm">{p.endereco}</div>
-                {p.avaliacao && <div className="text-xs mt-2 bg-yellow-50 p-2 rounded-xl">⭐ Cliente avaliou: {p.avaliacao.nota} estrelas - "{p.avaliacao.comentario}"</div>}
-                {p.status!=="finalizado" && <button type="button" onClick={()=>finalizarPedido(p.id)} className="bg-[#FF7A00] text-white w-full py-3 rounded-xl mt-2 font-bold">✅ FINALIZAR SERVIÇO - Cliente vai avaliar</button>}
-              </div>
-            ))}
-          </div>
-        </div>
+        <MontadorPanel 
+          currentUser={currentUser} setCurrentUser={setCurrentUser} users={users} orders={orders} isLive={isLive}
+          aceitarPedido={aceitarPedido} finalizarPedido={finalizarPedido} formatBRL={formatBRL} notify={notify} setUsers={setUsers}
+        />
       )}
+
 
       {view==="admin" && (
         <div className="max-w-6xl mx-auto px-4 py-6">
@@ -556,6 +534,208 @@ const criarPedido = async ()=>{
     </div>
   );
 }
+
+
+function MontadorPanel({ currentUser, setCurrentUser, users, orders, isLive, aceitarPedido, finalizarPedido, formatBRL, notify, setUsers }){
+  const [tab, setTab] = React.useState("disponiveis");
+  const [novaCidade, setNovaCidade] = React.useState("");
+  const [timerNow, setTimerNow] = React.useState(Date.now());
+  React.useEffect(()=>{ const id=setInterval(()=>setTimerNow(Date.now()),1000); return ()=>clearInterval(id); },[]);
+
+  const toggleDisponivel = async ()=>{
+    const novo = !currentUser.disponivel;
+    const updated = { ...currentUser, disponivel: novo };
+    setCurrentUser(updated);
+    try { const { error } = await supabase.from("users").update({ disponivel: novo }).eq("id", currentUser.id); if(error) throw error; } catch(e){ console.error(e); }
+    setUsers(prev=>prev.map(u=>u.id==currentUser.id? {...u, disponivel:novo}:u));
+    notify(novo? "✅ Você está ONLINE - receberá pedidos com SOM":"⛔ Você está OFFLINE", novo?"success":"info", novo?3:1);
+  };
+
+  const removerCidade = async (cid)=>{
+    const novas = (currentUser.cidades||[]).filter(c=>c!==cid);
+    const updated = { ...currentUser, cidades: novas };
+    setCurrentUser(updated);
+    try { await supabase.from("users").update({ cidades: novas }).eq("id", currentUser.id); } catch {}
+    setUsers(prev=>prev.map(u=>u.id==currentUser.id? {...u, cidades:novas}:u));
+  };
+
+  const adicionarCidade = async ()=>{
+    if(!novaCidade) return;
+    if((currentUser.cidades||[]).length>=3) return notify("Máximo 3 cidades","error",1);
+    const novas = [...(currentUser.cidades||[]), novaCidade];
+    const updated = { ...currentUser, cidades: novas };
+    setCurrentUser(updated);
+    setNovaCidade("");
+    try { await supabase.from("users").update({ cidades: novas }).eq("id", currentUser.id); } catch {}
+    setUsers(prev=>prev.map(u=>u.id==currentUser.id? {...u, cidades:novas}:u));
+  };
+
+  const meusAceitos = orders.filter(o=> (o.montador_id==currentUser.id || o.montadorId==currentUser.id) && o.status==="aceito");
+  const meusFinalizados = orders.filter(o=> (o.montador_id==currentUser.id || o.montadorId==currentUser.id) && o.status==="finalizado");
+  const disponiveis = orders.filter(o=>{
+    if(o.status!=="aguardando_montador") return false;
+    if(!currentUser.cidades?.length) return true;
+    return currentUser.cidades.map(c=>c.toLowerCase()).includes((o.cidade||"").toLowerCase()) || true;
+  });
+
+  const totalGanho = meusFinalizados.reduce((s,p)=>s + (p.total*0.9), 0);
+  const totalBruto = meusFinalizados.reduce((s,p)=>s + p.total, 0);
+
+  const tempoRestante = (aceiteAt)=>{
+    if(!aceiteAt) return "30:00";
+    const aceite = new Date(aceiteAt).getTime();
+    const limite = aceite + 30*60*1000;
+    const diff = limite - timerNow;
+    if(diff<=0) return "ATRASADO!";
+    const m = Math.floor(diff/60000);
+    const s = Math.floor((diff%60000)/1000);
+    return `${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+  };
+
+  return (
+    <div className="max-w-6xl mx-auto px-4 py-6">
+      <h2 className="font-bold text-2xl">Painel Montador - {currentUser.nome} {isLive?"🟢":"🔴"}</h2>
+      <div className="mt-3 bg-white p-4 rounded-3xl shadow flex justify-between items-center">
+        <div>
+          <div className="font-bold">Status: {currentUser.disponivel? "🟢 ONLINE - Recebendo pedidos":"🔴 OFFLINE"}</div>
+          <div className="text-xs text-gray-600">⭐ {Number(currentUser.avaliacao||5).toFixed(1)} | {currentUser.total_servicos||0} serviços | CPF validado</div>
+          <div className="text-xs">PIX: {currentUser.pix} | Cidades: {(currentUser.cidades||[]).join(", ")||"Todas SP"}</div>
+        </div>
+        <button type="button" onClick={toggleDisponivel} className={`px-6 py-3 rounded-2xl font-bold text-white ${currentUser.disponivel?"bg-red-500":"bg-green-600"}`}>{currentUser.disponivel?"Ficar Offline":"Ficar Online 🔊"}</button>
+      </div>
+
+      <div className="flex gap-2 mt-4 overflow-auto pb-2">
+        <button type="button" onClick={()=>setTab("disponiveis")} className={`px-4 py-2 rounded-full text-sm whitespace-nowrap ${tab==="disponiveis"?"bg-[#0A2A6B] text-white":"bg-white"}`}>🔔 Disponíveis ({disponiveis.length})</button>
+        <button type="button" onClick={()=>setTab("aceitos")} className={`px-4 py-2 rounded-full text-sm whitespace-nowrap ${tab==="aceitos"?"bg-[#0A2A6B] text-white":"bg-white"}`}>Meus Aceitos ({meusAceitos.length}) ⏰</button>
+        <button type="button" onClick={()=>setTab("finalizados")} className={`px-4 py-2 rounded-full text-sm whitespace-nowrap ${tab==="finalizados"?"bg-[#0A2A6B] text-white":"bg-white"}`}>Finalizados ({meusFinalizados.length})</button>
+        <button type="button" onClick={()=>setTab("financeiro")} className={`px-4 py-2 rounded-full text-sm whitespace-nowrap ${tab==="financeiro"?"bg-[#0A2A6B] text-white":"bg-white"}`}>💰 Financeiro</button>
+        <button type="button" onClick={()=>setTab("perfil")} className={`px-4 py-2 rounded-full text-sm whitespace-nowrap ${tab==="perfil"?"bg-[#0A2A6B] text-white":"bg-white"}`}>👤 Perfil</button>
+      </div>
+
+      {tab==="disponiveis" && (
+        <div className="mt-4 space-y-3">
+          <div className="text-xs bg-green-100 p-3 rounded-xl">🔊 SOM ALTO ativado - Você será notificado com beep + vibração quando chegar pedido novo nas cidades: {(currentUser.cidades||[]).join(", ")||"Todas SP"}. Mantenha ONLINE.</div>
+          {disponiveis.map(p=>{
+            const cliente = users.find(u=>u.id==p.cliente_id || u.id==p.clienteId);
+            return (
+              <div key={p.id} className="bg-white rounded-3xl p-4 shadow border-l-4 border-l-[#FF7A00] animate-pulse">
+                <div className="flex justify-between"><span className="font-bold text-lg">🔔 NOVO #{p.id} - {p.cidade}</span><span className="font-bold text-[#FF7A00] text-lg">{formatBRL(p.total)} (90% seu = {formatBRL(p.total*0.9)})</span></div>
+                <div className="mt-2 bg-gray-50 p-3 rounded-xl">
+                  <div className="font-bold text-sm">👤 Cliente: {cliente?.nome||`ID ${p.cliente_id}`}</div>
+                  <div className="text-xs">📱 {cliente?.telefone||"Telefone no cadastro"} | {cliente?.email||""}</div>
+                  <div className="text-sm mt-1 font-bold">📍 {p.endereco} - {p.bairro} - {p.cidade}</div>
+                  <div className="text-xs">📅 {p.data} às {p.horario}</div>
+                </div>
+                <div className="mt-2">
+                  <div className="text-xs font-bold">Serviços ({(p.itens||[]).length} itens):</div>
+                  <div className="text-xs">{(p.itens||[]).map(i=>`${i.nome} x${i.qtd}`).join(", ")}</div>
+                </div>
+                {p.foto && <img src={p.foto} className="w-full h-32 object-cover rounded-xl mt-2"/>}
+                <div className="flex gap-2 mt-3">
+                  <button type="button" onClick={()=>aceitarPedido(p.id)} className="flex-1 bg-[#0A2A6B] text-white py-4 rounded-xl font-bold text-lg">🔔 ACEITAR - 30MIN ⏰</button>
+                  <a href={`https://wa.me/55${(cliente?.telefone||"").replace(/\D/g,"")}`} target="_blank" className="bg-green-600 text-white px-4 py-4 rounded-xl font-bold text-xs">WhatsApp Cliente</a>
+                </div>
+              </div>
+            )
+          })}
+          {disponiveis.length===0 && <div className="text-center py-10 text-gray-400 bg-white rounded-3xl">Nenhum pedido liberado agora. Deixe ONLINE com som ligado! 🔊🟢<br/>Quando ADM confirmar pagamento, toca beep aqui.</div>}
+        </div>
+      )}
+
+      {tab==="aceitos" && (
+        <div className="mt-4 space-y-3">
+          {meusAceitos.map(p=>{
+            const cliente = users.find(u=>u.id==p.cliente_id || u.id==p.clienteId);
+            const rest = tempoRestante(p.aceiteAt || p.aceite_at);
+            const atrasado = rest==="ATRASADO!";
+            return (
+              <div key={p.id} className={`bg-white p-4 rounded-3xl shadow border-l-4 ${atrasado?"border-l-red-600 bg-red-50":"border-l-blue-500"}`}>
+                <div className="flex justify-between items-center">
+                  <span className="font-bold">#{p.id} - {p.cidade} - {formatBRL(p.total)}</span>
+                  <span className={`px-3 py-1 rounded-full text-sm font-bold ${atrasado?"bg-red-600 text-white":"bg-blue-600 text-white"}`}>⏰ {rest}</span>
+                </div>
+                <div className="mt-2 bg-gray-50 p-3 rounded-xl">
+                  <div className="font-bold">👤 {cliente?.nome} - 📱 {cliente?.telefone}</div>
+                  <div className="text-sm">📍 {p.endereco} - {p.bairro}</div>
+                  <div className="text-xs">📅 {p.data} {p.horario} | Aceito {p.aceiteAt? new Date(p.aceiteAt).toLocaleString("pt-BR") : new Date(p.aceite_at).toLocaleString("pt-BR")}</div>
+                </div>
+                <div className="flex gap-2 mt-3">
+                  <a href={`https://wa.me/55${(cliente?.telefone||"").replace(/\D/g,"")}?text=Olá ${cliente?.nome}, sou ${currentUser.nome} do Contato Certo SP, estou a caminho do pedido #${p.id}`} target="_blank" className="flex-1 bg-green-600 text-white text-center py-3 rounded-xl font-bold">💬 WhatsApp Cliente</a>
+                  <a href={`tel:${cliente?.telefone}`} className="flex-1 bg-[#0A2A6B] text-white text-center py-3 rounded-xl font-bold">📞 Ligar</a>
+                </div>
+                <button type="button" onClick={()=>finalizarPedido(p.id)} className="w-full bg-[#FF7A00] text-white py-4 rounded-xl mt-3 font-bold text-lg">✅ FINALIZAR SERVIÇO - Cliente vai avaliar ⭐</button>
+              </div>
+            )
+          })}
+          {meusAceitos.length===0 && <div className="bg-white p-10 rounded-3xl text-center text-gray-400">Nenhum serviço aceito. Aceite pedidos na aba Disponíveis.</div>}
+        </div>
+      )}
+
+      {tab==="finalizados" && (
+        <div className="mt-4 space-y-3">
+          {meusFinalizados.map(p=>{
+            const cliente = users.find(u=>u.id==p.cliente_id);
+            return (
+              <div key={p.id} className="bg-white p-4 rounded-3xl shadow">
+                <div className="flex justify-between"><b>#{p.id} FINALIZADO ✅</b><span>{formatBRL(p.total)} | Seu: {formatBRL(p.total*0.9)}</span></div>
+                <div className="text-xs">{p.cidade} - {cliente?.nome} - {p.finalizadoAt? new Date(p.finalizadoAt).toLocaleString("pt-BR"): new Date(p.finalizado_at).toLocaleString("pt-BR")}</div>
+                {p.avaliacao ? <div className="mt-2 bg-yellow-50 p-2 rounded-xl text-xs">⭐ Cliente avaliou: {p.avaliacao.nota} estrelas<br/>"{p.avaliacao.comentario}" - {p.avaliacao.cliente}</div> : <div className="text-xs text-gray-400 mt-2">Aguardando avaliação do cliente</div>}
+              </div>
+            )
+          })}
+          {meusFinalizados.length===0 && <div className="bg-white p-10 rounded-3xl text-center text-gray-400">Nenhum serviço finalizado ainda</div>}
+        </div>
+      )}
+
+      {tab==="financeiro" && (
+        <div className="mt-4 space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-[#0A2A6B] text-white p-4 rounded-2xl"><div className="text-xs">Total Bruto</div><div className="text-xl font-bold">{formatBRL(totalBruto)}</div></div>
+            <div className="bg-green-600 text-white p-4 rounded-2xl"><div className="text-xs">Seu Ganho 90%</div><div className="text-xl font-bold">{formatBRL(totalGanho)}</div></div>
+            <div className="bg-[#FF7A00] text-white p-4 rounded-2xl"><div className="text-xs">Serviços Finalizados</div><div className="text-xl font-bold">{meusFinalizados.length}</div></div>
+            <div className="bg-gray-800 text-white p-4 rounded-2xl"><div className="text-xs">Avaliação Média</div><div className="text-xl font-bold">⭐ {Number(currentUser.avaliacao||5).toFixed(1)}</div></div>
+          </div>
+          <div className="bg-white p-4 rounded-3xl shadow">
+            <div className="font-bold">Como funciona o pagamento:</div>
+            <div className="text-xs mt-2">Cliente paga 100% para ADM (contatocerto.prestadores@gmail.com). ADM confirma. Você aceita e finaliza. Você recebe 90% via PIX {currentUser.pix} em até 24h. 10% fica com a plataforma.</div>
+          </div>
+          <div className="bg-white p-4 rounded-3xl shadow">
+            <div className="font-bold">Histórico de ganhos</div>
+            {meusFinalizados.map(p=><div key={p.id} className="flex justify-between text-xs py-2 border-b">#{p.id} - {p.cidade} - {formatBRL(p.total*0.9)} - {p.data}</div>)}
+          </div>
+        </div>
+      )}
+
+      {tab==="perfil" && (
+        <div className="mt-4 space-y-4">
+          <div className="bg-white p-4 rounded-3xl shadow">
+            <div className="font-bold">👤 {currentUser.nome}</div>
+            <div className="text-xs">📱 {currentUser.telefone} | ✉️ {currentUser.email}</div>
+            <div className="text-xs">CPF: {currentUser.cpf} (validado) | PIX: {currentUser.pix}</div>
+            <div className="text-xs">⭐ {Number(currentUser.avaliacao||5).toFixed(1)} | {currentUser.total_servicos||0} serviços</div>
+          </div>
+          <div className="bg-white p-4 rounded-3xl shadow">
+            <div className="font-bold">📍 Cidades que atende (máx 3)</div>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {(currentUser.cidades||[]).map(c=><span key={c} className="bg-[#0A2A6B] text-white text-xs px-3 py-1 rounded-full flex items-center gap-2">{c} <button type="button" onClick={()=>removerCidade(c)} className="bg-white/20 rounded-full w-4 h-4">x</button></span>)}
+            </div>
+            <div className="flex gap-2 mt-3">
+              <input value={novaCidade} onChange={e=>setNovaCidade(e.target.value)} placeholder="Nova cidade" className="flex-1 border rounded-xl p-3 text-sm"/>
+              <button type="button" onClick={adicionarCidade} className="bg-[#FF7A00] text-white px-6 py-3 rounded-xl font-bold">Adicionar</button>
+            </div>
+            <div className="text-xs text-gray-500 mt-2">Você só recebe pedidos dessas cidades. Se deixar vazio, recebe de todo SP.</div>
+          </div>
+          <div className="bg-white p-4 rounded-3xl shadow">
+            <div className="font-bold">⭐ Avaliações recebidas</div>
+            {orders.filter(o=> (o.montador_id==currentUser.id) && o.avaliacao).map(o=><div key={o.id} className="text-xs mt-2 p-2 bg-yellow-50 rounded-xl">#{o.id} ⭐{o.avaliacao.nota} - "{o.avaliacao.comentario}" - Cliente: {o.avaliacao.cliente}</div>)}
+            {orders.filter(o=> o.montador_id==currentUser.id && o.avaliacao).length===0 && <div className="text-xs text-gray-400 mt-2">Nenhuma avaliação ainda. Finalize serviços para receber.</div>}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 
 function RegisterForm({mode,onSubmit}){
   const [f,setF]=useState({nome:"",cidade:"",telefone:"",email:"",usuario:"",senha:"",cpf:"",pix:"",cidades:[],role:mode==="cliente"?"cliente":"montador"});
