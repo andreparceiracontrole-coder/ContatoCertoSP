@@ -295,6 +295,8 @@ export default function App() {
             <button onClick={()=>setAdminTab("pedidos")} className={`px-4 py-2 rounded-full text-sm ${adminTab==="pedidos"?"bg-[#0A2A6B] text-white":"bg-white"}`}>Pedidos ({orders.length})</button>
             <button onClick={()=>setAdminTab("comprovantes")} className={`px-4 py-2 rounded-full text-sm ${adminTab==="comprovantes"?"bg-[#0A2A6B] text-white":"bg-white"}`}>Comprovantes ({orders.filter(o=>o.status==="aguardando_confirmacao_adm").length}) 🔥</button>
             <button onClick={()=>setAdminTab("liberados")} className={`px-4 py-2 rounded-full text-sm ${adminTab==="liberados"?"bg-[#0A2A6B] text-white":"bg-white"}`}>Liberados ({orders.filter(o=>o.status==="aguardando_montador").length})</button>
+            <button onClick={()=>setAdminTab("aceitos")} className={`px-4 py-2 rounded-full text-sm ${adminTab==="aceitos"?"bg-[#0A2A6B] text-white":"bg-white"}`}>Aceitos ({orders.filter(o=>o.status==="aceito").length})</button>
+            <button onClick={()=>setAdminTab("finalizados")} className={`px-4 py-2 rounded-full text-sm ${adminTab==="finalizados"?"bg-[#0A2A6B] text-white":"bg-white"}`}>Finalizados ({orders.filter(o=>o.status==="finalizado").length})</button>
             <button onClick={()=>setAdminTab("financeiro")} className={`px-4 py-2 rounded-full text-sm ${adminTab==="financeiro"?"bg-[#0A2A6B] text-white":"bg-white"}`}>Financeiro</button>
             <button onClick={()=>setAdminTab("usuarios")} className={`px-4 py-2 rounded-full text-sm ${adminTab==="usuarios"?"bg-[#0A2A6B] text-white":"bg-white"}`}>Usuários ({users.length})</button>
           </div>
@@ -302,22 +304,39 @@ export default function App() {
           {adminTab==="pedidos" && (
             <div className="mt-4 space-y-3">
               {orders.length===0 && <div className="bg-white p-10 rounded-3xl text-center text-gray-400">Nenhum pedido ainda. Quando cliente criar, aparece aqui ao vivo.</div>}
-              {orders.map(p=>(
+              {orders.map(p=>{
+                const montador = users.find(u=>u.id==p.montador_id || u.id==p.montadorId);
+                const cliente = users.find(u=>u.id==p.cliente_id || u.id==p.clienteId);
+                return (
                 <div key={p.id} className="bg-white p-4 rounded-3xl shadow">
                   <div className="flex justify-between items-start">
-                    <div>
+                    <div className="flex-1">
                       <div className="font-bold">Pedido #{p.id} - {formatBRL(p.total)}</div>
-                      <div className="text-xs">Cliente ID {p.cliente_id} - {p.cidade} - {p.endereco} {p.bairro}</div>
+                      <div className="text-xs">Cliente: {cliente?.nome || `ID ${p.cliente_id}`} - {cliente?.telefone || ""} - {p.cidade}</div>
+                      <div className="text-xs">{p.endereco} {p.bairro} - {p.data} {p.horario}</div>
                       <div className="text-xs mt-1">{(p.itens||[]).map(i=>i.nome).join(", ")}</div>
-                      <div className={`inline-block text-xs px-2 py-1 rounded-full mt-2 ${p.status==="aguardando_comprovante"?"bg-gray-200":p.status==="aguardando_confirmacao_adm"?"bg-yellow-200":p.status==="aguardando_montador"?"bg-green-200":p.status==="aceito"?"bg-blue-200":"bg-gray-100"}`}>{p.status}</div>
+                      <div className={`inline-block text-xs px-2 py-1 rounded-full mt-2 ${p.status==="aguardando_comprovante"?"bg-gray-200":p.status==="aguardando_confirmacao_adm"?"bg-yellow-200":p.status==="aguardando_montador"?"bg-green-200":p.status==="aceito"?"bg-blue-200":p.status==="finalizado"?"bg-green-600 text-white":"bg-gray-100"}`}>{p.status}</div>
+                      {montador && (
+                        <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-2xl">
+                          <div className="text-xs font-bold text-[#0A2A6B]">🔧 MONTADOR QUE ACEITOU:</div>
+                          <div className="font-bold">{montador.nome}</div>
+                          <div className="text-xs">📱 {montador.telefone} | ✉️ {montador.email}</div>
+                          <div className="text-xs">📍 Atende: {(montador.cidades||[]).join(", ")} | CPF: {montador.cpf}</div>
+                          <div className="text-xs">💰 PIX: {montador.pix}</div>
+                          <div className="text-xs mt-1 text-green-700">Aceito em: {p.aceiteAt ? new Date(p.aceiteAt).toLocaleString("pt-BR") : p.aceite_at ? new Date(p.aceite_at).toLocaleString("pt-BR") : "-"}</div>
+                          <a href={`https://wa.me/55${(montador.telefone||"").replace(/\D/g,"")}?text=Olá ${montador.nome}, sobre o pedido #${p.id}`} target="_blank" className="inline-block mt-2 bg-green-600 text-white text-xs px-3 py-2 rounded-full">WhatsApp Montador</a>
+                        </div>
+                      )}
+                      {!montador && (p.status==="aceito" || p.status==="finalizado") && <div className="mt-2 text-xs text-orange-600">Montador ID {p.montador_id || p.montadorId} - carregando...</div>}
                     </div>
-                    <div className="text-right text-xs text-gray-500">{p.data} {p.horario}</div>
+                    <div className="text-right text-xs text-gray-500">{p.data}<br/>{p.horario}</div>
                   </div>
                   {p.comprovante && <img src={p.comprovante} className="w-full max-w-xs h-40 object-cover rounded-xl mt-3 border" alt="comprovante"/>}
                   {p.status==="aguardando_confirmacao_adm" && <button onClick={()=>confirmarPagamentoADM(p.id)} className="bg-[#0A2A6B] text-white w-full py-3 rounded-xl mt-3 font-bold">✅ CONFIRMAR PAGAMENTO - LIBERAR PARA MONTADORES (REGRA CRÍTICA)</button>}
                   {p.status==="aguardando_comprovante" && <div className="mt-2 text-xs bg-yellow-50 p-2 rounded-xl">Aguardando cliente enviar comprovante PIX {PIX_KEY}</div>}
                 </div>
-              ))}
+              )})}
+              
             </div>
           )}
 
@@ -337,9 +356,40 @@ export default function App() {
 
           {adminTab==="liberados" && (
             <div className="mt-4">
-              {orders.filter(o=>o.status==="aguardando_montador").map(p=>(
-                <div key={p.id} className="bg-white p-4 rounded-3xl shadow mt-3"><b>#{p.id}</b> {p.cidade} {formatBRL(p.total)} - Aguardando montador aceitar</div>
-              ))}
+              {orders.filter(o=>o.status==="aguardando_montador").map(p=>{ const cli = users.find(u=>u.id==p.cliente_id); return (<div key={p.id} className="bg-white p-4 rounded-3xl shadow mt-3"><b>#{p.id}</b> {p.cidade} {formatBRL(p.total)} - {cli?.nome||""} - Aguardando montador aceitar</div> ) })}
+            </div>
+          )}
+
+          {adminTab==="aceitos" && (
+            <div className="mt-4 space-y-3">
+              {orders.filter(o=>o.status==="aceito").map(p=>{
+                const montador = users.find(u=>u.id==p.montador_id || u.id==p.montadorId);
+                const cliente = users.find(u=>u.id==p.cliente_id);
+                return (
+                  <div key={p.id} className="bg-blue-50 border border-blue-300 p-4 rounded-3xl">
+                    <div className="font-bold">Pedido #{p.id} - ACEITO por {montador?.nome || `ID ${p.montador_id}`}</div>
+                    <div className="text-xs">Cliente: {cliente?.nome} - {p.cidade} - {formatBRL(p.total)}</div>
+                    {montador && <div className="mt-2 text-xs">🔧 {montador.nome} - {montador.telefone} - {montador.cidades?.join(", ")} - PIX {montador.pix}</div>}
+                    <div className="text-xs">Aceito: {p.aceiteAt ? new Date(p.aceiteAt).toLocaleString("pt-BR") : p.aceite_at ? new Date(p.aceite_at).toLocaleString("pt-BR") : ""}</div>
+                  </div>
+                )
+              })}
+              {orders.filter(o=>o.status==="aceito").length===0 && <div className="bg-white p-10 rounded-3xl text-center text-gray-400">Nenhum pedido aceito ainda</div>}
+            </div>
+          )}
+
+          {adminTab==="finalizados" && (
+            <div className="mt-4 space-y-3">
+              {orders.filter(o=>o.status==="finalizado").map(p=>{
+                const montador = users.find(u=>u.id==p.montador_id || u.id==p.montadorId);
+                return (
+                  <div key={p.id} className="bg-green-50 border border-green-300 p-4 rounded-3xl">
+                    <div className="font-bold">Pedido #{p.id} - FINALIZADO ✅</div>
+                    <div className="text-xs">{p.cidade} - {formatBRL(p.total)} - Montador: {montador?.nome || p.montador_id}</div>
+                    <div className="text-xs">Finalizado: {p.finalizadoAt ? new Date(p.finalizadoAt).toLocaleString("pt-BR") : p.finalizado_at ? new Date(p.finalizado_at).toLocaleString("pt-BR") : ""}</div>
+                  </div>
+                )
+              })}
             </div>
           )}
 
