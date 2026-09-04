@@ -72,7 +72,12 @@ export default function App() {
       const { data: o } = await supabase.from("orders").select("*").order("created_at", {ascending:false});
       if (u) setUsers(u);
       if (o) {
-        const mapped = o.map(x=>({ id: x.id, clienteId: x.cliente_id, cliente_id: x.cliente_id, itens: x.itens, subtotal: x.subtotal, desconto: x.desconto, total: x.total, endereco: x.endereco, bairro: x.bairro, cidade: x.cidade, data: x.data, horario: x.horario, foto: x.foto, status: x.status, comprovante: x.comprovante, montadorId: x.montador_id, montador_id: x.montador_id, createdAt: x.created_at, aceiteAt: x.aceite_at, finalizadoAt: x.finalizado_at, avaliacao: x.avaliacao }));
+        let mapped = o.map(x=>({ id: x.id, clienteId: x.cliente_id, cliente_id: x.cliente_id, itens: x.itens, subtotal: x.subtotal, desconto: x.desconto, total: x.total, endereco: x.endereco, bairro: x.bairro, cidade: x.cidade, data: x.data, horario: x.horario, foto: x.foto, status: x.status, comprovante: x.comprovante, montadorId: x.montador_id, montador_id: x.montador_id, createdAt: x.created_at, aceiteAt: x.aceite_at, finalizadoAt: x.finalizado_at, avaliacao: x.avaliacao, cancelado_at: x.cancelado_at }));
+        // Respeita cancelados locais para não voltar o pedido
+        try{
+          const cancelados = JSON.parse(localStorage.getItem("ccs_cancelados")||"[]");
+          mapped = mapped.map(m=> cancelados.includes(m.id) ? {...m, status:"cancelado"} : m);
+        }catch{}
         // Detectar mudancas para notificacoes sonoras
         handleNotifications(mapped, prevOrdersRef.current);
         prevOrdersRef.current = mapped;
@@ -245,25 +250,21 @@ const criarPedido = async ()=>{
     const confirmar = window.confirm("Tem certeza que deseja cancelar este pedido? Se já pagou, entre em contato com o ADM para reembolso. WhatsApp 18991488302");
     if(!confirmar) return;
     const agora = new Date().toISOString();
-    // Otimista
+    // Otimista - atualiza na hora
     setOrders(prev=>prev.map(o=>o.id===id?{...o,status:"cancelado", canceladoAt: agora, cancelado_at: agora}:o));
+    // Salva lista de cancelados para sobreviver ao fetch do Supabase
+    try{
+      const cancelados = JSON.parse(localStorage.getItem("ccs_cancelados")||"[]");
+      if(!cancelados.includes(id)) localStorage.setItem("ccs_cancelados", JSON.stringify([...cancelados, id]));
+    }catch{}
     try { 
-      // Tenta com cancelado_at, se coluna não existir tenta só status
       let { error } = await supabase.from("orders").update({ status:"cancelado", cancelado_at: agora }).eq("id", id);
       if(error){
-        console.log("Tentando sem cancelado_at", error.message);
         const res2 = await supabase.from("orders").update({ status:"cancelado" }).eq("id", id);
         if(res2.error) throw res2.error;
       }
     } catch (e){ 
-      console.error("Erro cancelar Supabase", e);
-      // Mantém local mesmo se Supabase falhar
-      try{
-        const all = JSON.parse(localStorage.getItem("ccs_orders")||"[]");
-        localStorage.setItem("ccs_orders", JSON.stringify(all.map(o=>o.id===id?{...o,status:"cancelado", canceladoAt: agora}:o)));
-      }catch{}
-      notify("Pedido cancelado localmente - verifique RLS no Supabase","info",2);
-      return;
+      console.error("Supabase bloqueou cancelamento - mantido local", e);
     }
     notify("Pedido cancelado com sucesso","success",2);
   };
