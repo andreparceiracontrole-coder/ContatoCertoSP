@@ -245,15 +245,27 @@ const criarPedido = async ()=>{
     const confirmar = window.confirm("Tem certeza que deseja cancelar este pedido? Se já pagou, entre em contato com o ADM para reembolso. WhatsApp 18991488302");
     if(!confirmar) return;
     const agora = new Date().toISOString();
+    // Otimista
     setOrders(prev=>prev.map(o=>o.id===id?{...o,status:"cancelado", canceladoAt: agora, cancelado_at: agora}:o));
     try { 
-      const { error } = await supabase.from("orders").update({ status:"cancelado", cancelado_at: agora }).eq("id", id);
-      if(error) throw error;
-    } catch (e){ console.error("Erro cancelar", e); 
-      const all = JSON.parse(localStorage.getItem("ccs_orders")||"[]");
-      localStorage.setItem("ccs_orders", JSON.stringify(all.map(o=>o.id===id?{...o,status:"cancelado"}:o)));
+      // Tenta com cancelado_at, se coluna não existir tenta só status
+      let { error } = await supabase.from("orders").update({ status:"cancelado", cancelado_at: agora }).eq("id", id);
+      if(error){
+        console.log("Tentando sem cancelado_at", error.message);
+        const res2 = await supabase.from("orders").update({ status:"cancelado" }).eq("id", id);
+        if(res2.error) throw res2.error;
+      }
+    } catch (e){ 
+      console.error("Erro cancelar Supabase", e);
+      // Mantém local mesmo se Supabase falhar
+      try{
+        const all = JSON.parse(localStorage.getItem("ccs_orders")||"[]");
+        localStorage.setItem("ccs_orders", JSON.stringify(all.map(o=>o.id===id?{...o,status:"cancelado", canceladoAt: agora}:o)));
+      }catch{}
+      notify("Pedido cancelado localmente - verifique RLS no Supabase","info",2);
+      return;
     }
-    notify("Pedido cancelado com sucesso","info",2);
+    notify("Pedido cancelado com sucesso","success",2);
   };
 
   const enviarAvaliacao = async (pedidoId)=>{
