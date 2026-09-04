@@ -122,6 +122,7 @@ export default function App() {
             notify(`🔧 Pedido #${novo.id} ACEITO por ${mont?.nome||"montador"}`, "info", 2);
           }
           if(novo.status==="finalizado") notify(`✅ Pedido #${novo.id} FINALIZADO`, "info", 2);
+          if(novo.status==="cancelado") notify(`❌ Pedido #${novo.id} CANCELADO pelo cliente`, "error", 2);
         }
       }
     });
@@ -240,6 +241,21 @@ const criarPedido = async ()=>{
     notify("Serviço finalizado! Cliente vai avaliar","success",2);
   };
 
+  const cancelarPedido = async (id)=>{
+    const confirmar = window.confirm("Tem certeza que deseja cancelar este pedido? Se já pagou, entre em contato com o ADM para reembolso. WhatsApp 18991488302");
+    if(!confirmar) return;
+    const agora = new Date().toISOString();
+    setOrders(prev=>prev.map(o=>o.id===id?{...o,status:"cancelado", canceladoAt: agora, cancelado_at: agora}:o));
+    try { 
+      const { error } = await supabase.from("orders").update({ status:"cancelado", cancelado_at: agora }).eq("id", id);
+      if(error) throw error;
+    } catch (e){ console.error("Erro cancelar", e); 
+      const all = JSON.parse(localStorage.getItem("ccs_orders")||"[]");
+      localStorage.setItem("ccs_orders", JSON.stringify(all.map(o=>o.id===id?{...o,status:"cancelado"}:o)));
+    }
+    notify("Pedido cancelado com sucesso","info",2);
+  };
+
   const enviarAvaliacao = async (pedidoId)=>{
     if(!avaliacaoForm.nota) return notify("Escolha a nota","error",1);
     const av = { nota: avaliacaoForm.nota, comentario: avaliacaoForm.comentario, data: new Date().toISOString(), cliente: currentUser.nome };
@@ -335,6 +351,13 @@ const criarPedido = async ()=>{
                 <div className="text-sm mt-1">{(p.itens||[]).map(i=>`${i.nome} x${i.qtd}`).join(", ")}</div>
                 <div className="font-bold text-[#FF7A00]">{formatBRL(p.total)} - {p.cidade}</div>
                 <div className="text-xs text-gray-500">{p.endereco} - {p.bairro}</div>
+                {(p.status==="aguardando_comprovante" || p.status==="aguardando_confirmacao_adm" || p.status==="aguardando_montador") && (
+                  <div className="mt-2 flex gap-2">
+                    <button type="button" onClick={()=>cancelarPedido(p.id)} className="flex-1 bg-red-50 border border-red-200 text-red-600 text-xs py-2 rounded-xl font-bold">❌ Cancelar Pedido</button>
+                    {p.status!=="aguardando_comprovante" && <span className="text-[10px] text-gray-400 self-center">Antes do montador aceitar</span>}
+                  </div>
+                )}
+                {p.status==="cancelado" && <div className="mt-2 text-xs bg-red-100 text-red-700 p-2 rounded-xl">❌ Pedido cancelado em {p.canceladoAt? new Date(p.canceladoAt).toLocaleString("pt-BR"): p.cancelado_at? new Date(p.cancelado_at).toLocaleString("pt-BR"):""}</div>}
                 {p.status==="aguardando_comprovante" && (
                   <div className="mt-3 p-3 bg-yellow-50 rounded-xl">
                     <div className="text-sm font-bold">📤 Envie o comprovante PIX</div>
