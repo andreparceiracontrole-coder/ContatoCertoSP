@@ -897,13 +897,20 @@ export default function App() {
 
           {!showOrderFlow ? (
             <>
-              {/* Busca e Categorias - Layout Clássico */}
-              <div className="mt-6 bg-white rounded-3xl p-4 shadow">
-                <div className="flex gap-2 mb-4">
-                  <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 Buscar serviço (ex: guarda-roupa, cama box)..." className="flex-1 border rounded-2xl p-4 text-sm"/>
-                  <button type="button" onClick={()=>setShowOrderFlow(true)} className="bg-[#0A2A6B] text-white px-6 rounded-2xl font-bold text-sm">🛒 Carrinho ({cart.reduce((s,i)=>s+i.qtd,0)})</button>
+              {/* Busca e Categorias - Layout Clássico + Botão Busca Inteligente NOVO */}
+              <div className="mt-6 bg-white rounded-3xl p-4 shadow border-2 border-[#0A2A6B]/10">
+                <div className="flex flex-col gap-3">
+                  <div className="flex gap-2">
+                    <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 Buscar serviço (ex: guarda-roupa, cama box)..." className="flex-1 border-2 rounded-2xl p-4 text-sm focus:border-[#0A2A6B]"/>
+                    <button type="button" onClick={()=>setShowOrderFlow(true)} className="bg-[#0A2A6B] text-white px-6 rounded-2xl font-bold text-sm">🛒 Carrinho ({cart.reduce((s,i)=>s+i.qtd,0)})</button>
+                  </div>
+                  {/* BOTÃO NOVO - Catálogo com Busca Inteligente - Isolado, não mexe no layout principal */}
+                  <button type="button" onClick={()=>{ setShowBuscaInteligente(true); setEtapaInteligente(1); setBuscaInteligenteTerm(""); setServicoInteligente(null); setComprovanteInteligente(""); setFormInteligente({ endereco: currentUser?.cidade||"", bairro:"", cidade: currentUser?.cidade||"", data:"", horario:"" }); }} className="w-full bg-gradient-to-r from-[#FF7A00] to-[#0A2A6B] text-white py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 shadow-lg hover:scale-[1.01] transition">
+                    🔍 NOVO: Catálogo com Busca Inteligente - Clique aqui para escolher serviço com endereço e pagar 10% 🟢 Ao Vivo
+                  </button>
+                  <div className="text-[10px] text-gray-500 text-center">Novo fluxo: Escolhe serviço → Informações + Endereço/Data/Hora → Aba pagamento 10% PIX → Comprovante para ADM 18991488302 com som 🔔</div>
                 </div>
-                <div className="flex gap-2 flex-wrap">
+                <div className="flex gap-2 flex-wrap mt-3">
                   {CATEGORIAS.map(c=><button key={c} onClick={()=>setCatFilter(c)} className={`px-4 py-2 rounded-full text-xs font-bold ${catFilter===c?"bg-[#0A2A6B] text-white":"bg-gray-100 hover:bg-gray-200"}`}>{c}</button>)}
                 </div>
               </div>
