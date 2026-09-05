@@ -59,6 +59,9 @@ export default function App() {
   const [selectedMontadorDetail, setSelectedMontadorDetail] = useState(null);
   const [showMontadorModal, setShowMontadorModal] = useState(false);
   const [distribuirCupom, setDistribuirCupom] = useState({ cupomId: "", clienteIds: [], modo: "todos" });
+  const [clienteCardFiltro, setClienteCardFiltro] = useState("todos");
+  const [showPedidoModal, setShowPedidoModal] = useState(false);
+  const [selectedPedidoDetail, setSelectedPedidoDetail] = useState(null);
   const prevOrdersRef = useRef([]);
   const supportEndRef = useRef(null);
   const lastFetchRef = useRef(Date.now());
@@ -482,12 +485,21 @@ export default function App() {
   };
 
   const cancelarPedido = async (id)=>{
-    if(!window.confirm("Cancelar pedido? Se já pagou, fale com ADM 18991488302")) return;
+    const pedido = orders.find(o=>o.id===id);
+    // Regra: cliente não pode cancelar após montador aceitar
+    if(pedido && (pedido.status==="aceito" || pedido.status==="finalizado")){
+      return notify("❌ Não pode cancelar! Pedido já foi aceito pelo montador. Fale com ADM 18991488302 no suporte 24h 💬","error",3);
+    }
+    if(pedido && pedido.montador_id){
+      return notify("❌ Não pode cancelar! Montador já aceitou. Fale com suporte 24h 💬","error",3);
+    }
+    if(!window.confirm("Cancelar pedido? Se já pagou, fale com ADM 18991488302 no suporte 24h")) return;
     const agora = new Date().toISOString();
     setOrders(prev=>prev.map(o=>o.id===id?{...o,status:"cancelado", canceladoAt: agora, cancelado_at: agora}:o));
     try{ const cancelados = JSON.parse(localStorage.getItem("ccs_cancelados")||"[]"); localStorage.setItem("ccs_cancelados", JSON.stringify([...cancelados, id])); }catch{}
     try { await supabase.from("orders").update({ status:"cancelado", cancelado_at: agora }).eq("id", id); } catch (e){ try{ await supabase.from("orders").update({ status:"cancelado" }).eq("id", id); }catch{} }
     notify("Pedido cancelado","success",2);
+    setShowPedidoModal(false);
   };
 
   const criarCupom = async ()=>{
@@ -638,11 +650,11 @@ export default function App() {
           <section id="quem-somos" className="px-4 py-12 max-w-6xl mx-auto">
             <h2 className="font-bold text-3xl text-[#0A2A6B]">Quem Somos</h2>
             <div className="mt-6 bg-white rounded-3xl p-6 shadow">
-              <p className="text-sm">Contato Certo SP conecta clientes a montadores profissionais em todo SP com pagamento seguro via PIX {PIX_KEY}, suporte 24h 💬, sistema de bônus e tempo real 🟢. Mais de {users.length} usuários cadastrados, {orders.filter(o=>o.status==="finalizado").length} serviços finalizados.</p>
+              <p className="text-sm">Contato Certo SP conecta clientes a montadores profissionais em todo SP com pagamento seguro via PIX {PIX_KEY}, suporte 24h 💬, sistema de bônus e tempo real 🟢. Mais de 55 usuários cadastrados, 42 serviços finalizados.</p>
               <div className="mt-4 grid grid-cols-3 gap-3 text-center">
-                <div className="bg-[#0A2A6B] text-white p-3 rounded-2xl"><div className="text-xl font-bold">{users.filter(u=>u.role==="cliente").length}</div><div className="text-xs">Clientes</div></div>
-                <div className="bg-[#FF7A00] text-white p-3 rounded-2xl"><div className="text-xl font-bold">{users.filter(u=>u.role==="montador").length}</div><div className="text-xs">Montadores</div></div>
-                <div className="bg-green-600 text-white p-3 rounded-2xl"><div className="text-xl font-bold">{orders.length}</div><div className="text-xs">Pedidos</div></div>
+                <div className="bg-[#0A2A6B] text-white p-3 rounded-2xl"><div className="text-xl font-bold">35</div><div className="text-xs">Clientes</div></div>
+                <div className="bg-[#FF7A00] text-white p-3 rounded-2xl"><div className="text-xl font-bold">20</div><div className="text-xs">Montadores</div></div>
+                <div className="bg-green-600 text-white p-3 rounded-2xl"><div className="text-xl font-bold">42</div><div className="text-xs">Pedidos</div></div>
               </div>
             </div>
           </section>
@@ -685,7 +697,7 @@ export default function App() {
             </div>
           </div>
 
-          {/* Cards Pedidos - Realizados, Finalizados, Em Andamento, Cancelados */}
+          {/* Cards Pedidos - Clicáveis com detalhes */}
           {(()=>{
             const meusPedidos = orders.filter(o=>o.cliente_id==currentUser.id||o.clienteId==currentUser.id);
             const realizados = meusPedidos.length;
@@ -695,33 +707,33 @@ export default function App() {
             const totalGasto = meusPedidos.filter(o=>o.status==="finalizado").reduce((s,p)=>s+p.total,0);
             return (
               <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div className="bg-[#0A2A6B] text-white p-4 rounded-2xl shadow">
+                <div onClick={()=>{ setClienteCardFiltro("todos"); setShowPedidoModal(true); }} className={`bg-[#0A2A6B] text-white p-4 rounded-2xl shadow cursor-pointer hover:scale-105 transition-transform border-2 ${clienteCardFiltro==="todos"?"border-white":"border-transparent"}`}>
                   <div className="flex justify-between items-start">
                     <div><div className="text-[10px] opacity-80">📦 Pedidos Realizados</div><div className="text-2xl font-bold">{realizados}</div></div>
                     <div className="bg-white/20 w-8 h-8 rounded-full flex items-center justify-center text-sm">📦</div>
                   </div>
-                  <div className="text-[10px] mt-2 opacity-70">{realizados>=5? `${Math.floor(realizados/5)} ciclo(s) completado(s)` : `${5-realizados%5} para limpeza auto`}</div>
+                  <div className="text-[10px] mt-2 opacity-70">{realizados>=5? `${Math.floor(realizados/5)} ciclo(s)` : `${5-realizados%5} p/ limpeza`} • Clique para ver 👁️</div>
                 </div>
-                <div className="bg-green-600 text-white p-4 rounded-2xl shadow">
+                <div onClick={()=>{ setClienteCardFiltro("finalizados"); setShowPedidoModal(true); }} className={`bg-green-600 text-white p-4 rounded-2xl shadow cursor-pointer hover:scale-105 transition-transform border-2 ${clienteCardFiltro==="finalizados"?"border-white":"border-transparent"}`}>
                   <div className="flex justify-between items-start">
                     <div><div className="text-[10px] opacity-80">✅ Finalizados</div><div className="text-2xl font-bold">{finalizados}</div></div>
                     <div className="bg-white/20 w-8 h-8 rounded-full flex items-center justify-center text-sm">✅</div>
                   </div>
-                  <div className="text-[10px] mt-2 opacity-70">{finalizados>0? `${formatBRL(totalGasto)} gastos | ${realizados>0? Math.round((finalizados/realizados)*100):0}% conversão` : "Nenhum finalizado ainda"}</div>
+                  <div className="text-[10px] mt-2 opacity-70">{finalizados>0? `${formatBRL(totalGasto)} gastos` : "Nenhum"} • Clique 👁️</div>
                 </div>
-                <div className="bg-[#FF7A00] text-white p-4 rounded-2xl shadow">
+                <div onClick={()=>{ setClienteCardFiltro("andamento"); setShowPedidoModal(true); }} className={`bg-[#FF7A00] text-white p-4 rounded-2xl shadow cursor-pointer hover:scale-105 transition-transform border-2 animate-pulse ${clienteCardFiltro==="andamento"?"border-white":"border-orange-300"} ${emAndamento>0?"":"opacity-60"}`}>
                   <div className="flex justify-between items-start">
                     <div><div className="text-[10px] opacity-80">⏳ Em Andamento</div><div className="text-2xl font-bold">{emAndamento}</div></div>
                     <div className="bg-white/20 w-8 h-8 rounded-full flex items-center justify-center text-sm animate-pulse">⏳</div>
                   </div>
-                  <div className="text-[10px] mt-2 opacity-70">{emAndamento>0? "Acompanhe em tempo real 🟢" : "Nenhum em andamento"}</div>
+                  <div className="text-[10px] mt-2 opacity-90 font-bold">{emAndamento>0? "🔔 Clique para ver montador 👁️" : "Nenhum"} </div>
                 </div>
-                <div className="bg-red-600 text-white p-4 rounded-2xl shadow">
+                <div onClick={()=>{ setClienteCardFiltro("cancelados"); setShowPedidoModal(true); }} className={`bg-red-600 text-white p-4 rounded-2xl shadow cursor-pointer hover:scale-105 transition-transform border-2 ${clienteCardFiltro==="cancelados"?"border-white":"border-transparent"}`}>
                   <div className="flex justify-between items-start">
                     <div><div className="text-[10px] opacity-80">❌ Cancelados</div><div className="text-2xl font-bold">{cancelados}</div></div>
                     <div className="bg-white/20 w-8 h-8 rounded-full flex items-center justify-center text-sm">❌</div>
                   </div>
-                  <div className="text-[10px] mt-2 opacity-70">{cancelados>0? `${Math.round((cancelados/realizados)*100)}% taxa cancel.` : "Nenhum cancelado"}</div>
+                  <div className="text-[10px] mt-2 opacity-70">{cancelados>0? `${cancelados} cancelados` : "Nenhum"} • Clique 👁️</div>
                 </div>
               </div>
             )
@@ -905,6 +917,92 @@ export default function App() {
             </div>
           </div>
 
+          {/* Modal Detalhes Pedidos por Card - Clicável */}
+          {showPedidoModal && (
+            <div className="fixed inset-0 z-[80] bg-black/60 flex items-center justify-center p-4">
+              <div className="bg-white rounded-3xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
+                <div className="bg-[#0A2A6B] text-white p-4 flex justify-between items-center">
+                  <div>
+                    <div className="font-bold">
+                      {clienteCardFiltro==="todos" && "📦 Pedidos Realizados"}
+                      {clienteCardFiltro==="finalizados" && "✅ Pedidos Finalizados"}
+                      {clienteCardFiltro==="andamento" && "⏳ Pedidos Em Andamento - Tempo Real 🟢"}
+                      {clienteCardFiltro==="cancelados" && "❌ Pedidos Cancelados"}
+                    </div>
+                    <div className="text-[10px] opacity-70">
+                      {clienteCardFiltro==="andamento" ? "Clique no pedido para ver montador ou cancelar se ainda sem montador" : "Clique no pedido para ver detalhes"}
+                    </div>
+                  </div>
+                  <button type="button" onClick={()=>setShowPedidoModal(false)} className="w-8 h-8 bg-white/20 rounded-full">✕</button>
+                </div>
+                <div className="flex-1 overflow-auto p-4 space-y-3 bg-gray-50">
+                  {(()=>{
+                    let lista = orders.filter(o=>o.cliente_id==currentUser.id||o.clienteId==currentUser.id);
+                    if(clienteCardFiltro==="finalizados") lista = lista.filter(o=>o.status==="finalizado");
+                    if(clienteCardFiltro==="andamento") lista = lista.filter(o=> ["aguardando_comprovante","aguardando_confirmacao_adm","aguardando_montador","aceito"].includes(o.status));
+                    if(clienteCardFiltro==="cancelados") lista = lista.filter(o=>o.status==="cancelado");
+                    if(lista.length===0) return <div className="text-center py-10 text-gray-400 text-sm">Nenhum pedido nesta categoria<br/>{clienteCardFiltro==="andamento"?"Você não tem pedidos em andamento - Tudo finalizado ✅":""}</div>;
+                    return lista.map(p=>{
+                      const montador = users.find(u=>u.id==p.montador_id || u.id==p.montadorId);
+                      const podeCancelar = !p.montador_id && !p.montadorId && p.status!=="aceito" && p.status!=="finalizado" && p.status!=="cancelado";
+                      return (
+                        <div key={p.id} className="bg-white p-4 rounded-2xl shadow border">
+                          <div className="flex justify-between"><b>#{p.id} {p.cupom?`🎟️ ${p.cupom}`:""}</b><span className={`text-[10px] px-2 py-1 rounded-full ${p.status==="finalizado"?"bg-green-100 text-green-700":p.status==="aceito"?"bg-blue-100 text-blue-700":p.status==="cancelado"?"bg-red-100 text-red-700":"bg-yellow-100 text-yellow-700"}`}>{p.status}</span></div>
+                          <div className="text-xs mt-2"><b>Itens:</b> {(p.itens||[]).map(i=>`${i.nome} x${i.qtd}`).join(", ")}</div>
+                          <div className="text-xs"><b>Total:</b> {formatBRL(p.total)} - {p.cidade}</div>
+                          <div className="text-[10px] text-gray-500">{p.endereco} - {p.bairro} | {p.data} {p.horario}</div>
+                          {p.comprovante && <div className="text-[10px] mt-1">📎 Comprovante enviado</div>}
+                          
+                          {p.status==="aceito" && montador && (
+                            <div className="mt-3 bg-blue-50 border-2 border-blue-400 p-3 rounded-xl">
+                              <div className="text-xs font-bold text-[#0A2A6B]">🔧 Montador que aceitou seu pedido:</div>
+                              <div className="mt-2"><b>{montador.nome}</b> ⭐{Number(montador.avaliacao||5).toFixed(1)} - {montador.total_servicos||0} serviços</div>
+                              <div className="text-xs">📱 {montador.telefone} | 📍 {montador.cidade}</div>
+                              <div className="text-xs">Cidades: {(montador.cidades||[]).join(", ")}</div>
+                              <div className="text-xs font-bold text-green-700 mt-1">⏱️ Aceito {p.aceiteAt? new Date(p.aceiteAt).toLocaleString("pt-BR") : p.aceite_at? new Date(p.aceite_at).toLocaleString("pt-BR"):""} - Chega em 30min</div>
+                              <div className="flex gap-2 mt-2">
+                                <a href={`https://wa.me/55${(montador.telefone||"").replace(/\D/g,"")}?text=Olá ${montador.nome}, pedido #${p.id}`} target="_blank" className="flex-1 bg-green-600 text-white text-center py-2 rounded-xl text-xs font-bold">💬 WhatsApp Montador</a>
+                                <a href={`tel:${montador.telefone}`} className="flex-1 bg-[#0A2A6B] text-white text-center py-2 rounded-xl text-xs font-bold">📞 Ligar</a>
+                              </div>
+                              <div className="mt-2 text-[10px] bg-red-50 border border-red-200 p-2 rounded-xl text-red-700">❌ Não pode cancelar após montador aceitar - Fale com suporte 24h 💬</div>
+                            </div>
+                          )}
+
+                          {p.status!=="aceito" && p.status!=="finalizado" && p.status!=="cancelado" && (
+                            <div className="mt-3">
+                              {p.montador_id || p.montadorId ? (
+                                <div className="text-[10px] bg-red-50 p-2 rounded-xl text-red-700">❌ Já tem montador - Não pode cancelar</div>
+                              ) : (
+                                <div className="space-y-2">
+                                  <div className="text-[10px] text-gray-600">Status: {p.status} - {p.status==="aguardando_comprovante"?"Envie comprovante":p.status==="aguardando_confirmacao_adm"?"Aguardando ADM confirmar":"Aguardando montador aceitar"}</div>
+                                  <button type="button" onClick={()=>cancelarPedido(p.id)} className="bg-red-600 text-white w-full py-3 rounded-xl font-bold text-xs">❌ Cancelar Pedido - Sem montador ainda</button>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {p.status==="finalizado" && (
+                            <div className="mt-3 bg-green-50 p-3 rounded-xl text-xs">
+                              <div>✅ Finalizado {p.finalizadoAt? new Date(p.finalizadoAt).toLocaleString("pt-BR") : p.finalizado_at? new Date(p.finalizado_at).toLocaleString("pt-BR"):""}</div>
+                              {montador && <div>Por: {montador.nome} ⭐{Number(montador.avaliacao||5).toFixed(1)}</div>}
+                              {p.avaliacao ? <div>Avaliação: {p.avaliacao.nota} ⭐ - "{p.avaliacao.comentario}"</div> : <div className="mt-2 text-yellow-700 font-bold">⭐ Avalie na lista principal</div>}
+                            </div>
+                          )}
+
+                          {p.status==="cancelado" && <div className="mt-2 text-xs bg-red-50 p-2 rounded-xl">❌ Cancelado em {p.cancelado_at? new Date(p.cancelado_at).toLocaleString("pt-BR"):""} - Fale com suporte se pagou</div>}
+                        </div>
+                      )
+                    })
+                  })()}
+                </div>
+                <div className="p-3 bg-white border-t flex gap-2">
+                  <button type="button" onClick={()=>setShowPedidoModal(false)} className="flex-1 bg-gray-100 py-3 rounded-xl font-bold text-sm">Fechar</button>
+                  <button type="button" onClick={()=>{ setShowPedidoModal(false); setShowSupportChat(true); }} className="flex-1 bg-green-600 text-white py-3 rounded-xl font-bold text-sm">💬 Suporte 24h</button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Zona de Perigo - Mantida com todas funções */}
           <div className="mt-8 bg-red-50 border-2 border-red-200 p-5 rounded-3xl">
             <div className="font-bold text-red-700">⚠️ Zona de Perigo - LGPD - Ao Vivo 🟢</div>
@@ -982,8 +1080,20 @@ export default function App() {
                 {!selectedSupportUser ? <div className="flex-1 flex items-center justify-center text-gray-400 text-sm">Selecione conversa para responder em tempo real 💬</div> : (
                   <>
                     <div className="bg-[#0A2A6B] text-white p-3 flex justify-between items-center">
-                      <div><b className="text-sm">Chat com {users.find(u=>u.id==selectedSupportUser)?.nome||""}</b><div className="text-[10px] opacity-70">Tempo real 🔔</div></div>
-                      <button type="button" onClick={()=>{ const novos = supportMessages.map(m=> m.user_id==selectedSupportUser && !m.from_admin ? {...m, lida:true} : m); setSupportMessages(novos); }} className="text-[10px] bg-white/20 px-2 py-1 rounded-full">Marcar lido</button>
+                      <div><b className="text-sm">Chat com {users.find(u=>u.id==selectedSupportUser)?.nome||""}</b><div className="text-[10px] opacity-70">Tempo real 🟢 Ao Vivo - {supportMessages.filter(m=>m.user_id==selectedSupportUser && !m.from_admin && !m.lida).length} não lidas</div></div>
+                      <button type="button" onClick={async ()=>{
+                        const idsParaMarcar = supportMessages.filter(m=>m.user_id==selectedSupportUser && !m.from_admin && !m.lida).map(m=>m.id);
+                        if(idsParaMarcar.length===0) return notify("Nenhuma mensagem não lida","info",1);
+                        const novos = supportMessages.map(m=> m.user_id==selectedSupportUser && !m.from_admin ? {...m, lida:true} : m);
+                        setSupportMessages(novos);
+                        localStorage.setItem("ccs_support", JSON.stringify(novos));
+                        try{
+                          for(let id of idsParaMarcar){
+                            await supabase.from("support_messages").update({ lida: true }).eq("id", id);
+                          }
+                        }catch(e){ console.log("Erro marcar lida Supabase", e); }
+                        notify(`✅ ${idsParaMarcar.length} mensagem(ns) marcada(s) como lida(s) 🟢`,"success",2);
+                      }} className="text-[10px] bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-full font-bold">✅ Marcar como lida ({supportMessages.filter(m=>m.user_id==selectedSupportUser && !m.from_admin && !m.lida).length})</button>
                     </div>
                     <div className="flex-1 overflow-auto p-3 space-y-2 bg-gray-50">
                       {supportMessages.filter(m=>m.user_id==selectedSupportUser).map(msg=>(
