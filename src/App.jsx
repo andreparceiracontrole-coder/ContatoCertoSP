@@ -716,7 +716,7 @@ export default function App() {
             <div className="absolute inset-0 bg-gradient-to-r from-[#0A2A6B]/95 via-[#0A2A6B]/80 to-[#0A2A6B]/40"></div>
             <div className="relative px-6 py-16 md:py-24 max-w-6xl mx-auto">
               <h1 className="font-extrabold text-white text-4xl md:text-6xl">Montadores de Móveis Profissionais em Todo SP</h1>
-              <p className="text-white/80 mt-4 text-lg max-w-2xl">330 serviços oficiais com atualização em tempo real 🟢 - PIX {PIX_KEY} - Suporte 24h 💬</p>
+              <p className="text-white/80 mt-4 text-lg max-w-2xl">330 serviços oficiais com atualização em tempo real 🟢 - Pagamento seguro 10% + 90% - Suporte 24h 💬</p>
               <div className="mt-8 flex flex-col sm:flex-row gap-4 max-w-md">
                 <button type="button" onClick={()=>{ setAuthMode("cliente"); setIsLogin(false); setShowAuth(true); }} className="bg-white text-[#0A2A6B] rounded-2xl py-5 font-bold flex-1">SOU CLIENTE</button>
                 <button type="button" onClick={()=>{ setAuthMode("montador"); setIsLogin(false); setShowAuth(true); }} className="bg-[#FF7A00] text-white rounded-2xl py-5 font-bold flex-1">SOU MONTADOR</button>
@@ -732,7 +732,7 @@ export default function App() {
                 <div className="text-sm mt-2 space-y-2">
                   <div>1️⃣ <b>Cadastro</b> → Busca serviço → Adiciona no carrinho</div>
                   <div>2️⃣ <b>Fazer pedido</b> → Abre aba para colocar <b>endereço completo</b> + enviar <b>comprovante dos 10%</b></div>
-                  <div>3️⃣ <b>Taxa de agendamento 10%:</b> Você paga apenas 10% do valor total via PIX <b>{PIX_KEY}</b> para o site confirmar agendamento. Ex: Serviço R$ 100 = taxa R$ 10</div>
+                  <div>3️⃣ <b>Taxa de agendamento 10%:</b> Você paga apenas 10% do valor total via PIX do site (visível ao fazer pedido) para confirmar agendamento. Ex: Serviço R$ 100 = taxa R$ 10</div>
                   <div>4️⃣ <b>Envio comprovante:</b> Comprovante dos 10% vai para ADM no painel + WhatsApp 18991488302 automaticamente com som 🔔</div>
                   <div>5️⃣ <b>ADM confirma</b> → Libera para montadores → Montador aceita (🔔🔔)</div>
                   <div>6️⃣ <b>Montador a caminho:</b> Você vê informações completas do montador que aceitou</div>
@@ -758,7 +758,7 @@ export default function App() {
           <section id="quem-somos" className="px-4 py-12 max-w-6xl mx-auto">
             <h2 className="font-bold text-3xl text-[#0A2A6B]">Quem Somos</h2>
             <div className="mt-6 bg-white rounded-3xl p-6 shadow">
-              <p className="text-sm">Contato Certo SP conecta clientes a montadores profissionais em todo SP com pagamento seguro via PIX {PIX_KEY}, suporte 24h 💬, sistema de bônus e tempo real 🟢. Mais de 55 usuários cadastrados, 42 serviços finalizados.</p>
+              <p className="text-sm">Contato Certo SP conecta clientes a montadores profissionais em todo SP com pagamento seguro via taxa 10% + 90% na entrega, suporte 24h 💬, sistema de bônus e tempo real 🟢. Mais de 55 usuários cadastrados, 42 serviços finalizados.</p>
               <div className="mt-4 grid grid-cols-3 gap-3 text-center">
                 <div className="bg-[#0A2A6B] text-white p-3 rounded-2xl"><div className="text-xl font-bold">35</div><div className="text-xs">Clientes</div></div>
                 <div className="bg-[#FF7A00] text-white p-3 rounded-2xl"><div className="text-xl font-bold">20</div><div className="text-xs">Montadores</div></div>
@@ -783,9 +783,43 @@ export default function App() {
             <div className="bg-gradient-to-r from-[#0A2A6B] to-green-600 text-white rounded-3xl p-6">
               <h2 className="font-bold text-2xl">Suporte 24h 💬</h2>
               <p className="text-sm mt-2">Clique no ícone 💬 no canto inferior direito para falar com ADM em tempo real. Resposta em até 5min com som 🔔</p>
-              <div className="mt-3 text-xs opacity-80">WhatsApp: {WHATSAPP} | Email: {PIX_KEY}</div>
+              <div className="mt-3 text-xs opacity-80">WhatsApp: {WHATSAPP} | Instagram e TikTok abaixo</div>
             </div>
           </section>
+
+          {/* Redes Sociais - TikTok e Instagram */}
+          <section className="px-4 py-12 max-w-6xl mx-auto">
+            <div className="bg-white rounded-3xl p-6 shadow text-center">
+              <h3 className="font-bold text-xl text-[#0A2A6B]">Siga nossas redes sociais 🟢</h3>
+              <p className="text-xs text-gray-500 mt-1">Acompanhe dicas, bastidores e montagens em tempo real</p>
+              <div className="mt-6 flex justify-center gap-4">
+                <a href="https://www.tiktok.com/@contatocerto_prestadores?_r=1&_t=ZS-99Tk8jT42GS" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-black text-white px-6 py-3 rounded-2xl font-bold text-sm hover:scale-105 transition-transform">
+                  <span className="text-lg">🎵</span> TikTok
+                </a>
+                <a href="https://www.instagram.com/contatocerto.of?igsh=MWZwNWw1NWViNHdyaQ==" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-orange-500 text-white px-6 py-3 rounded-2xl font-bold text-sm hover:scale-105 transition-transform">
+                  <span className="text-lg">📸</span> Instagram
+                </a>
+              </div>
+              <div className="mt-4 flex justify-center gap-3">
+                <a href="https://www.tiktok.com/@contatocerto_prestadores?_r=1&_t=ZS-99Tk8jT42GS" target="_blank" className="w-12 h-12 bg-black rounded-full flex items-center justify-center text-white font-bold">TT</a>
+                <a href="https://www.instagram.com/contatocerto.of?igsh=MWZwNWw1NWViNHdyaQ==" target="_blank" className="w-12 h-12 bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400 rounded-full flex items-center justify-center text-white font-bold">IG</a>
+              </div>
+              <div className="mt-4 text-[10px] text-gray-400">contatocerto.of no Instagram • @contatocerto_prestadores no TikTok</div>
+            </div>
+          </section>
+
+          {/* Footer */}
+          <footer className="bg-[#0A2A6B] text-white py-8 px-4 mt-8">
+            <div className="max-w-6xl mx-auto text-center">
+              <div className="font-bold text-lg">CONTATO CERTO SP 🟢 Ao Vivo</div>
+              <div className="text-xs opacity-70 mt-2">Montadores profissionais em todo SP | Taxa 10% + 90% na entrega | Suporte 24h 💬 {WHATSAPP}</div>
+              <div className="mt-4 flex justify-center gap-4">
+                <a href="https://www.tiktok.com/@contatocerto_prestadores?_r=1&_t=ZS-99Tk8jT42GS" target="_blank" className="bg-white/20 px-4 py-2 rounded-full text-xs font-bold">TikTok 🎵</a>
+                <a href="https://www.instagram.com/contatocerto.of?igsh=MWZwNWw1NWViNHdyaQ==" target="_blank" className="bg-white/20 px-4 py-2 rounded-full text-xs font-bold">Instagram 📸</a>
+              </div>
+              <div className="mt-4 text-[10px] opacity-50">© 2026 Contato Certo SP - Todos direitos reservados | Pagamento seguro | Tempo real 🟢</div>
+            </div>
+          </footer>
         </>
       )}
 
@@ -1716,8 +1750,11 @@ function MontadorPanel({ currentUser, setCurrentUser, users, orders, isLive, ace
             <div className="bg-gray-800 text-white p-4 rounded-2xl"><div className="text-xs">Avaliação</div><div className="text-xl font-bold">⭐ {Number(currentUser.avaliacao||5).toFixed(1)}</div></div>
           </div>
           <div className="bg-white p-4 rounded-3xl shadow">
-            <div className="font-bold">Como funciona pagamento - Tempo Real 🟢</div>
-            <div className="text-xs mt-2">NOVO MODELO 10%+90%: Cliente paga 10% para site (taxa agendamento). Você aceita, faz serviço, cliente paga 90% direto para seu PIX {currentUser.pix} em até 24h. No 6º serviço (bônus) recebe 100%! Watchdog garante site nunca offline &gt;5s.</div>
+            <div className="font-bold">Como funciona pagamento - Tempo Real 🟢 - Modelo 10%+90%</div>
+            <div className="text-xs mt-2 space-y-1">
+              <div>NOVO MODELO: Cliente paga 10% taxa agendamento para site via PIX <b>{PIX_KEY}</b> (visível apenas para você e cliente no pagamento).</div>
+              <div>Você aceita, faz serviço, cliente paga 90% direto para seu PIX {currentUser.pix} na hora. No 6º serviço bônus 100%! Watchdog garante site nunca offline &gt;5s.</div>
+            </div>
           </div>
           <div className="bg-white p-4 rounded-3xl shadow">
             <div className="font-bold">Histórico de ganhos - Ao Vivo 🟢</div>
