@@ -685,6 +685,48 @@ export default function App() {
             </div>
           </div>
 
+          {/* Cards Pedidos - Realizados, Finalizados, Em Andamento, Cancelados */}
+          {(()=>{
+            const meusPedidos = orders.filter(o=>o.cliente_id==currentUser.id||o.clienteId==currentUser.id);
+            const realizados = meusPedidos.length;
+            const finalizados = meusPedidos.filter(o=>o.status==="finalizado").length;
+            const emAndamento = meusPedidos.filter(o=> ["aguardando_comprovante","aguardando_confirmacao_adm","aguardando_montador","aceito"].includes(o.status)).length;
+            const cancelados = meusPedidos.filter(o=>o.status==="cancelado").length;
+            const totalGasto = meusPedidos.filter(o=>o.status==="finalizado").reduce((s,p)=>s+p.total,0);
+            return (
+              <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="bg-[#0A2A6B] text-white p-4 rounded-2xl shadow">
+                  <div className="flex justify-between items-start">
+                    <div><div className="text-[10px] opacity-80">📦 Pedidos Realizados</div><div className="text-2xl font-bold">{realizados}</div></div>
+                    <div className="bg-white/20 w-8 h-8 rounded-full flex items-center justify-center text-sm">📦</div>
+                  </div>
+                  <div className="text-[10px] mt-2 opacity-70">{realizados>=5? `${Math.floor(realizados/5)} ciclo(s) completado(s)` : `${5-realizados%5} para limpeza auto`}</div>
+                </div>
+                <div className="bg-green-600 text-white p-4 rounded-2xl shadow">
+                  <div className="flex justify-between items-start">
+                    <div><div className="text-[10px] opacity-80">✅ Finalizados</div><div className="text-2xl font-bold">{finalizados}</div></div>
+                    <div className="bg-white/20 w-8 h-8 rounded-full flex items-center justify-center text-sm">✅</div>
+                  </div>
+                  <div className="text-[10px] mt-2 opacity-70">{finalizados>0? `${formatBRL(totalGasto)} gastos | ${realizados>0? Math.round((finalizados/realizados)*100):0}% conversão` : "Nenhum finalizado ainda"}</div>
+                </div>
+                <div className="bg-[#FF7A00] text-white p-4 rounded-2xl shadow">
+                  <div className="flex justify-between items-start">
+                    <div><div className="text-[10px] opacity-80">⏳ Em Andamento</div><div className="text-2xl font-bold">{emAndamento}</div></div>
+                    <div className="bg-white/20 w-8 h-8 rounded-full flex items-center justify-center text-sm animate-pulse">⏳</div>
+                  </div>
+                  <div className="text-[10px] mt-2 opacity-70">{emAndamento>0? "Acompanhe em tempo real 🟢" : "Nenhum em andamento"}</div>
+                </div>
+                <div className="bg-red-600 text-white p-4 rounded-2xl shadow">
+                  <div className="flex justify-between items-start">
+                    <div><div className="text-[10px] opacity-80">❌ Cancelados</div><div className="text-2xl font-bold">{cancelados}</div></div>
+                    <div className="bg-white/20 w-8 h-8 rounded-full flex items-center justify-center text-sm">❌</div>
+                  </div>
+                  <div className="text-[10px] mt-2 opacity-70">{cancelados>0? `${Math.round((cancelados/realizados)*100)}% taxa cancel.` : "Nenhum cancelado"}</div>
+                </div>
+              </div>
+            )
+          })()}
+
           {/* Banner Limpeza Automática */}
           {orders.filter(o=>o.cliente_id==currentUser.id||o.clienteId==currentUser.id).length>0 && orders.filter(o=>o.cliente_id==currentUser.id||o.clienteId==currentUser.id).length %5===4 && (
             <div className="mt-4 bg-yellow-50 border border-yellow-300 p-3 rounded-2xl text-xs text-yellow-800">
