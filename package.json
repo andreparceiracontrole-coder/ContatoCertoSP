@@ -1,7 +1,7 @@
 {
   "name": "contato-certo-sp",
   "private": true,
-  "version": "1.0.202609042232",
+  "version": "1.0.20260904223853",
   "type": "module",
   "scripts": {
     "dev": "vite",
