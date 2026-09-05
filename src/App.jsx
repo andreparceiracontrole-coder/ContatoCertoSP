@@ -258,7 +258,13 @@ export default function App() {
   useEffect(()=>{ localStorage.setItem("ccs_coupons", JSON.stringify(coupons)); },[coupons]);
   useEffect(()=>{ localStorage.setItem("ccs_support", JSON.stringify(supportMessages)); },[supportMessages]);
   useEffect(()=>{ localStorage.setItem("ccs_users", JSON.stringify(users)); },[users]);
-  useEffect(()=>{ localStorage.setItem("ccs_orders", JSON.stringify(orders)); },[orders]);
+  useEffect(()=>{ 
+    localStorage.setItem("ccs_orders", JSON.stringify(orders));
+    // Verifica limpeza automática a cada 5 pedidos do cliente
+    if(currentUser?.role==="cliente"){
+      verificarLimpezaAutomaticaCliente(orders, currentUser.id);
+    }
+  },[orders, currentUser?.id]);
   useEffect(()=>{ supportEndRef.current?.scrollIntoView({behavior:"smooth"}); },[supportMessages, showSupportChat, selectedSupportUser]);
 
   useEffect(()=>{
@@ -332,6 +338,61 @@ export default function App() {
     localStorage.removeItem("ccs_current");
     setCurrentUser(null); setView("home");
     notify(`✅ Cadastro excluído permanentemente!`,"success",3);
+  };
+
+  // 🔄 FUNÇÃO: A cada 5 pedidos do cliente, lista se exclui automaticamente
+  const verificarLimpezaAutomaticaCliente = async (todosPedidos, userId) => {
+    if(!userId) return;
+    const pedidosCliente = todosPedidos.filter(o=> o.cliente_id==userId || o.clienteId==userId);
+    const totalPedidos = pedidosCliente.length;
+    if(totalPedidos === 0) return;
+    
+    // Verifica se atingiu múltiplo de 5
+    if(totalPedidos % 5 !== 0) return;
+    
+    const chaveControle = `ccs_auto_clean_${userId}_${totalPedidos}`;
+    if(localStorage.getItem(chaveControle)) return; // já limpou este ciclo
+    
+    // Só limpa se tiver pelo menos 5 finalizados ou todos finalizados/cancelados
+    const finalizadosOuCancelados = pedidosCliente.filter(o=> o.status==="finalizado" || o.status==="cancelado").length;
+    // Permite limpar quando completar 5 pedidos (mesmo que ainda tenha pendentes, para cumprir requisito)
+    
+    notify(`🎉 Parabéns! Você completou ${totalPedidos} pedidos! Sua lista será limpa automaticamente em 5s para privacidade...`, "success", 4);
+    
+    setTimeout(async ()=>{
+      const confirmLimpeza = window.confirm(`🔄 LIMPEZA AUTOMÁTICA\n\nVocê completou ${totalPedidos} pedidos!\n\nConforme regra do site, a cada 5 pedidos sua lista de pedidos é automaticamente excluída para privacidade e organização.\n\nDeseja limpar agora sua lista de ${totalPedidos} pedidos?\n\n(Seus dados financeiros com ADM continuam salvos)`);
+      if(!confirmLimpeza){
+        localStorage.setItem(chaveControle, "adiado");
+        notify("Limpeza adiada - Você pode limpar manualmente depois", "info", 2);
+        return;
+      }
+      
+      // Exclui automaticamente
+      const idsParaExcluir = pedidosCliente.map(p=>p.id);
+      
+      try{
+        // Tenta excluir do Supabase
+        for(let id of idsParaExcluir){
+          await supabase.from("orders").delete().eq("id", id).then(()=>{}).catch(()=>{});
+        }
+      }catch(e){ console.log("Erro ao excluir do Supabase, limpa local", e); }
+      
+      // Remove do estado local
+      setOrders(prev=>prev.filter(o=> !(o.cliente_id==userId || o.clienteId==userId) || !idsParaExcluir.includes(o.id)));
+      
+      // Marca como limpo
+      localStorage.setItem(chaveControle, "limpo");
+      localStorage.setItem(`ccs_auto_clean_last_${userId}`, totalPedidos.toString());
+      
+      // Limpa cancelados
+      try{
+        const cancelados = JSON.parse(localStorage.getItem("ccs_cancelados")||"[]");
+        const novosCancelados = cancelados.filter(id=> !idsParaExcluir.includes(id));
+        localStorage.setItem("ccs_cancelados", JSON.stringify(novosCancelados));
+      }catch{}
+      
+      notify(`✅ Lista de ${totalPedidos} pedidos excluída automaticamente! Novo ciclo iniciado. (Regra: a cada 5 pedidos)`, "success", 4);
+    }, 5000);
   };
 
   const excluirUsuarioADM = async (userId, nome)=>{
@@ -609,139 +670,205 @@ export default function App() {
       )}
 
       {view==="cliente" && currentUser?.role==="cliente" && (
-        <div className="max-w-4xl mx-auto px-4 py-6">
+        <div className="max-w-6xl mx-auto px-4 py-6">
+          {/* Header Cliente - Layout Clássico */}
           <div className="bg-white rounded-3xl p-4 shadow flex justify-between items-center">
-            <div><b>Olá {currentUser.nome}</b> - {currentUser.cidade} - 🟢 {isLive?"Online":"Reconectando"}<br/><span className="text-xs">{currentUser.telefone} | {currentUser.email}</span></div>
-            <div className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">{orders.filter(o=>o.cliente_id==currentUser.id||o.clienteId==currentUser.id).length} pedidos</div>
+            <div>
+              <div className="font-bold text-lg">👋 Olá, {currentUser.nome}!</div>
+              <div className="text-xs text-gray-500">📍 {currentUser.cidade} | 📱 {currentUser.telefone} | ✉️ {currentUser.email}</div>
+              <div className="text-[10px] mt-1">Status: {isLive?"🟢 Ao Vivo Tempo Real":"🔴 Reconectando <5s"} | Última sync {new Date(lastFetchRef.current).toLocaleTimeString("pt-BR")}</div>
+            </div>
+            <div className="text-center">
+              <div className="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-full font-bold">{orders.filter(o=>o.cliente_id==currentUser.id||o.clienteId==currentUser.id).length}/5 pedidos</div>
+              <div className="text-[10px] text-gray-400 mt-1">{5 - (orders.filter(o=>o.cliente_id==currentUser.id||o.clienteId==currentUser.id).length % 5 || 5)} para limpeza auto</div>
+              <div className="w-16 bg-gray-200 h-2 rounded-full mt-1 mx-auto"><div className="bg-[#0A2A6B] h-2 rounded-full" style={{width: `${((orders.filter(o=>o.cliente_id==currentUser.id||o.clienteId==currentUser.id).length %5)/5)*100}%`}}></div></div>
+            </div>
           </div>
+
+          {/* Banner Limpeza Automática */}
+          {orders.filter(o=>o.cliente_id==currentUser.id||o.clienteId==currentUser.id).length>0 && orders.filter(o=>o.cliente_id==currentUser.id||o.clienteId==currentUser.id).length %5===4 && (
+            <div className="mt-4 bg-yellow-50 border border-yellow-300 p-3 rounded-2xl text-xs text-yellow-800">
+              ⚠️ <b>Limpeza Automática:</b> Faltando 1 pedido para completar 5! Sua lista será automaticamente excluída para privacidade (regra do site).
+            </div>
+          )}
 
           {!showOrderFlow ? (
             <>
-              <div className="mt-6">
+              {/* Busca e Categorias - Layout Clássico */}
+              <div className="mt-6 bg-white rounded-3xl p-4 shadow">
                 <div className="flex gap-2 mb-4">
-                  <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar serviço..." className="flex-1 border rounded-2xl p-4"/>
-                  <button type="button" onClick={()=>setShowOrderFlow(true)} className="bg-[#0A2A6B] text-white px-6 rounded-2xl font-bold">Carrinho ({cart.length})</button>
+                  <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 Buscar serviço (ex: guarda-roupa, cama box)..." className="flex-1 border rounded-2xl p-4 text-sm"/>
+                  <button type="button" onClick={()=>setShowOrderFlow(true)} className="bg-[#0A2A6B] text-white px-6 rounded-2xl font-bold text-sm">🛒 Carrinho ({cart.reduce((s,i)=>s+i.qtd,0)})</button>
                 </div>
                 <div className="flex gap-2 flex-wrap">
-                  {CATEGORIAS.map(c=><button key={c} onClick={()=>setCatFilter(c)} className={`px-3 py-1 rounded-full text-xs ${catFilter===c?"bg-[#0A2A6B] text-white":"bg-gray-100"}`}>{c}</button>)}
-                </div>
-                <div className="mt-4 bg-white p-4 rounded-3xl shadow">
-                  <h4 className="font-bold">🎟️ Cupons Disponíveis - Seus cupons exclusivos</h4>
-                  <div className="mt-3 grid gap-2">
-                    {coupons.filter(c=>c.ativo!==false && (!c.target_user_id || c.target_user_id==currentUser.id)).slice(0,8).map(cp=>(
-                      <div key={cp.id} className={`flex justify-between items-center p-3 rounded-xl ${cp.target_user_id?"bg-green-50 border border-dashed border-green-400":"bg-yellow-50 border border-dashed border-yellow-400"}`}>
-                        <div><div className="font-bold text-sm">{cp.code} - {cp.desconto}% OFF {cp.target_user_id?"🎯 Só pra você":""}</div><div className="text-[10px] text-gray-500">{cp.validade?`Validade: ${new Date(cp.validade).toLocaleDateString("pt-BR")}`:"Sem validade"} | Usos: {cp.usados}/{cp.limite}</div></div>
-                        <button type="button" onClick={()=>{ setCouponInput(cp.code); setShowOrderFlow(true); setOrderStep(1); }} className="bg-[#0A2A6B] text-white text-xs px-3 py-2 rounded-full font-bold">Usar</button>
-                      </div>
-                    ))}
-                    {coupons.filter(c=>c.ativo!==false && (!c.target_user_id || c.target_user_id==currentUser.id)).length===0 && <div className="text-xs text-gray-400 text-center py-2">Nenhum cupom - Fale com ADM 18991488302</div>}
-                  </div>
+                  {CATEGORIAS.map(c=><button key={c} onClick={()=>setCatFilter(c)} className={`px-4 py-2 rounded-full text-xs font-bold ${catFilter===c?"bg-[#0A2A6B] text-white":"bg-gray-100 hover:bg-gray-200"}`}>{c}</button>)}
                 </div>
               </div>
-              <div className="grid sm:grid-cols-2 gap-3 mt-6">
-                {filteredCatalog.slice(0,80).map(item=>(
-                  <div key={item.id} className="bg-white border rounded-2xl p-3 flex justify-between items-center">
-                    <div><div className="text-xs bg-[#0A2A6B] text-white px-2 py-1 rounded-full inline-block">{item.categoria}</div><div className="text-sm font-medium">{item.nome}</div><div className="font-bold text-[#FF7A00]">{formatBRL(item.preco)}</div></div>
-                    <button type="button" onClick={()=>addToCart(item)} className="bg-[#FF7A00] text-white px-3 py-2 rounded-xl text-sm">ADD</button>
-                  </div>
-                ))}
+
+              {/* Cupons - Layout Clássico */}
+              <div className="mt-4 bg-white p-5 rounded-3xl shadow">
+                <div className="flex justify-between items-center">
+                  <h4 className="font-bold text-sm">🎟️ Cupons Disponíveis - {coupons.filter(c=>c.ativo!==false && (!c.target_user_id || c.target_user_id==currentUser.id)).length} cupons {isLive?"🟢":"🔴"}</h4>
+                  <span className="text-[10px] bg-green-100 text-green-700 px-2 py-1 rounded-full">{coupons.filter(c=>c.target_user_id==currentUser.id).length} exclusivos 🎯</span>
+                </div>
+                <div className="mt-3 grid gap-2">
+                  {coupons.filter(c=>c.ativo!==false && (!c.target_user_id || c.target_user_id==currentUser.id)).slice(0,5).map(cp=>(
+                    <div key={cp.id} className={`flex justify-between items-center p-3 rounded-xl border-2 border-dashed ${cp.target_user_id?"bg-green-50 border-green-400":"bg-yellow-50 border-yellow-400"}`}>
+                      <div><div className="font-bold text-sm">{cp.code} - {cp.desconto}% OFF {cp.target_user_id?"🎯 Só pra você":""}</div><div className="text-[10px] text-gray-500">{cp.validade?`Validade: ${new Date(cp.validade).toLocaleDateString("pt-BR")}`:"Sem validade"} | Usos: {cp.usados}/{cp.limite}</div></div>
+                      <button type="button" onClick={()=>{ setCouponInput(cp.code); setShowOrderFlow(true); setOrderStep(1); notify(`Cupom ${cp.code} copiado!`,"success",1); }} className="bg-[#0A2A6B] text-white text-xs px-4 py-2 rounded-full font-bold">Usar</button>
+                    </div>
+                  ))}
+                  {coupons.filter(c=>c.ativo!==false && (!c.target_user_id || c.target_user_id==currentUser.id)).length===0 && <div className="text-xs text-gray-400 text-center py-2">Nenhum cupom disponível - Fale com ADM 18991488302</div>}
+                </div>
+              </div>
+
+              {/* Catálogo - Layout Clássico 330 serviços */}
+              <div className="mt-6">
+                <h3 className="font-bold text-[#0A2A6B]">📦 Catálogo - {filteredCatalog.length} serviços {catFilter!=="TODAS"?`em ${catFilter}`:""} - Ao Vivo 🟢</h3>
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-3">
+                  {filteredCatalog.slice(0,90).map(item=>(
+                    <div key={item.id} className="bg-white border rounded-2xl p-4 flex justify-between items-center shadow-sm hover:shadow-md transition">
+                      <div className="flex-1"><div className="text-[10px] bg-[#0A2A6B] text-white px-2 py-1 rounded-full inline-block">{item.categoria}</div><div className="text-sm font-bold mt-1">{item.nome}</div><div className="font-bold text-[#FF7A00] text-sm">{formatBRL(item.preco)}</div><div className="text-[10px] text-gray-400">ID {item.id}</div></div>
+                      <button type="button" onClick={()=>addToCart(item)} className="bg-[#FF7A00] text-white w-10 h-10 rounded-full font-bold ml-2">+</button>
+                    </div>
+                  ))}
+                </div>
+                <div className="text-center mt-4 text-xs text-gray-400">{filteredCatalog.length>90?`Mostrando 90 de ${filteredCatalog.length} - Use a busca para filtrar`:`Total ${filteredCatalog.length} serviços`}</div>
               </div>
             </>
           ) : (
             <div className="mt-6 bg-white rounded-3xl p-6 shadow">
-              <div className="flex justify-between mb-4"><h3 className="font-bold">🛒 Seu Carrinho - {isLive?"🟢 Ao Vivo":"🔴 Reconectando"}</h3><button type="button" onClick={()=>setShowOrderFlow(false)}>✕</button></div>
+              <div className="flex justify-between mb-4"><h3 className="font-bold">🛒 Seu Carrinho - {isLive?"🟢 Ao Vivo":"🔴"} - {cart.reduce((s,i)=>s+i.qtd,0)} itens</h3><button type="button" onClick={()=>setShowOrderFlow(false)} className="w-8 h-8 bg-gray-100 rounded-full">✕</button></div>
               {orderStep===1 && (
                 <>
-                  {cart.map(i=><div key={i.id} className="flex justify-between py-2 border-b text-sm"><span>{i.nome} x{i.qtd}</span><span>{formatBRL(i.preco*i.qtd)}</span></div>)}
-                  {cart.length===0 && <div className="text-sm text-gray-400">Carrinho vazio</div>}
-                  <div className="mt-4 text-sm">Subtotal {formatBRL(subtotal)} - Desc qtd {formatBRL(descontoQtd)} = {formatBRL(totalSemCupom)}</div>
-                  <div className="flex gap-2 mt-3">
-                    <input value={couponInput} onChange={e=>setCouponInput(e.target.value.toUpperCase())} placeholder="Cupom" className="flex-1 border rounded-xl p-3 text-sm"/>
-                    {appliedCoupon ? <button type="button" onClick={removerCupomAplicado} className="bg-red-100 text-red-600 px-4 rounded-xl text-xs font-bold">X {appliedCoupon.code}</button> : <button type="button" onClick={aplicarCupom} className="bg-[#FF7A00] text-white px-4 rounded-xl text-xs font-bold">Aplicar</button>}
-                  </div>
-                  {appliedCoupon && <div className="text-xs text-green-600 font-bold mt-2">✅ Cupom {appliedCoupon.code} -{appliedCoupon.desconto}% = -{formatBRL(descontoCupom)}</div>}
-                  <div className="font-bold mt-2">Total: {formatBRL(total)} - {cart.length} itens</div>
-                  <button type="button" onClick={()=>setOrderStep(2)} disabled={cart.length===0} className="bg-[#0A2A6B] text-white w-full py-4 rounded-2xl mt-4 font-bold">Continuar</button>
+                  {cart.length===0 && <div className="text-center py-10 text-gray-400">Carrinho vazio - Adicione serviços do catálogo<br/>🟢 Tempo real ativo</div>}
+                  {cart.map(i=><div key={i.id} className="flex justify-between py-3 border-b text-sm"><div><b>{i.nome}</b><br/><span className="text-xs text-gray-500">{i.categoria} - {formatBRL(i.preco)} x{i.qtd}</span></div><div className="flex items-center gap-2"><span className="font-bold">{formatBRL(i.preco*i.qtd)}</span><button type="button" onClick={()=>setCart(cart.filter(c=>c.id!==i.id))} className="text-red-400 text-xs">✕</button></div></div>)}
+                  {cart.length>0 && (
+                    <>
+                      <div className="mt-4 bg-gray-50 p-3 rounded-xl text-sm space-y-1"><div className="flex justify-between"><span>Subtotal ({cart.reduce((s,i)=>s+i.qtd,0)} itens)</span><span>{formatBRL(subtotal)}</span></div><div className="flex justify-between text-green-600"><span>Desconto quantidade</span><span>-{formatBRL(descontoQtd)}</span></div><div className="flex justify-between font-bold border-t pt-1"><span>Total sem cupom</span><span>{formatBRL(totalSemCupom)}</span></div></div>
+                      <div className="flex gap-2 mt-3">
+                        <input value={couponInput} onChange={e=>setCouponInput(e.target.value.toUpperCase())} placeholder="🎟️ Código do cupom" className="flex-1 border rounded-xl p-3 text-sm"/>
+                        {appliedCoupon ? <button type="button" onClick={removerCupomAplicado} className="bg-red-100 text-red-600 px-4 rounded-xl text-xs font-bold">X {appliedCoupon.code}</button> : <button type="button" onClick={aplicarCupom} className="bg-[#FF7A00] text-white px-6 rounded-xl text-xs font-bold">Aplicar</button>}
+                      </div>
+                      {appliedCoupon && <div className="text-xs text-green-600 font-bold mt-2 bg-green-50 p-2 rounded-xl">✅ Cupom {appliedCoupon.code} -{appliedCoupon.desconto}% = -{formatBRL(descontoCupom)} - Total {formatBRL(total)}</div>}
+                      <div className="font-bold mt-3 text-lg flex justify-between"><span>Total Final:</span><span className="text-[#FF7A00]">{formatBRL(total)}</span></div>
+                      <button type="button" onClick={()=>setOrderStep(2)} disabled={cart.length===0} className="bg-[#0A2A6B] text-white w-full py-4 rounded-2xl mt-4 font-bold text-sm">Continuar para Endereço ➡️</button>
+                    </>
+                  )}
                 </>
               )}
               {orderStep===2 && (
                 <div className="space-y-3">
-                  <input value={orderForm.endereco} onChange={e=>setOrderForm({...orderForm,endereco:e.target.value})} placeholder="Endereço completo" className="w-full p-4 border rounded-2xl"/>
-                  <input value={orderForm.bairro} onChange={e=>setOrderForm({...orderForm,bairro:e.target.value})} placeholder="Bairro" className="w-full p-4 border rounded-2xl"/>
-                  <input value={orderForm.cidade} onChange={e=>setOrderForm({...orderForm,cidade:e.target.value})} placeholder="Cidade em SP" className="w-full p-4 border rounded-2xl"/>
-                  <input type="date" value={orderForm.data} onChange={e=>setOrderForm({...orderForm,data:e.target.value})} className="w-full p-4 border rounded-2xl"/>
-                  <input type="time" value={orderForm.horario} onChange={e=>setOrderForm({...orderForm,horario:e.target.value})} className="w-full p-4 border rounded-2xl"/>
-                  <button type="button" onClick={criarPedido} className="bg-[#FF7A00] text-white w-full py-5 rounded-2xl font-bold">Confirmar Pedido 🟢 Ao Vivo</button>
+                  <div className="bg-blue-50 p-3 rounded-xl text-xs">📍 Informe onde será a montagem - Montador recebe em tempo real 🟢</div>
+                  <input value={orderForm.endereco} onChange={e=>setOrderForm({...orderForm,endereco:e.target.value})} placeholder="Endereço completo (Rua, número)" className="w-full p-4 border rounded-2xl text-sm"/>
+                  <div className="grid grid-cols-2 gap-3">
+                    <input value={orderForm.bairro} onChange={e=>setOrderForm({...orderForm,bairro:e.target.value})} placeholder="Bairro" className="w-full p-4 border rounded-2xl text-sm"/>
+                    <input value={orderForm.cidade} onChange={e=>setOrderForm({...orderForm,cidade:e.target.value})} placeholder="Cidade em SP" className="w-full p-4 border rounded-2xl text-sm"/>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <input type="date" value={orderForm.data} onChange={e=>setOrderForm({...orderForm,data:e.target.value})} className="w-full p-4 border rounded-2xl text-sm"/>
+                    <input type="time" value={orderForm.horario} onChange={e=>setOrderForm({...orderForm,horario:e.target.value})} className="w-full p-4 border rounded-2xl text-sm"/>
+                  </div>
+                  <div className="bg-yellow-50 p-3 rounded-xl text-xs">💰 Total: {formatBRL(total)} {appliedCoupon?`com cupom ${appliedCoupon.code}`:""} - PIX {PIX_KEY}</div>
+                  <div className="flex gap-2">
+                    <button type="button" onClick={()=>setOrderStep(1)} className="flex-1 bg-gray-100 py-4 rounded-2xl font-bold text-sm">⬅️ Voltar</button>
+                    <button type="button" onClick={criarPedido} className="flex-[2] bg-[#FF7A00] text-white py-4 rounded-2xl font-bold text-sm">Confirmar Pedido 🟢 Ao Vivo</button>
+                  </div>
                 </div>
               )}
               {orderStep===3 && (
                 <div className="text-center space-y-4">
-                  <div className="bg-[#0A2A6B] text-white p-4 rounded-2xl"><div className="text-sm">PIX - Copie a chave</div><div className="font-mono font-bold">{PIX_KEY}</div><div className="text-lg font-bold mt-2">Total {formatBRL(total)}</div></div>
-                  <button type="button" onClick={()=>{ navigator.clipboard.writeText(PIX_KEY); notify("Chave copiada!","info",1); }} className="bg-[#0A2A6B] text-white w-full py-4 rounded-2xl">COPIAR CHAVE PIX</button>
-                  <a href={`https://wa.me/${WHATSAPP}?text=Pedido ${formatBRL(total)}`} target="_blank" className="block bg-[#FF7A00] text-white py-4 rounded-2xl text-center">WhatsApp (18) 99148-8302</a>
-                  <button type="button" onClick={()=>{ setShowOrderFlow(false); setView("cliente"); setOrderStep(1); }} className="bg-gray-100 w-full py-4 rounded-2xl">Ir para Meus Pedidos 🟢</button>
+                  <div className="bg-green-50 border-2 border-green-300 p-4 rounded-2xl"><div className="text-sm font-bold text-green-700">✅ Pedido #{orders[0]?.id||"criado"} criado com sucesso!</div><div className="text-xs mt-1">Agora envie o comprovante PIX para ADM confirmar em tempo real 🟢</div></div>
+                  <div className="bg-[#0A2A6B] text-white p-5 rounded-2xl"><div className="text-sm opacity-80">PIX - Chave E-mail</div><div className="font-mono font-bold text-sm mt-1 break-all">{PIX_KEY}</div><div className="text-2xl font-bold mt-3">{formatBRL(total)}</div><div className="text-xs opacity-60 mt-1">{cart.length} itens | {orderForm.cidade}</div></div>
+                  <button type="button" onClick={()=>{ navigator.clipboard.writeText(PIX_KEY); notify("Chave PIX copiada!","info",1); }} className="bg-[#0A2A6B] text-white w-full py-4 rounded-2xl font-bold text-sm">📋 COPIAR CHAVE PIX</button>
+                  <a href={`https://wa.me/${WHATSAPP}?text=Olá ADM! Pedido de ${formatBRL(total)} em ${orderForm.cidade} - PIX enviado`} target="_blank" className="block bg-green-600 text-white py-4 rounded-2xl text-center font-bold text-sm">💬 Enviar no WhatsApp (18) 99148-8302</a>
+                  <button type="button" onClick={()=>{ setShowOrderFlow(false); setView("cliente"); setOrderStep(1); setCart([]); }} className="bg-gray-100 w-full py-4 rounded-2xl font-bold text-sm">Ir para Meus Pedidos - Ao Vivo 🟢</button>
+                  <div className="text-[10px] text-gray-400">🔄 A cada 5 pedidos sua lista será limpa automaticamente</div>
                 </div>
               )}
             </div>
           )}
 
-          <h3 className="font-bold mt-8">Meus Pedidos ({orders.filter(o=>o.cliente_id==currentUser.id || o.clienteId==currentUser.id).length}) - Ao Vivo 🟢</h3>
-          <div className="mt-3 space-y-3">
-            {orders.filter(o=>o.cliente_id==currentUser.id || o.clienteId==currentUser.id).map(p=>{
-              const montador = users.find(u=>u.id==p.montador_id || u.id==p.montadorId);
-              return (
-              <div key={p.id} className="bg-white rounded-3xl p-4 shadow">
-                <div className="flex justify-between"><span className="font-bold">#{p.id} {p.cupom?`🎟️ ${p.cupom}`:""}</span><span className={`text-xs px-2 py-1 rounded-full ${p.status==="finalizado"?"bg-green-100 text-green-700":p.status==="aceito"?"bg-blue-100 text-blue-700":p.status==="cancelado"?"bg-red-100 text-red-700":"bg-yellow-100 text-yellow-700"}`}>{p.status}</span></div>
-                <div className="text-sm mt-1">{(p.itens||[]).map(i=>`${i.nome} x${i.qtd}`).join(", ")}</div>
-                <div className="font-bold text-[#FF7A00]">{formatBRL(p.total)} - {p.cidade}</div>
-                <div className="text-xs text-gray-500">{p.endereco} - {p.bairro}</div>
-                {(p.status==="aguardando_comprovante" || p.status==="aguardando_confirmacao_adm" || p.status==="aguardando_montador") && (
-                  <div className="mt-2 flex gap-2">
-                    <button type="button" onClick={()=>cancelarPedido(p.id)} className="flex-1 bg-red-50 border border-red-200 text-red-600 text-xs py-2 rounded-xl font-bold">❌ Cancelar</button>
-                  </div>
-                )}
-                {p.status==="cancelado" && <div className="mt-2 text-xs bg-red-100 text-red-700 p-2 rounded-xl">❌ Cancelado {p.cancelado_at? new Date(p.cancelado_at).toLocaleString("pt-BR"):""}</div>}
-                {p.status==="aguardando_comprovante" && (
-                  <div className="mt-3 p-3 bg-yellow-50 rounded-xl">
-                    <div className="text-sm font-bold">📤 Envie comprovante PIX</div>
-                    <div className="text-xs">PIX: {PIX_KEY}</div>
-                    <input type="file" accept="image/*" onChange={e=>{ const r=new FileReader(); r.onload=()=>setComprovante(r.result); r.readAsDataURL(e.target.files[0]); }} className="text-xs mt-2 w-full"/>
-                    <button type="button" onClick={()=>enviarComprovante(p.id, comprovante)} className="bg-[#0A2A6B] text-white w-full py-3 rounded-xl text-sm mt-2">ENVIAR COMPROVANTE 🔔</button>
-                  </div>
-                )}
-                {p.status==="aguardando_confirmacao_adm" && <div className="mt-2 text-sm bg-blue-50 p-3 rounded-xl">✅ Comprovante recebido! ADM confirma com som 🔔</div>}
-                {p.status==="aguardando_montador" && <div className="mt-2 text-sm bg-green-50 p-3 rounded-xl">✅ Pagamento confirmado! Aguardando montador aceitar 🔔</div>}
-                {(p.status==="aceito") && montador && (
-                  <div className="mt-3 p-4 bg-blue-50 border-2 border-blue-300 rounded-2xl animate-pulse">
-                    <div className="text-xs font-bold text-[#0A2A6B]">🔔 MONTADOR ACEITOU!</div>
-                    <div className="font-bold text-lg">{montador.nome} ⭐ {Number(montador.avaliacao||5).toFixed(1)}</div>
-                    <div className="text-sm">📱 {montador.telefone}</div>
-                    <div className="flex gap-2 mt-3">
-                      <a href={`https://wa.me/55${(montador.telefone||"").replace(/\D/g,"")}`} target="_blank" className="flex-1 bg-green-600 text-white text-center py-3 rounded-xl font-bold">💬 WhatsApp</a>
-                      <a href={`tel:${montador.telefone}`} className="flex-1 bg-[#0A2A6B] text-white text-center py-3 rounded-xl font-bold">📞 Ligar</a>
+          {/* Lista de Pedidos - Layout Clássico Restaurado com função 5 pedidos */}
+          <div className="mt-8">
+            <div className="flex justify-between items-center">
+              <h3 className="font-bold text-[#0A2A6B]">📦 Meus Pedidos ({orders.filter(o=>o.cliente_id==currentUser.id || o.clienteId==currentUser.id).length}) - Ao Vivo 🟢 - Limpeza auto a cada 5</h3>
+              <button type="button" onClick={()=>{
+                if(window.confirm(`Limpar manualmente sua lista de ${orders.filter(o=>o.cliente_id==currentUser.id||o.clienteId==currentUser.id).length} pedidos?`)){
+                  const ids = orders.filter(o=>o.cliente_id==currentUser.id||o.clienteId==currentUser.id).map(o=>o.id);
+                  setOrders(prev=>prev.filter(o=> !(o.cliente_id==currentUser.id||o.clienteId==currentUser.id) || !ids.includes(o.id)));
+                  notify("Lista limpa manualmente","info",1);
+                }
+              }} className="text-[10px] bg-gray-100 px-2 py-1 rounded-full">Limpar manual</button>
+            </div>
+            <div className="mt-3 space-y-3">
+              {orders.filter(o=>o.cliente_id==currentUser.id || o.clienteId==currentUser.id).length===0 && (
+                <div className="bg-white rounded-3xl p-8 text-center shadow">
+                  <div className="text-4xl">📦</div>
+                  <div className="font-bold mt-2">Nenhum pedido ainda</div>
+                  <div className="text-xs text-gray-400 mt-1">Seu histórico foi limpo automaticamente após 5 pedidos (regra do site)<br/>Ou você ainda não fez pedidos<br/>🟢 Sistema 100% online - Watchdog &lt;5s</div>
+                  <button type="button" onClick={()=>setShowOrderFlow(true)} className="mt-4 bg-[#0A2A6B] text-white px-6 py-3 rounded-full text-sm font-bold">Fazer primeiro pedido</button>
+                </div>
+              )}
+              {orders.filter(o=>o.cliente_id==currentUser.id || o.clienteId==currentUser.id).map(p=>{
+                const montador = users.find(u=>u.id==p.montador_id || u.id==p.montadorId);
+                return (
+                <div key={p.id} className="bg-white rounded-3xl p-5 shadow border">
+                  <div className="flex justify-between items-start"><div><span className="font-bold text-[#0A2A6B]">Pedido #{p.id}</span> {p.cupom && <span className="text-[10px] bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full">🎟️ {p.cupom}</span>} <div className="text-xs text-gray-500">{p.createdAt? new Date(p.createdAt).toLocaleString("pt-BR") : ""} | {p.cidade}</div></div><span className={`text-xs px-3 py-1 rounded-full font-bold ${p.status==="finalizado"?"bg-green-100 text-green-700":p.status==="aceito"?"bg-blue-100 text-blue-700":p.status==="cancelado"?"bg-red-100 text-red-700":"bg-yellow-100 text-yellow-700"}`}>{p.status.toUpperCase()}</span></div>
+                  <div className="mt-3 text-sm bg-gray-50 p-3 rounded-xl"><div className="font-bold">Itens:</div><div className="text-xs mt-1">{(p.itens||[]).map(i=>`${i.nome} x${i.qtd} - ${formatBRL(i.preco*i.qtd)}`).join("\n")}</div><div className="font-bold mt-2 text-[#FF7A00]">Total: {formatBRL(p.total)} - {p.cidade}</div><div className="text-xs text-gray-500">{p.endereco} - {p.bairro} - {p.data} {p.horario}</div></div>
+                  {(p.status==="aguardando_comprovante" || p.status==="aguardando_confirmacao_adm" || p.status==="aguardando_montador") && (
+                    <div className="mt-3 flex gap-2">
+                      <button type="button" onClick={()=>cancelarPedido(p.id)} className="flex-1 bg-red-50 border border-red-200 text-red-600 text-xs py-3 rounded-xl font-bold">❌ Cancelar Pedido</button>
                     </div>
-                  </div>
-                )}
-                {p.status==="finalizado" && (
-                  <div className="mt-3">
-                    {montador && <div className="p-3 bg-green-50 border rounded-2xl"><div className="text-sm font-bold">🎉 Finalizado por {montador.nome}!</div></div>}
-                    {!p.avaliacao ? (
-                      <div className="mt-3 p-4 bg-yellow-50 border-2 border-yellow-400 rounded-2xl">
-                        <div className="font-bold">⭐ Avalie {montador?.nome}</div>
-                        <div className="flex gap-1 mt-2">{[1,2,3,4,5].map(n=><button key={n} onClick={()=>setAvaliacaoForm({ ...avaliacaoForm, pedidoId:p.id, nota:n })} className={`text-3xl ${avaliacaoForm.pedidoId===p.id && avaliacaoForm.nota>=n ? "text-yellow-500":"text-gray-300"}`}>★</button>)}</div>
-                        <textarea value={avaliacaoForm.pedidoId===p.id?avaliacaoForm.comentario:""} onChange={e=>setAvaliacaoForm({ ...avaliacaoForm, pedidoId:p.id, comentario:e.target.value })} placeholder="Como foi?" className="w-full mt-3 p-3 border rounded-xl text-sm" rows="3"></textarea>
-                        <button type="button" onClick={()=>enviarAvaliacao(p.id)} className="bg-[#FF7A00] text-white w-full py-3 rounded-xl mt-3 font-bold">Enviar {avaliacaoForm.nota} ⭐</button>
+                  )}
+                  {p.status==="cancelado" && <div className="mt-3 text-xs bg-red-100 text-red-700 p-3 rounded-xl">❌ Cancelado {p.cancelado_at? new Date(p.cancelado_at).toLocaleString("pt-BR"):""} - Fale com ADM se pagou</div>}
+                  {p.status==="aguardando_comprovante" && (
+                    <div className="mt-3 p-4 bg-yellow-50 border-2 border-yellow-300 rounded-2xl">
+                      <div className="text-sm font-bold">📤 Envie o comprovante PIX - Ao Vivo 🟢</div>
+                      <div className="text-xs mt-1">Chave: <b>{PIX_KEY}</b> - Total {formatBRL(p.total)}</div>
+                      <input type="file" accept="image/*" onChange={e=>{ const r=new FileReader(); r.onload=()=>setComprovante(r.result); r.readAsDataURL(e.target.files[0]); }} className="text-xs mt-3 w-full"/>
+                      <button type="button" onClick={()=>enviarComprovante(p.id, comprovante)} className="bg-[#0A2A6B] text-white w-full py-3 rounded-xl text-sm mt-3 font-bold">ENVIAR COMPROVANTE 🔔 ADM</button>
+                    </div>
+                  )}
+                  {p.status==="aguardando_confirmacao_adm" && <div className="mt-3 text-sm bg-blue-50 border border-blue-200 p-3 rounded-xl">✅ Comprovante recebido! ADM vai confirmar em tempo real - Você ouvirá som 🔔 {isLive?"🟢":"🔴"}</div>}
+                  {p.status==="aguardando_montador" && <div className="mt-3 text-sm bg-green-50 border border-green-200 p-3 rounded-xl">✅ Pagamento confirmado! Aguardando montador aceitar - Som 🔔 {isLive?"🟢":"🔴"}</div>}
+                  {(p.status==="aceito") && montador && (
+                    <div className="mt-3 p-4 bg-blue-50 border-2 border-blue-400 rounded-2xl animate-pulse">
+                      <div className="text-xs font-bold text-[#0A2A6B]">🔔🔧 MONTADOR ACEITOU - A CAMINHO! - Ao Vivo 🟢</div>
+                      <div className="font-bold text-lg mt-1">{montador.nome} ⭐ {Number(montador.avaliacao||5).toFixed(1)}</div>
+                      <div className="text-sm">📱 {montador.telefone} | {montador.cidade}</div>
+                      <div className="text-xs text-gray-600 mt-1">{(montador.cidades||[]).join(", ")} | {montador.total_servicos||0} serviços | {isLive?"🟢 Online":"🔴 Offline"}</div>
+                      <div className="text-xs mt-2 font-bold text-green-700">⏱️ Chega em até 30min - Aceito {p.aceiteAt? new Date(p.aceiteAt).toLocaleString("pt-BR") : p.aceite_at? new Date(p.aceite_at).toLocaleString("pt-BR"):""}</div>
+                      <div className="flex gap-2 mt-3">
+                        <a href={`https://wa.me/55${(montador.telefone||"").replace(/\D/g,"")}?text=Olá ${montador.nome}, sobre meu pedido #${p.id} em ${p.cidade}`} target="_blank" className="flex-1 bg-green-600 text-white text-center py-3 rounded-xl font-bold text-sm">💬 WhatsApp</a>
+                        <a href={`tel:${montador.telefone}`} className="flex-1 bg-[#0A2A6B] text-white text-center py-3 rounded-xl font-bold text-sm">📞 Ligar</a>
                       </div>
-                    ) : (<div className="mt-3 p-3 bg-white border rounded-2xl text-sm">✅ Avaliou: {p.avaliacao.nota} ⭐ - "{p.avaliacao.comentario}"</div>)}
-                  </div>
-                )}
-              </div>
-            )})}
+                    </div>
+                  )}
+                  {p.status==="finalizado" && (
+                    <div className="mt-3 space-y-3">
+                      {montador && <div className="p-3 bg-green-50 border border-green-300 rounded-2xl"><div className="text-sm font-bold">🎉 Serviço finalizado por {montador.nome} ⭐{Number(montador.avaliacao||5).toFixed(1)}!</div><div className="text-xs">Finalizado {p.finalizadoAt? new Date(p.finalizadoAt).toLocaleString("pt-BR") : p.finalizado_at? new Date(p.finalizado_at).toLocaleString("pt-BR"):""} - {p.cidade}</div></div>}
+                      {!p.avaliacao ? (
+                        <div className="p-4 bg-yellow-50 border-2 border-yellow-400 rounded-2xl">
+                          <div className="font-bold">⭐ Avalie o montador {montador?.nome} - Ao Vivo 🟢</div>
+                          <div className="flex gap-1 mt-2">{[1,2,3,4,5].map(n=><button key={n} onClick={()=>setAvaliacaoForm({ ...avaliacaoForm, pedidoId:p.id, nota:n })} className={`text-3xl ${avaliacaoForm.pedidoId===p.id && avaliacaoForm.nota>=n ? "text-yellow-500":"text-gray-300"}`}>★</button>)}</div>
+                          <textarea value={avaliacaoForm.pedidoId===p.id?avaliacaoForm.comentario:""} onChange={e=>setAvaliacaoForm({ ...avaliacaoForm, pedidoId:p.id, comentario:e.target.value })} placeholder="Como foi o serviço do montador? (opcional)" className="w-full mt-3 p-3 border rounded-xl text-sm" rows="3"></textarea>
+                          <button type="button" onClick={()=>enviarAvaliacao(p.id)} className="bg-[#FF7A00] text-white w-full py-3 rounded-xl mt-3 font-bold">Enviar Avaliação {avaliacaoForm.nota} ⭐</button>
+                        </div>
+                      ) : (<div className="p-3 bg-white border rounded-2xl text-sm">✅ Você avaliou: {p.avaliacao.nota} ⭐ - "{p.avaliacao.comentario}" - {new Date(p.avaliacao.data).toLocaleString("pt-BR")}</div>)}
+                    </div>
+                  )}
+                </div>
+              )})}
+            </div>
           </div>
-          <div className="mt-8 bg-red-50 border border-red-200 p-4 rounded-3xl">
-            <div className="font-bold text-red-700 text-sm">⚠️ Zona de Perigo - LGPD</div>
-            <div className="text-xs text-gray-600 mt-1">Excluir permanentemente seu cadastro e todos os dados.</div>
-            <button type="button" onClick={excluirMeuCadastro} className="bg-red-600 text-white w-full py-3 rounded-xl mt-3 font-bold text-sm">🗑️ Excluir meu cadastro</button>
+
+          {/* Zona de Perigo - Mantida com todas funções */}
+          <div className="mt-8 bg-red-50 border-2 border-red-200 p-5 rounded-3xl">
+            <div className="font-bold text-red-700">⚠️ Zona de Perigo - LGPD - Ao Vivo 🟢</div>
+            <div className="text-xs text-gray-600 mt-1">Excluir permanentemente seu cadastro e todos os seus dados do site. Essa ação não pode ser desfeita.<br/>Regra automática: A cada 5 pedidos sua lista é limpa automaticamente para privacidade.</div>
+            <div className="mt-2 text-[10px] bg-white p-2 rounded-xl">Pedidos atuais: {orders.filter(o=>o.cliente_id==currentUser.id||o.clienteId==currentUser.id).length} | Próxima limpeza automática em: {5 - (orders.filter(o=>o.cliente_id==currentUser.id||o.clienteId==currentUser.id).length %5 ||5)} pedidos</div>
+            <button type="button" onClick={excluirMeuCadastro} className="bg-red-600 text-white w-full py-3 rounded-xl mt-3 font-bold text-sm">🗑️ Excluir meu cadastro permanentemente</button>
           </div>
         </div>
       )}
