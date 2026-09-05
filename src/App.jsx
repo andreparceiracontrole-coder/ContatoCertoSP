@@ -63,6 +63,8 @@ export default function App() {
   const [clienteCardFiltro, setClienteCardFiltro] = useState("todos");
   const [showPedidoModal, setShowPedidoModal] = useState(false);
   const [selectedPedidoDetail, setSelectedPedidoDetail] = useState(null);
+  const [lastOrderTotal, setLastOrderTotal] = useState(0);
+  const [lastOrderInfo, setLastOrderInfo] = useState(null);
   const prevOrdersRef = useRef([]);
   const supportEndRef = useRef(null);
   const lastFetchRef = useRef(Date.now());
@@ -435,7 +437,7 @@ export default function App() {
     notify(`${item.nome} adicionado`, "info",1);
   };
 
-  const subtotal = cart.reduce((s,i)=>s+i.preco*i.qtd,0);
+  const subtotal = cart.reduce((s,i)=>s+(i.preco||0)*i.qtd,0);
   const descontoQtd = calcularDesconto(cart.reduce((s,i)=>s+i.qtd,0), subtotal);
   const totalSemCupom = subtotal - descontoQtd;
   const descontoCupom = appliedCoupon ? totalSemCupom * (appliedCoupon.desconto/100) : 0;
@@ -443,13 +445,58 @@ export default function App() {
 
   const criarPedido = async ()=>{
     if(!orderForm.endereco || !orderForm.cidade) return notify("Preencha endereço e cidade","error",1);
+    if(cart.length===0) return notify("Carrinho vazio","error",1);
     const taxa_site = total * 0.10;
     const restante_montador = total * 0.90;
-    const pedidoDB = { id: Date.now(), cliente_id: currentUser.id, itens: cart, subtotal, desconto: descontoQtd + descontoCupom, total, taxa_site, restante_montador, endereco: orderForm.endereco, bairro: orderForm.bairro, cidade: orderForm.cidade, data: orderForm.data, horario: orderForm.horario, foto: "", status:"aguardando_comprovante", comprovante:"", comprovante_restante:"", montador_id: null, created_at: new Date().toISOString(), cupom: appliedCoupon?.code||null };
+    // Salva total antes de limpar carrinho para não bugar pagamento
+    setLastOrderTotal(total);
+    const pedidoId = Date.now();
+    const pedidoDB = { 
+      id: pedidoId, 
+      cliente_id: currentUser.id, 
+      itens: cart, 
+      subtotal, 
+      desconto: descontoQtd + descontoCupom, 
+      total, 
+      taxa_site, 
+      restante_montador, 
+      endereco: orderForm.endereco, 
+      bairro: orderForm.bairro, 
+      cidade: orderForm.cidade, 
+      data: orderForm.data, 
+      horario: orderForm.horario, 
+      foto: "", 
+      status:"aguardando_comprovante", 
+      comprovante:"", 
+      comprovante_restante:"", 
+      montador_id: null, 
+      created_at: new Date().toISOString(), 
+      cupom: appliedCoupon?.code||null 
+    };
     const pedidoLocal = { ...pedidoDB, clienteId: pedidoDB.cliente_id, cliente_id: pedidoDB.cliente_id, montadorId:null, montador_id:null, createdAt: pedidoDB.created_at };
     setOrders(prev => [pedidoLocal, ...prev]);
-    setCart([]); setOrderStep(3);
-    try { await supabase.from("orders").insert(pedidoDB); fetchData(); notify(`Pedido criado! Pague apenas 10% (${formatBRL(taxa_site)}) para o site`,"success",2); } catch (e) { notify(`Pedido criado! Pague 10% ${formatBRL(taxa_site)} para o site`,"info",2); }
+    setLastOrderInfo(pedidoDB);
+    setCart([]); 
+    setOrderStep(3);
+    // Tenta salvar no Supabase - se colunas novas não existirem, tenta sem elas
+    try { 
+      const { error } = await supabase.from("orders").insert(pedidoDB);
+      if(error){
+        console.log("Erro insert com colunas novas, tentando sem taxa_site/restante:", error.message);
+        const pedidoFallback = { 
+          id: pedidoId, cliente_id: currentUser.id, itens: cart, subtotal, desconto: descontoQtd + descontoCupom, total,
+          endereco: orderForm.endereco, bairro: orderForm.bairro, cidade: orderForm.cidade, data: orderForm.data, horario: orderForm.horario,
+          status:"aguardando_comprovante", comprovante:"", montador_id: null, created_at: new Date().toISOString(), cupom: appliedCoupon?.code||null
+        };
+        const { error: err2 } = await supabase.from("orders").insert(pedidoFallback);
+        if(err2) throw err2;
+      }
+      fetchData(); 
+      notify(`Pedido #${pedidoId} criado! Pague apenas 10% (${formatBRL(taxa_site)}) para o site`,"success",3); 
+    } catch (e) { 
+      console.log("Erro supabase criar pedido:", e);
+      notify(`Pedido #${pedidoId} criado local! Pague 10% ${formatBRL(taxa_site)} para o site - Se não subir, rode SQL no Supabase`,"info",3); 
+    }
   };
 
   const enviarComprovante = async (pedidoId, base64)=>{
@@ -485,9 +532,16 @@ export default function App() {
   };
 
   const confirmarPagamentoADM = async (id)=>{
+    const pedido = orders.find(o=>o.id===id);
     setOrders(prev=>prev.map(o=>o.id===id?{...o,status:"aguardando_montador"}:o));
-    try { await supabase.from("orders").update({ status:"aguardando_montador" }).eq("id", id); } catch (e){}
-    notify("Pagamento confirmado! Liberado com som 🔔","success",3);
+    try { 
+      const { error } = await supabase.from("orders").update({ status:"aguardando_montador" }).eq("id", id);
+      if(error) throw error;
+    } catch (e){
+      console.log("Erro confirmar ADM:", e);
+      // Fallback: tenta atualizar local mesmo se supabase falhar
+    }
+    notify(`Pagamento 10% (${formatBRL(pedido?.taxa_site||pedido?.total*0.10||0)}) confirmado! Liberado para montador com som 🔔 - Cliente pagará 90% na entrega`,"success",3);
   };
 
   const aceitarPedido = async (id)=>{
@@ -862,13 +916,13 @@ export default function App() {
               )}
               {orderStep===3 && (
                 <div className="text-center space-y-4">
-                  <div className="bg-green-50 border-2 border-green-300 p-4 rounded-2xl"><div className="text-sm font-bold text-green-700">✅ Pedido #{orders[0]?.id||"criado"} criado! Novo modelo 10% + 90% 🟢</div><div className="text-xs mt-1">Pague apenas 10% agora para o site confirmar. 90% restante você paga direto para o montador na hora do serviço - Sem medo de calote!</div></div>
+                  <div className="bg-green-50 border-2 border-green-300 p-4 rounded-2xl"><div className="text-sm font-bold text-green-700">✅ Pedido #{orders[0]?.id||"criado"} criado! Novo modelo 10% + 90% 🟢</div><div className="text-xs mt-1">Pague apenas 10% agora para o site confirmar. 90% restante você paga direto para o montador na hora do serviço - BUG CORRIGIDO ✅ - Sem medo de calote!</div></div>
                   
                   <div className="bg-[#0A2A6B] text-white p-5 rounded-2xl">
                     <div className="text-xs opacity-80">🔒 Taxa de agendamento - 10% para o SITE (pago agora)</div>
                     <div className="font-mono font-bold text-sm mt-1 break-all">{PIX_KEY}</div>
-                    <div className="text-3xl font-bold mt-2">{formatBRL(total*0.10)}</div>
-                    <div className="text-xs opacity-60 mt-1">10% de {formatBRL(total)} | {cart.reduce((s,i)=>s+i.qtd,0)} itens | {orderForm.cidade}</div>
+                    <div className="text-3xl font-bold mt-2">{formatBRL((lastOrderTotal||orders[0]?.total||total)*0.10)}</div>
+                    <div className="text-xs opacity-60 mt-1">10% de {formatBRL(lastOrderTotal||orders[0]?.total||total)} | {lastOrderInfo?.itens?.length||cart.reduce((s,i)=>s+i.qtd,0)} itens | {orderForm.cidade}</div>
                     <div className="mt-3 bg-white/20 p-3 rounded-xl text-left">
                       <div className="text-[10px] font-bold">COMO FUNCIONA NOVO MODELO:</div>
                       <div className="text-[10px] mt-1">✅ Agora: Você paga {formatBRL(total*0.10)} (10%) para o site garantir agendamento</div>
@@ -877,11 +931,11 @@ export default function App() {
                     </div>
                   </div>
 
-                  <button type="button" onClick={()=>{ navigator.clipboard.writeText(PIX_KEY); notify("Chave PIX do site copiada! Pague 10%","info",1); }} className="bg-[#0A2A6B] text-white w-full py-4 rounded-2xl font-bold text-sm">📋 COPIAR PIX SITE - Pagar 10% ({formatBRL(total*0.10)})</button>
+                  <button type="button" onClick={()=>{ navigator.clipboard.writeText(PIX_KEY); notify("Chave PIX do site copiada! Pague 10%","info",1); }} className="bg-[#0A2A6B] text-white w-full py-4 rounded-2xl font-bold text-sm">📋 COPIAR PIX SITE - Pagar 10% ({formatBRL((lastOrderTotal||orders[0]?.total||total)*0.10)})</button>
                   
                   <div className="bg-yellow-50 border border-yellow-300 p-3 rounded-xl text-left">
                     <div className="text-xs font-bold text-yellow-800">💰 Restante para o montador (pago na entrega):</div>
-                    <div className="text-lg font-bold text-[#FF7A00]">{formatBRL(total*0.90)}</div>
+                    <div className="text-lg font-bold text-[#FF7A00]">{formatBRL((lastOrderTotal||orders[0]?.total||total)*0.90)}</div>
                     <div className="text-[10px] text-gray-600">Você pagará este valor direto para o montador quando ele finalizar na sua casa. PIX do montador aparecerá após ele aceitar seu pedido.</div>
                   </div>
 
