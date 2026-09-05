@@ -309,7 +309,20 @@ const criarPedido = async ()=>{
             <button type="button" onClick={()=>setMenuOpen(false)} className="mb-6 text-2xl">✕</button>
             <nav className="flex flex-col gap-3">
               <button type="button" onClick={()=>{ setMenuOpen(false); if(currentUser){ setView(currentUser.role==="cliente"?"cliente":currentUser.role==="montador"?"montador":"admin"); } else { setShowAuth(true); setIsLogin(true); } }} className="text-left p-3 rounded-xl bg-[#0A2A6B] text-white font-bold">👤 Meu Perfil</button>
-              {["Como Funciona","Quem Somos","Suporte 24h","Montadores em Destaque"].map(item=><button key={item} onClick={()=>{ setMenuOpen(false); document.getElementById(item.toLowerCase().replace(/\s/g,"-"))?.scrollIntoView({behavior:"smooth"}); }} className="text-left p-3 rounded-xl hover:bg-gray-50">{item}</button>)}
+              {[
+                { label: "Como Funciona", id: "como-funciona" },
+                { label: "Quem Somos", id: "quem-somos" },
+                { label: "Suporte 24h", id: "suporte-24h" },
+                { label: "Montadores em Destaque", id: "montadores-em-destaque" },
+              ].map(item=><button key={item.id} onClick={()=>{ 
+                setMenuOpen(false); 
+                if(view!=="home"){
+                  setView("home"); 
+                  setTimeout(()=>{ document.getElementById(item.id)?.scrollIntoView({behavior:"smooth"}); }, 400);
+                } else {
+                  document.getElementById(item.id)?.scrollIntoView({behavior:"smooth"});
+                }
+              }} className="text-left p-3 rounded-xl hover:bg-gray-50 font-medium">{item.label}</button>)}
               <hr className="my-2"/>
               {!currentUser && <>
                 <button type="button" onClick={()=>{ setAuthMode("cliente"); setIsLogin(false); setShowAuth(true); setMenuOpen(false); }} className="bg-[#0A2A6B] text-white rounded-2xl py-4 font-bold">Cadastrar Cliente</button>
@@ -341,6 +354,33 @@ const criarPedido = async ()=>{
               <div className="bg-white rounded-3xl p-5 shadow border-l-4 border-l-[#FF7A00]"><b>Montador:</b> Cadastro → 3 cidades → Fique online → Receba pedido com SOM 🔔🔔🔔 → Aceite em 30min → Finalize → Cliente avalia</div>
             </div>
           </section>
+          <section id="quem-somos" className="px-4 py-12 max-w-6xl mx-auto">
+            <h2 className="font-bold text-3xl text-[#0A2A6B]">Quem Somos</h2>
+            <div className="mt-6 bg-white rounded-3xl p-6 shadow">
+              <p className="text-sm leading-relaxed">A <b>Contato Certo SP</b> nasceu em Cândido Mota para resolver o problema de quem compra móveis e não encontra montador rápido. São mais de <b>330 serviços oficiais</b> cadastrados, montadores verificados com CPF, avaliação 5 estrelas e atendimento em até 30 minutos em todo estado de SP. Pagamento seguro via PIX <b>contatocerto.prestadores@gmail.com</b> e suporte 24h no WhatsApp <b>18991488302</b>. Nossa missão é conectar cliente e montador com segurança, rapidez e garantia.</p>
+              <div className="mt-4 grid grid-cols-3 gap-3 text-center">
+                <div className="bg-[#0A2A6B] text-white p-3 rounded-2xl"><div className="font-bold text-xl">1.200+</div><div className="text-xs">Clientes</div></div>
+                <div className="bg-[#FF7A00] text-white p-3 rounded-2xl"><div className="font-bold text-xl">150+</div><div className="text-xs">Montadores</div></div>
+                <div className="bg-green-600 text-white p-3 rounded-2xl"><div className="font-bold text-xl">4.9⭐</div><div className="text-xs">Avaliação</div></div>
+              </div>
+            </div>
+          </section>
+
+          <section id="suporte-24h" className="px-4 py-12 max-w-6xl mx-auto">
+            <h2 className="font-bold text-3xl text-[#0A2A6B]">Suporte 24h</h2>
+            <div className="mt-6 bg-white rounded-3xl p-6 shadow border-l-4 border-l-[#FF7A00]">
+              <div className="font-bold">Precisa de ajuda? Fale com a gente agora</div>
+              <div className="text-sm mt-2">📱 WhatsApp: <b>18991488302</b> (24h)</div>
+              <div className="text-sm">📧 E-mail: contatocerto.prestadores@gmail.com</div>
+              <div className="text-sm">🌐 Site: http://contatocertosp.vercel.app</div>
+              <div className="flex gap-2 mt-4">
+                <a href="https://wa.me/5518991488302?text=Olá, preciso de suporte" target="_blank" className="flex-1 bg-green-600 text-white text-center py-3 rounded-xl font-bold">💬 WhatsApp Suporte</a>
+                <a href="tel:18991488302" className="flex-1 bg-[#0A2A6B] text-white text-center py-3 rounded-xl font-bold">📞 Ligar</a>
+              </div>
+              <div className="text-xs text-gray-500 mt-3">Atendimento rápido para clientes e montadores. Dúvidas sobre pagamento, cancelamento, reembolso e montagem.</div>
+            </div>
+          </section>
+
           <section id="montadores-em-destaque" className="px-4 py-12 max-w-6xl mx-auto">
             <h2 className="font-bold text-2xl">Montadores em Destaque</h2>
             <div className="mt-6 grid sm:grid-cols-3 gap-4">
