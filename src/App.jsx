@@ -31,6 +31,10 @@ const playLongBeep = () => playBeep(4);
 export default function App() {
   const [users, setUsers] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [coupons, setCoupons] = useState(()=> JSON.parse(localStorage.getItem("ccs_coupons")||"[]"));
+  const [couponInput, setCouponInput] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [newCoupon, setNewCoupon] = useState({ code:"", desconto:10, validade:"", limite:100 });
   const [currentUser, setCurrentUser] = useState(() => JSON.parse(localStorage.getItem("ccs_current") || "null"));
   const [view, setView] = useState("home");
   const [menuOpen, setMenuOpen] = useState(false);
@@ -65,12 +69,21 @@ export default function App() {
         setIsLive(false);
         setUsers(JSON.parse(localStorage.getItem("ccs_users")||"[]"));
         setOrders(JSON.parse(localStorage.getItem("ccs_orders")||"[]"));
+        setCoupons(JSON.parse(localStorage.getItem("ccs_coupons")||"[]"));
         setLoading(false);
         return;
       }
       const { data: u } = await supabase.from("users").select("*").order("created_at", {ascending:false});
       const { data: o } = await supabase.from("orders").select("*").order("created_at", {ascending:false});
+      const { data: c } = await supabase.from("coupons").select("*").order("created_at", {ascending:false}).then(r=>r).catch(()=>({data:null}));
       if (u) setUsers(u);
+      if (c && c.length>=0) {
+        setCoupons(c);
+        localStorage.setItem("ccs_coupons", JSON.stringify(c));
+      } else {
+        // fallback local
+        setCoupons(JSON.parse(localStorage.getItem("ccs_coupons")||"[]"));
+      }
       if (o) {
         let mapped = o.map(x=>({ id: x.id, clienteId: x.cliente_id, cliente_id: x.cliente_id, itens: x.itens, subtotal: x.subtotal, desconto: x.desconto, total: x.total, endereco: x.endereco, bairro: x.bairro, cidade: x.cidade, data: x.data, horario: x.horario, foto: x.foto, status: x.status, comprovante: x.comprovante, montadorId: x.montador_id, montador_id: x.montador_id, createdAt: x.created_at, aceiteAt: x.aceite_at, finalizadoAt: x.finalizado_at, avaliacao: x.avaliacao, cancelado_at: x.cancelado_at }));
         // Respeita cancelados locais para não voltar o pedido
@@ -147,6 +160,7 @@ export default function App() {
   },[currentUser, users]);
 
   useEffect(()=>{ localStorage.setItem("ccs_current", JSON.stringify(currentUser)); },[currentUser]);
+  useEffect(()=>{ localStorage.setItem("ccs_coupons", JSON.stringify(coupons)); },[coupons]);
 
   const filteredCatalog = useMemo(()=>{
     return CATALOGO.filter(item=>{
@@ -184,13 +198,17 @@ export default function App() {
   };
 
   const subtotal = cart.reduce((s,i)=>s+i.preco*i.qtd,0);
-  const desconto = calcularDesconto(cart.reduce((s,i)=>s+i.qtd,0), subtotal);
-  const total = subtotal - desconto;
+  const descontoQtd = calcularDesconto(cart.reduce((s,i)=>s+i.qtd,0), subtotal);
+  const desconto = descontoQtd;
+  const totalSemCupom = subtotal - desconto;
+  const descontoCupom = appliedCoupon ? totalSemCupom * (appliedCoupon.desconto/100) : 0;
+  const total = totalSemCupom - descontoCupom;
 
 const criarPedido = async ()=>{
     if(!orderForm.endereco || !orderForm.cidade) return notify("Preencha endereço e cidade","error",1);
-    const pedidoDB = { id: Date.now(), cliente_id: currentUser.id, itens: cart, subtotal, desconto, total, endereco: orderForm.endereco, bairro: orderForm.bairro, cidade: orderForm.cidade, data: orderForm.data, horario: orderForm.horario, foto: "", status:"aguardando_comprovante", comprovante:"", montador_id: null, created_at: new Date().toISOString() };
-    const pedidoLocal = { ...pedidoDB, clienteId: pedidoDB.cliente_id, cliente_id: pedidoDB.cliente_id, montadorId:null, montador_id:null, createdAt: pedidoDB.created_at };
+    const totalComCupom = appliedCoupon ? (total * (1 - appliedCoupon.desconto/100)) : total;
+    const pedidoDB = { id: Date.now(), cliente_id: currentUser.id, itens: cart, subtotal, desconto: desconto + (appliedCoupon ? total - totalComCupom : 0), total: totalComCupom, endereco: orderForm.endereco, bairro: orderForm.bairro, cidade: orderForm.cidade, data: orderForm.data, horario: orderForm.horario, foto: "", status:"aguardando_comprovante", comprovante:"", montador_id: null, created_at: new Date().toISOString(), cupom: appliedCoupon?.code||null, cupom_desconto: appliedCoupon?.desconto||0 };
+    const pedidoLocal = { ...pedidoDB, clienteId: pedidoDB.cliente_id, cliente_id: pedidoDB.cliente_id, montadorId:null, montador_id:null, createdAt: pedidoDB.created_at, cupom: pedidoDB.cupom };
     // Atualizacao otimista - aparece na hora
     setOrders(prev => [pedidoLocal, ...prev]);
     setCart([]); setOrderStep(3);
@@ -238,12 +256,27 @@ const criarPedido = async ()=>{
 
   const finalizarPedido = async (id)=>{
     const agora = new Date().toISOString();
-    setOrders(prev=>prev.map(o=>o.id===id?{...o,status:"finalizado", finalizadoAt: agora, finalizado_at: agora}:o));
+    // Calcula bônus do montador - a cada 5 finalizados, o 6º ganha 100%
+    const montadorId = currentUser.id;
+    const jaFinalizados = orders.filter(o=> (o.montador_id==montadorId || o.montadorId==montadorId) && o.status==="finalizado").length;
+    const ehBonus = (jaFinalizados % 6 === 5); // 5,11,17... -> próximo é bônus
+    const pedidoAtual = orders.find(o=>o.id===id);
+    const ganhoMontador = ehBonus ? (pedidoAtual?.total||0) : (pedidoAtual?.total||0)*0.9;
+    
+    setOrders(prev=>prev.map(o=>o.id===id?{...o,status:"finalizado", finalizadoAt: agora, finalizado_at: agora, bonus_montador: ehBonus, ganho_montador: ganhoMontador}:o));
     try { 
-      const { error } = await supabase.from("orders").update({ status:"finalizado", finalizado_at: agora }).eq("id", id);
-      if(error) throw error;
+      const { error } = await supabase.from("orders").update({ status:"finalizado", finalizado_at: agora, bonus_montador: ehBonus, ganho_montador: ganhoMontador }).eq("id", id);
+      if(error){
+        // tenta sem colunas extras se não existirem
+        await supabase.from("orders").update({ status:"finalizado", finalizado_at: agora }).eq("id", id);
+      }
     } catch (e){ console.error("Erro finalizar", e); }
-    notify("Serviço finalizado! Cliente vai avaliar","success",2);
+    if(ehBonus){
+      notify(`🎉 BÔNUS! 6º serviço! Você ganha 100% deste: ${formatBRL(ganhoMontador)}`,"success",4);
+    } else {
+      const faltam = 5 - (jaFinalizados % 6);
+      notify(`Serviço finalizado! ${faltam===1?"Mais 1 para bônus 100%":"Faltam "+faltam+" para bônus 100%"}`,"success",2);
+    }
   };
 
   const cancelarPedido = async (id)=>{
@@ -267,6 +300,38 @@ const criarPedido = async ()=>{
       console.error("Supabase bloqueou cancelamento - mantido local", e);
     }
     notify("Pedido cancelado com sucesso","success",2);
+  };
+
+  const criarCupom = async ()=>{
+    if(!newCoupon.code) return notify("Digite o código do cupom","error",1);
+    const cupom = { id: Date.now(), code: newCoupon.code.toUpperCase().trim(), desconto: Number(newCoupon.desconto), validade: newCoupon.validade||null, limite: Number(newCoupon.limite)||100, usados:0, created_at: new Date().toISOString(), ativo:true };
+    const novos = [cupom, ...coupons];
+    setCoupons(novos);
+    try{ await supabase.from("coupons").insert(cupom); }catch(e){ console.log("Cupom local", e); }
+    setNewCoupon({ code:"", desconto:10, validade:"", limite:100 });
+    notify(`Cupom ${cupom.code} criado: ${cupom.desconto}% OFF`,"success",2);
+  };
+
+  const removerCupom = async (id)=>{
+    setCoupons(prev=>prev.filter(c=>c.id!==id));
+    try{ await supabase.from("coupons").delete().eq("id", id); }catch{}
+    notify("Cupom removido","info",1);
+  };
+
+  const aplicarCupom = ()=>{
+    const codigo = couponInput.toUpperCase().trim();
+    const cupom = coupons.find(c=>c.code===codigo && c.ativo!==false);
+    if(!cupom) return notify("Cupom inválido ou expirado","error",1);
+    if(cupom.validade && new Date(cupom.validade) < new Date()) return notify("Cupom expirado","error",1);
+    if(cupom.usados >= cupom.limite) return notify("Cupom esgotado","error",1);
+    setAppliedCoupon(cupom);
+    notify(`Cupom ${cupom.code} aplicado: ${cupom.desconto}% OFF`,"success",2);
+  };
+
+  const removerCupomAplicado = ()=>{
+    setAppliedCoupon(null);
+    setCouponInput("");
+    notify("Cupom removido","info",1);
   };
 
   const enviarAvaliacao = async (pedidoId)=>{
@@ -394,6 +459,21 @@ const criarPedido = async ()=>{
         <div className="max-w-6xl mx-auto px-4 py-6">
           <h2 className="font-bold text-2xl">Olá, {currentUser.nome} {isLive?"🟢 Ao Vivo":"🔴"} 🔔 Som ativado</h2>
           <button type="button" onClick={()=>{ setShowOrderFlow(true); setOrderStep(1); }} className="bg-[#FF7A00] text-white w-full text-xl py-6 rounded-2xl font-bold mt-4">+ NOVO PEDIDO - 330 serviços</button>
+          <div className="mt-6 bg-gradient-to-r from-[#0A2A6B] to-[#FF7A00] p-[1px] rounded-3xl">
+            <div className="bg-white rounded-[22px] p-4">
+              <div className="flex justify-between items-center"><h3 className="font-bold">🎟️ Cupons Disponíveis</h3><span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">{coupons.filter(c=>c.ativo!==false).length} ativos</span></div>
+              <div className="mt-3 grid gap-2">
+                {coupons.filter(c=>c.ativo!==false).slice(0,5).map(cp=>(
+                  <div key={cp.id} className="flex justify-between items-center bg-yellow-50 border border-dashed border-yellow-400 p-3 rounded-xl">
+                    <div><div className="font-bold text-sm">{cp.code} - {cp.desconto}% OFF</div><div className="text-[10px] text-gray-500">{cp.validade?`Validade: ${new Date(cp.validade).toLocaleDateString("pt-BR")}`:"Sem validade"} | Usos: {cp.usados}/{cp.limite}</div></div>
+                    <button type="button" onClick={()=>{ setCouponInput(cp.code); setShowOrderFlow(true); setOrderStep(1); notify(`Cupom ${cp.code} copiado! Aplique no carrinho`,"success",1); }} className="bg-[#0A2A6B] text-white text-xs px-3 py-2 rounded-full font-bold">Usar</button>
+                  </div>
+                ))}
+                {coupons.filter(c=>c.ativo!==false).length===0 && <div className="text-xs text-gray-400 text-center py-2">Nenhum cupom disponível no momento. Fale com o ADM no WhatsApp 18991488302</div>}
+              </div>
+            </div>
+          </div>
+
           <h3 className="font-bold mt-6">Meus Pedidos ({orders.filter(o=>o.cliente_id==currentUser.id || o.clienteId==currentUser.id).length})</h3>
           <div className="mt-3 space-y-3">
             {orders.filter(o=>o.cliente_id==currentUser.id || o.clienteId==currentUser.id).map(p=>{
@@ -469,12 +549,62 @@ const criarPedido = async ()=>{
       {view==="admin" && (
         <div className="max-w-6xl mx-auto px-4 py-6">
           <h2 className="font-bold text-2xl">Administração - {orders.length} pedidos {isLive?"🟢 Ao Vivo":"🔴"} 🔊 Som em tudo</h2>
+          {/* DASHBOARD DE USUÁRIOS - NOVO */}
+          <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="bg-[#0A2A6B] text-white p-4 rounded-2xl shadow">
+              <div className="text-xs opacity-80">👥 Total Usuários</div>
+              <div className="text-2xl font-bold">{users.length}</div>
+              <div className="text-[10px] mt-1">{users.filter(u=>u.role==="cliente").length} clientes + {users.filter(u=>u.role==="montador").length} montadores</div>
+            </div>
+            <div className="bg-green-600 text-white p-4 rounded-2xl shadow">
+              <div className="text-xs opacity-80">🛒 Clientes Cadastrados</div>
+              <div className="text-2xl font-bold">{users.filter(u=>u.role==="cliente").length}</div>
+              <div className="text-[10px] mt-1">{users.filter(u=>u.role==="cliente" && new Date(u.created_at||Date.now()) > new Date(Date.now()-7*24*60*60*1000)).length} novos esta semana</div>
+            </div>
+            <div className="bg-[#FF7A00] text-white p-4 rounded-2xl shadow">
+              <div className="text-xs opacity-80">🔧 Montadores Cadastrados</div>
+              <div className="text-2xl font-bold">{users.filter(u=>u.role==="montador").length}</div>
+              <div className="text-[10px] mt-1">{users.filter(u=>u.role==="montador" && u.disponivel).length} online agora 🟢 | {users.filter(u=>u.role==="montador" && !u.disponivel).length} offline</div>
+            </div>
+            <div className="bg-gray-800 text-white p-4 rounded-2xl shadow">
+              <div className="text-xs opacity-80">📊 Conversão</div>
+              <div className="text-2xl font-bold">{users.length>0? Math.round((orders.length/users.filter(u=>u.role==="cliente").length)*100) || 0 : 0}%</div>
+              <div className="text-[10px] mt-1">{orders.filter(o=>o.status==="finalizado").length} finalizados / {orders.length} pedidos</div>
+            </div>
+          </div>
+
+          <div className="mt-4 bg-white p-4 rounded-3xl shadow">
+            <h3 className="font-bold text-sm">👥 Lista de Usuários Detalhada - Tempo Real</h3>
+            <div className="mt-3 grid md:grid-cols-2 gap-4">
+              <div>
+                <div className="font-bold text-xs bg-green-50 p-2 rounded-xl">🛒 CLIENTES ({users.filter(u=>u.role==="cliente").length})</div>
+                <div className="mt-2 max-h-40 overflow-auto space-y-1">
+                  {users.filter(u=>u.role==="cliente").slice(0,20).map(u=>(
+                    <div key={u.id} className="text-xs border-b py-1 flex justify-between"><span>{u.nome} - {u.cidade} - {u.telefone}</span><span className="text-gray-400">{u.created_at? new Date(u.created_at).toLocaleDateString("pt-BR"):""}</span></div>
+                  ))}
+                  {users.filter(u=>u.role==="cliente").length===0 && <div className="text-xs text-gray-400">Nenhum cliente ainda</div>}
+                </div>
+              </div>
+              <div>
+                <div className="font-bold text-xs bg-orange-50 p-2 rounded-xl">🔧 MONTADORES ({users.filter(u=>u.role==="montador").length})</div>
+                <div className="mt-2 max-h-40 overflow-auto space-y-1">
+                  {users.filter(u=>u.role==="montador").slice(0,20).map(u=>(
+                    <div key={u.id} className="text-xs border-b py-1 flex justify-between"><span>{u.nome} {u.disponivel?"🟢":"🔴"} - {(u.cidades||[]).join(",")} - ⭐{Number(u.avaliacao||5).toFixed(1)} - {u.total_servicos||0} serv</span><span className="text-gray-400">{u.pix}</span></div>
+                  ))}
+                  {users.filter(u=>u.role==="montador").length===0 && <div className="text-xs text-gray-400">Nenhum montador ainda</div>}
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div className="flex gap-2 mt-4 overflow-auto pb-2">
             <button type="button" onClick={()=>setAdminTab("pedidos")} className={`px-4 py-2 rounded-full text-sm ${adminTab==="pedidos"?"bg-[#0A2A6B] text-white":"bg-white"}`}>Todos ({orders.length})</button>
             <button type="button" onClick={()=>setAdminTab("comprovantes")} className={`px-4 py-2 rounded-full text-sm ${adminTab==="comprovantes"?"bg-yellow-500 text-white animate-pulse":"bg-white"}`}>Comprovantes ({orders.filter(o=>o.status==="aguardando_confirmacao_adm").length}) 🔔</button>
             <button type="button" onClick={()=>setAdminTab("liberados")} className={`px-4 py-2 rounded-full text-sm ${adminTab==="liberados"?"bg-[#0A2A6B] text-white":"bg-white"}`}>Liberados ({orders.filter(o=>o.status==="aguardando_montador").length})</button>
             <button type="button" onClick={()=>setAdminTab("aceitos")} className={`px-4 py-2 rounded-full text-sm ${adminTab==="aceitos"?"bg-[#0A2A6B] text-white":"bg-white"}`}>Aceitos ({orders.filter(o=>o.status==="aceito").length}) 🔔</button>
             <button type="button" onClick={()=>setAdminTab("finalizados")} className={`px-4 py-2 rounded-full text-sm ${adminTab==="finalizados"?"bg-[#0A2A6B] text-white":"bg-white"}`}>Finalizados ({orders.filter(o=>o.status==="finalizado").length}) 🔔</button>
+            <button type="button" onClick={()=>setAdminTab("cupons")} className={`px-4 py-2 rounded-full text-sm ${adminTab==="cupons"?"bg-yellow-500 text-white":"bg-white"}`}>Cupons ({coupons.length}) 🎟️</button>
+            <button type="button" onClick={()=>setAdminTab("bonus")} className={`px-4 py-2 rounded-full text-sm ${adminTab==="bonus"?"bg-green-600 text-white":"bg-white"}`}>Bônus Montador 🎁</button>
             <button type="button" onClick={()=>setAdminTab("financeiro")} className={`px-4 py-2 rounded-full text-sm ${adminTab==="financeiro"?"bg-[#0A2A6B] text-white":"bg-white"}`}>Financeiro</button>
           </div>
 
@@ -535,6 +665,140 @@ const criarPedido = async ()=>{
             </div>
           )}
 
+          {adminTab==="cupons" && (
+            <div className="mt-4 space-y-4">
+              <div className="bg-white p-6 rounded-3xl shadow">
+                <h3 className="font-bold text-lg">🎟️ Criar Cupom de Desconto</h3>
+                <div className="grid grid-cols-2 gap-3 mt-4">
+                  <input value={newCoupon.code} onChange={e=>setNewCoupon({...newCoupon, code:e.target.value.toUpperCase()})} placeholder="Código ex: PRIMEIRO15" className="border rounded-xl p-3 text-sm"/>
+                  <input type="number" value={newCoupon.desconto} onChange={e=>setNewCoupon({...newCoupon, desconto:e.target.value})} placeholder="% Desconto" className="border rounded-xl p-3 text-sm"/>
+                  <input type="date" value={newCoupon.validade} onChange={e=>setNewCoupon({...newCoupon, validade:e.target.value})} className="border rounded-xl p-3 text-sm"/>
+                  <input type="number" value={newCoupon.limite} onChange={e=>setNewCoupon({...newCoupon, limite:e.target.value})} placeholder="Limite usos" className="border rounded-xl p-3 text-sm"/>
+                </div>
+                <button type="button" onClick={criarCupom} className="bg-[#0A2A6B] text-white w-full py-3 rounded-xl mt-4 font-bold">+ Criar Cupom e liberar para clientes com som 🔔</button>
+                <div className="text-xs text-gray-500 mt-2">Cupons ficam em tempo real para todos clientes. Ex: PRIMEIRO15 dá 15% OFF</div>
+              </div>
+              <div className="bg-white p-4 rounded-3xl shadow">
+                <h4 className="font-bold">Cupons Ativos ({coupons.length})</h4>
+                <div className="mt-3 space-y-2">
+                  {coupons.map(cp=>(
+                    <div key={cp.id} className="flex justify-between items-center border p-3 rounded-xl">
+                      <div><b>{cp.code}</b> - {cp.desconto}% OFF - Val: {cp.validade? new Date(cp.validade).toLocaleDateString("pt-BR") : "sem validade"} - Usos {cp.usados}/{cp.limite}</div>
+                      <button type="button" onClick={()=>removerCupom(cp.id)} className="bg-red-100 text-red-600 px-3 py-1 rounded-full text-xs">Remover</button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {adminTab==="bonus" && (
+            <div className="mt-4 space-y-4">
+              <div className="bg-white p-6 rounded-3xl shadow">
+                <h3 className="font-bold text-lg">🎁 Bônus Montador - 6º serviço 100%</h3>
+                <div className="text-xs mt-2">A cada 5 serviços finalizados, o 6º o montador ganha 100% do valor (ao invés de 90%). Incentivo para fidelizar.</div>
+                <div className="mt-4 grid gap-3">
+                  {users.filter(u=>u.role==="montador").map(m=>{
+                    const finalizados = orders.filter(o=> (o.montador_id==m.id || o.montadorId==m.id) && o.status==="finalizado").length;
+                    const progresso = finalizados % 6;
+                    const bonusGanhos = Math.floor(finalizados/6);
+                    const faltam = progresso===0 && finalizados>0 ? 0 : 6 - progresso;
+                    const ganhoBonus = orders.filter(o=> (o.montador_id==m.id || o.montadorId==m.id) && o.bonus_montador).reduce((s,p)=>s+(p.ganho_montador||p.total),0);
+                    return (
+                      <div key={m.id} className="border p-3 rounded-xl flex justify-between items-center">
+                        <div><b>{m.nome}</b> - {finalizados} finalizados - {bonusGanhos} bônus ganhos<br/><div className="text-xs">Progresso: {progresso}/5 para bônus | Faltam {faltam===6?5:faltam} | Ganho bônus total {formatBRL(ganhoBonus)}</div>
+                        <div className="w-32 bg-gray-200 h-2 rounded-full mt-1"><div className="bg-green-600 h-2 rounded-full" style={{width: `${(progresso/6)*100}%`}}></div></div></div>
+                        <div className={`text-xs px-2 py-1 rounded-full ${progresso===5?"bg-yellow-400 animate-pulse":"bg-gray-100"}`}>{progresso===5?"🔥 Próximo é 100%":""}</div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+              <div className="bg-white p-4 rounded-3xl shadow">
+                <h4 className="font-bold">Pedidos com Bônus 100%</h4>
+                {orders.filter(o=>o.bonus_montador).map(o=>{
+                  const m = users.find(u=>u.id==o.montador_id);
+                  return <div key={o.id} className="text-xs mt-2 p-2 bg-yellow-50 rounded-xl">#{o.id} BÔNUS 100% - {m?.nome} ganhou {formatBRL(o.ganho_montador||o.total)} ao invés de {formatBRL(o.total*0.9)}</div>
+                })}
+                {orders.filter(o=>o.bonus_montador).length===0 && <div className="text-xs text-gray-400">Nenhum bônus ainda</div>}
+              </div>
+            </div>
+          )}
+
+          {adminTab==="cupons" && (
+            <div className="mt-4 space-y-4">
+              <div className="bg-white p-6 rounded-3xl shadow">
+                <h3 className="font-bold text-lg">🎟️ Criar Cupom de Desconto - Tempo Real</h3>
+                <div className="grid grid-cols-2 gap-3 mt-4">
+                  <input value={newCoupon.code} onChange={e=>setNewCoupon({...newCoupon, code:e.target.value.toUpperCase()})} placeholder="Código ex: PRIMEIRO15" className="border rounded-xl p-3 text-sm"/>
+                  <input type="number" value={newCoupon.desconto} onChange={e=>setNewCoupon({...newCoupon, desconto:e.target.value})} placeholder="% Desconto" className="border rounded-xl p-3 text-sm"/>
+                  <input type="date" value={newCoupon.validade} onChange={e=>setNewCoupon({...newCoupon, validade:e.target.value})} className="border rounded-xl p-3 text-sm"/>
+                  <input type="number" value={newCoupon.limite} onChange={e=>setNewCoupon({...newCoupon, limite:e.target.value})} placeholder="Limite usos" className="border rounded-xl p-3 text-sm"/>
+                </div>
+                <button type="button" onClick={criarCupom} className="bg-[#0A2A6B] text-white w-full py-3 rounded-xl mt-4 font-bold">+ Criar Cupom e liberar com som 🔔</button>
+              </div>
+              <div className="bg-white p-4 rounded-3xl shadow">
+                <h4 className="font-bold">Cupons Ativos ({coupons.length})</h4>
+                <div className="mt-3 space-y-2">
+                  {coupons.map(cp=>(
+                    <div key={cp.id} className="flex justify-between items-center border p-3 rounded-xl">
+                      <div><b>{cp.code}</b> - {cp.desconto}% OFF - Val: {cp.validade? new Date(cp.validade).toLocaleDateString("pt-BR") : "sem validade"} - Usos {cp.usados}/{cp.limite}</div>
+                      <button type="button" onClick={()=>removerCupom(cp.id)} className="bg-red-100 text-red-600 px-3 py-1 rounded-full text-xs">Remover</button>
+                    </div>
+                  ))}
+                  {coupons.length===0 && <div className="text-xs text-gray-400">Nenhum cupom criado</div>}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {adminTab==="bonus" && (
+            <div className="mt-4 space-y-4">
+              <div className="bg-white p-6 rounded-3xl shadow">
+                <h3 className="font-bold text-lg">🎁 Bônus Montador - 6º serviço 100%</h3>
+                <div className="text-xs mt-2">A cada 5 serviços finalizados, o 6º o montador ganha 100% do valor (ao invés de 90%).</div>
+                <div className="mt-4 grid gap-3">
+                  {users.filter(u=>u.role==="montador").map(m=>{
+                    const finalizados = orders.filter(o=> (o.montador_id==m.id || o.montadorId==m.id) && o.status==="finalizado").length;
+                    const progresso = finalizados % 6;
+                    const bonusGanhos = Math.floor(finalizados/6);
+                    const faltam = progresso===0 && finalizados>0 ? 0 : 6 - progresso;
+                    const ganhoBonus = orders.filter(o=> (o.montador_id==m.id || o.montadorId==m.id) && o.bonus_montador).reduce((s,p)=>s+(p.ganho_montador||p.total),0);
+                    return (
+                      <div key={m.id} className="border p-3 rounded-xl flex justify-between items-center">
+                        <div><b>{m.nome}</b> - {finalizados} finalizados - {bonusGanhos} bônus ganhos<br/><div className="text-xs">Progresso: {progresso}/5 | Faltam {faltam===6?5:faltam} | Ganho bônus {formatBRL(ganhoBonus)}</div>
+                        <div className="w-32 bg-gray-200 h-2 rounded-full mt-1"><div className="bg-green-600 h-2 rounded-full" style={{width: `${(progresso/6)*100}%`}}></div></div></div>
+                        <div className={`text-xs px-2 py-1 rounded-full ${progresso===5?"bg-yellow-400 animate-pulse":"bg-gray-100"}`}>{progresso===5?"🔥 Próximo 100%":""}</div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {adminTab==="usuarios" && (
+            <div className="mt-4 space-y-4">
+              <div className="bg-white p-6 rounded-3xl shadow">
+                <h3 className="font-bold">👥 Todos os Usuários - {users.length} total</h3>
+                <div className="mt-4 grid md:grid-cols-2 gap-6">
+                  <div>
+                    <h4 className="font-bold text-sm bg-green-100 p-2 rounded-xl">🛒 Clientes ({users.filter(u=>u.role==="cliente").length})</h4>
+                    {users.filter(u=>u.role==="cliente").map(u=>(
+                      <div key={u.id} className="text-xs border-b py-2"><b>{u.nome}</b><br/>{u.email} - {u.telefone} - {u.cidade} - Pedidos: {orders.filter(o=>o.cliente_id==u.id).length}<br/><span className="text-gray-400">Cadastro: {u.created_at? new Date(u.created_at).toLocaleString("pt-BR"): "local"} - Usuário: {u.usuario}</span></div>
+                    ))}
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-sm bg-orange-100 p-2 rounded-xl">🔧 Montadores ({users.filter(u=>u.role==="montador").length})</h4>
+                    {users.filter(u=>u.role==="montador").map(u=>(
+                      <div key={u.id} className="text-xs border-b py-2"><b>{u.nome} {u.disponivel?"🟢 ONLINE":"🔴 OFFLINE"}</b><br/>{u.telefone} - CPF: {u.cpf} - PIX: {u.pix}<br/>Cidades: {(u.cidades||[]).join(", ")} - ⭐{Number(u.avaliacao||5).toFixed(1)} - {u.total_servicos||0} serviços<br/><span className="text-gray-400">Usuário: {u.usuario} | {u.email}</span></div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {adminTab==="financeiro" && (
             <div className="mt-4 bg-white p-6 rounded-3xl shadow">
               <div className="grid grid-cols-2 gap-4">
@@ -569,7 +833,15 @@ const criarPedido = async ()=>{
                     </div>
                   ))}
                 </div>
-                {cart.length>0 && <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-4"><div className="max-w-4xl mx-auto"><div className="text-sm">Total {formatBRL(total)} - {cart.length} itens</div><button type="button" onClick={()=>setOrderStep(2)} className="bg-[#0A2A6B] text-white w-full py-3 rounded-xl mt-2">Continuar</button></div></div>}
+                {cart.length>0 && <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-4 shadow-2xl"><div className="max-w-4xl mx-auto">
+                  <div className="flex gap-2 mb-2">
+                    <input value={couponInput} onChange={e=>setCouponInput(e.target.value.toUpperCase())} placeholder="Cupom de desconto" className="flex-1 border rounded-xl p-2 text-sm"/>
+                    {appliedCoupon ? <button type="button" onClick={removerCupomAplicado} className="bg-red-100 text-red-600 px-4 rounded-xl text-xs font-bold">X {appliedCoupon.code}</button> : <button type="button" onClick={aplicarCupom} className="bg-[#FF7A00] text-white px-4 rounded-xl text-xs font-bold">Aplicar</button>}
+                  </div>
+                  {appliedCoupon && <div className="text-xs text-green-600 font-bold mb-1">✅ Cupom {appliedCoupon.code} - {appliedCoupon.desconto}% OFF = -{formatBRL(descontoCupom)}</div>}
+                  <div className="text-sm">Subtotal {formatBRL(subtotal)} - Desc {formatBRL(desconto)} {appliedCoupon?`- Cupom ${formatBRL(descontoCupom)}`:""} = <b>{formatBRL(total)}</b> - {cart.length} itens</div>
+                  <button type="button" onClick={()=>setOrderStep(2)} className="bg-[#0A2A6B] text-white w-full py-3 rounded-xl mt-2">Continuar</button>
+                </div></div>}
               </>
             )}
             {orderStep===2 && (
@@ -765,19 +1037,41 @@ function MontadorPanel({ currentUser, setCurrentUser, users, orders, isLive, ace
 
       {tab==="financeiro" && (
         <div className="mt-4 space-y-4">
+          {(()=>{
+            const progresso = meusFinalizados.length % 6;
+            const bonusGanhos = Math.floor(meusFinalizados.length/6);
+            const faltam = progresso===0 && meusFinalizados.length>0 ? 0 : 6 - progresso;
+            const totalBonus = meusFinalizados.filter(p=>p.bonus_montador).reduce((s,p)=>s+(p.ganho_montador||p.total),0);
+            return (
+              <div className="bg-gradient-to-r from-yellow-400 to-[#FF7A00] p-[1px] rounded-3xl">
+                <div className="bg-white rounded-[22px] p-4">
+                  <div className="font-bold">🎁 Bônus: 6º serviço 100% seu!</div>
+                  <div className="mt-2 flex justify-between items-center">
+                    <div><div className="text-xs">Progresso</div><div className="font-bold">{progresso}/5 para bônus</div><div className="text-[10px] text-gray-500">{bonusGanhos} bônus já ganhos | Total bônus {formatBRL(totalBonus)}</div></div>
+                    <div className={`px-3 py-2 rounded-full text-xs font-bold ${progresso===5?"bg-yellow-400 animate-pulse":"bg-gray-100"}`}>{progresso===5?"🔥 Próximo é 100%!":"Faltam "+(faltam===6?5:faltam)}</div>
+                  </div>
+                  <div className="w-full bg-gray-200 h-3 rounded-full mt-3"><div className="bg-gradient-to-r from-green-500 to-[#FF7A00] h-3 rounded-full transition-all" style={{width: `${(progresso/6)*100}%`}}></div></div>
+                  <div className="text-[10px] text-gray-500 mt-1">A cada 5 serviços finalizados, o 6º você ganha 100% ao invés de 90%. Bônus em tempo real 🔊</div>
+                </div>
+              </div>
+            )
+          })()}
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-[#0A2A6B] text-white p-4 rounded-2xl"><div className="text-xs">Total Bruto</div><div className="text-xl font-bold">{formatBRL(totalBruto)}</div></div>
-            <div className="bg-green-600 text-white p-4 rounded-2xl"><div className="text-xs">Seu Ganho 90%</div><div className="text-xl font-bold">{formatBRL(totalGanho)}</div></div>
+            <div className="bg-green-600 text-white p-4 rounded-2xl"><div className="text-xs">Seu Ganho (90% + bônus 100%)</div><div className="text-xl font-bold">{formatBRL(totalGanho)}</div></div>
             <div className="bg-[#FF7A00] text-white p-4 rounded-2xl"><div className="text-xs">Serviços Finalizados</div><div className="text-xl font-bold">{meusFinalizados.length}</div></div>
             <div className="bg-gray-800 text-white p-4 rounded-2xl"><div className="text-xs">Avaliação Média</div><div className="text-xl font-bold">⭐ {Number(currentUser.avaliacao||5).toFixed(1)}</div></div>
           </div>
           <div className="bg-white p-4 rounded-3xl shadow">
             <div className="font-bold">Como funciona o pagamento:</div>
-            <div className="text-xs mt-2">Cliente paga 100% para ADM (contatocerto.prestadores@gmail.com). ADM confirma. Você aceita e finaliza. Você recebe 90% via PIX {currentUser.pix} em até 24h. 10% fica com a plataforma.</div>
+            <div className="text-xs mt-2">Cliente paga 100% para ADM (contatocerto.prestadores@gmail.com). ADM confirma. Você aceita e finaliza. Você recebe 90% via PIX {currentUser.pix} em até 24h. No 6º serviço (bônus) recebe 100%! 10% fica com a plataforma nos 5 primeiros.</div>
           </div>
           <div className="bg-white p-4 rounded-3xl shadow">
             <div className="font-bold">Histórico de ganhos</div>
-            {meusFinalizados.map(p=><div key={p.id} className="flex justify-between text-xs py-2 border-b">#{p.id} - {p.cidade} - {formatBRL(p.total*0.9)} - {p.data}</div>)}
+            {meusFinalizados.map(p=>{
+              const ganho = p.bonus_montador ? (p.ganho_montador||p.total) : p.total*0.9;
+              return <div key={p.id} className={`flex justify-between text-xs py-2 border-b ${p.bonus_montador?"bg-yellow-50 font-bold":""}`}>#{p.id} {p.bonus_montador?"🎁 BÔNUS 100%":""} - {p.cidade} - {formatBRL(ganho)} - {p.data}</div>
+            })}
           </div>
         </div>
       )}
