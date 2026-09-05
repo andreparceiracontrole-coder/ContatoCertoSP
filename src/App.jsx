@@ -44,6 +44,7 @@ export default function App() {
   const [cart, setCart] = useState([]);
   const [orderForm, setOrderForm] = useState({ endereco:"", bairro:"", cidade:"", data:"", horario:"", foto:"" });
   const [comprovante, setComprovante] = useState("");
+  const [comprovanteRestante, setComprovanteRestante] = useState("");
   const [toast, setToast] = useState("");
   const [toastType, setToastType] = useState("info");
   const [showOrderFlow, setShowOrderFlow] = useState(false);
@@ -102,8 +103,9 @@ export default function App() {
           let mapped = o.map(x=>({ 
             id: x.id, clienteId: x.cliente_id, cliente_id: x.cliente_id, 
             itens: x.itens, subtotal: x.subtotal, desconto: x.desconto, total: x.total, 
+            taxa_site: x.taxa_site || (x.total*0.10), restante_montador: x.restante_montador || (x.total*0.90),
             endereco: x.endereco, bairro: x.bairro, cidade: x.cidade, data: x.data, horario: x.horario, 
-            foto: x.foto, status: x.status, comprovante: x.comprovante, 
+            foto: x.foto, status: x.status, comprovante: x.comprovante, comprovante_restante: x.comprovante_restante,
             montadorId: x.montador_id, montador_id: x.montador_id, 
             createdAt: x.created_at, aceiteAt: x.aceite_at, finalizadoAt: x.finalizado_at, 
             avaliacao: x.avaliacao, cancelado_at: x.cancelado_at,
@@ -441,18 +443,45 @@ export default function App() {
 
   const criarPedido = async ()=>{
     if(!orderForm.endereco || !orderForm.cidade) return notify("Preencha endereço e cidade","error",1);
-    const pedidoDB = { id: Date.now(), cliente_id: currentUser.id, itens: cart, subtotal, desconto: descontoQtd + descontoCupom, total, endereco: orderForm.endereco, bairro: orderForm.bairro, cidade: orderForm.cidade, data: orderForm.data, horario: orderForm.horario, foto: "", status:"aguardando_comprovante", comprovante:"", montador_id: null, created_at: new Date().toISOString(), cupom: appliedCoupon?.code||null };
+    const taxa_site = total * 0.10;
+    const restante_montador = total * 0.90;
+    const pedidoDB = { id: Date.now(), cliente_id: currentUser.id, itens: cart, subtotal, desconto: descontoQtd + descontoCupom, total, taxa_site, restante_montador, endereco: orderForm.endereco, bairro: orderForm.bairro, cidade: orderForm.cidade, data: orderForm.data, horario: orderForm.horario, foto: "", status:"aguardando_comprovante", comprovante:"", comprovante_restante:"", montador_id: null, created_at: new Date().toISOString(), cupom: appliedCoupon?.code||null };
     const pedidoLocal = { ...pedidoDB, clienteId: pedidoDB.cliente_id, cliente_id: pedidoDB.cliente_id, montadorId:null, montador_id:null, createdAt: pedidoDB.created_at };
     setOrders(prev => [pedidoLocal, ...prev]);
     setCart([]); setOrderStep(3);
-    try { await supabase.from("orders").insert(pedidoDB); fetchData(); notify("Pedido criado! Envie comprovante","success",2); } catch (e) { notify("Pedido criado local!","info",2); }
+    try { await supabase.from("orders").insert(pedidoDB); fetchData(); notify(`Pedido criado! Pague apenas 10% (${formatBRL(taxa_site)}) para o site`,"success",2); } catch (e) { notify(`Pedido criado! Pague 10% ${formatBRL(taxa_site)} para o site`,"info",2); }
   };
 
   const enviarComprovante = async (pedidoId, base64)=>{
-    if(!base64) return notify("Selecione comprovante","error",1);
+    if(!base64) return notify("Selecione comprovante da taxa 10%","error",1);
     setOrders(prev=>prev.map(o=>o.id===pedidoId?{...o, comprovante: base64, status:"aguardando_confirmacao_adm"}:o));
     try { await supabase.from("orders").update({ comprovante: base64, status:"aguardando_confirmacao_adm" }).eq("id", pedidoId); } catch (e){}
-    notify("Comprovante enviado! ADM notificado 🔔","success",2);
+    notify("Comprovante da taxa 10% enviado! ADM vai confirmar 🔔","success",2);
+  };
+
+  const enviarComprovanteRestante = async (pedidoId, base64)=>{
+    if(!base64) return notify("Selecione comprovante do pagamento ao montador (90%)","error",1);
+    setOrders(prev=>prev.map(o=>o.id===pedidoId?{...o, comprovante_restante: base64, status:"finalizado", finalizadoAt: new Date().toISOString(), finalizado_at: new Date().toISOString()}:o));
+    try { await supabase.from("orders").update({ comprovante_restante: base64, status:"finalizado", finalizado_at: new Date().toISOString() }).eq("id", pedidoId); } catch (e){}
+    notify("Comprovante dos 90% enviado! Pedido finalizado! Avalie o montador ⭐","success",3);
+  };
+
+  const confirmarRecebimentoMontador = async (pedidoId)=>{
+    // Montador confirma que recebeu os 90%
+    const agora = new Date().toISOString();
+    setOrders(prev=>prev.map(o=>o.id===pedidoId?{...o, status:"finalizado", finalizadoAt: agora, finalizado_at: agora}:o));
+    try { await supabase.from("orders").update({ status:"finalizado", finalizado_at: agora }).eq("id", pedidoId); } catch(e){}
+    notify("Você confirmou recebimento dos 90%! Pedido finalizado ✅","success",2);
+  };
+
+  const reportarNaoPagamento = async (pedidoId)=>{
+    if(!window.confirm("Reportar que cliente não pagou os 90%? Cliente será bloqueado e taxa de R$ 10 ficará com você como compensação parcial.")) return;
+    const clienteId = orders.find(o=>o.id===pedidoId)?.cliente_id;
+    if(clienteId){
+      try{ await supabase.from("users").update({ bloqueado: true, motivo_bloqueio: "Não pagou montador 90% - calote" }).eq("id", clienteId); }catch{}
+      setUsers(prev=>prev.map(u=>u.id==clienteId? {...u, bloqueado:true, motivo_bloqueio:"Não pagou montador"}:u));
+    }
+    notify("Cliente reportado e bloqueado! Taxa de 10% fica com você como compensação","success",3);
   };
 
   const confirmarPagamentoADM = async (id)=>{
@@ -474,14 +503,15 @@ export default function App() {
     const jaFinalizados = orders.filter(o=> (o.montador_id==montadorId || o.montadorId==montadorId) && o.status==="finalizado").length;
     const ehBonus = (jaFinalizados % 6 === 5);
     const pedidoAtual = orders.find(o=>o.id===id);
-    const ganhoMontador = ehBonus ? (pedidoAtual?.total||0) : (pedidoAtual?.total||0)*0.9;
+    // Novo modelo: montador já recebe 90% direto do cliente, então ganho é 90% + bônus
+    const ganhoMontador = ehBonus ? (pedidoAtual?.restante_montador||pedidoAtual?.total*0.9) + (pedidoAtual?.taxa_site||pedidoAtual?.total*0.1) : (pedidoAtual?.restante_montador||pedidoAtual?.total*0.9);
     setOrders(prev=>prev.map(o=>o.id===id?{...o,status:"finalizado", finalizadoAt: agora, finalizado_at: agora, bonus_montador: ehBonus, ganho_montador: ganhoMontador}:o));
     try { 
       const { error } = await supabase.from("orders").update({ status:"finalizado", finalizado_at: agora, bonus_montador: ehBonus, ganho_montador: ganhoMontador }).eq("id", id);
       if(error) await supabase.from("orders").update({ status:"finalizado", finalizado_at: agora }).eq("id", id);
     } catch (e){}
-    if(ehBonus) notify(`🎉 BÔNUS 6º serviço 100%! ${formatBRL(ganhoMontador)}`,"success",4);
-    else { const faltam = 5 - (jaFinalizados % 6); notify(`Finalizado! ${faltam===1?"Mais 1 para bônus 100%":"Faltam "+faltam+" p/ bônus"}`,"success",2); }
+    if(ehBonus) notify(`🎉 BÔNUS 6º serviço! Você ganhou 100% (${formatBRL(ganhoMontador)})! Cliente pagou taxa + restante`,"success",4);
+    else { const faltam = 5 - (jaFinalizados % 6); notify(`Finalizado! Você recebeu ${formatBRL(pedidoAtual?.restante_montador||0)} do cliente. ${faltam===1?"Mais 1 para bônus 100%":"Faltam "+faltam+" p/ bônus"}`,"success",2); }
   };
 
   const cancelarPedido = async (id)=>{
@@ -832,12 +862,32 @@ export default function App() {
               )}
               {orderStep===3 && (
                 <div className="text-center space-y-4">
-                  <div className="bg-green-50 border-2 border-green-300 p-4 rounded-2xl"><div className="text-sm font-bold text-green-700">✅ Pedido #{orders[0]?.id||"criado"} criado com sucesso!</div><div className="text-xs mt-1">Agora envie o comprovante PIX para ADM confirmar em tempo real 🟢</div></div>
-                  <div className="bg-[#0A2A6B] text-white p-5 rounded-2xl"><div className="text-sm opacity-80">PIX - Chave E-mail</div><div className="font-mono font-bold text-sm mt-1 break-all">{PIX_KEY}</div><div className="text-2xl font-bold mt-3">{formatBRL(total)}</div><div className="text-xs opacity-60 mt-1">{cart.length} itens | {orderForm.cidade}</div></div>
-                  <button type="button" onClick={()=>{ navigator.clipboard.writeText(PIX_KEY); notify("Chave PIX copiada!","info",1); }} className="bg-[#0A2A6B] text-white w-full py-4 rounded-2xl font-bold text-sm">📋 COPIAR CHAVE PIX</button>
-                  <a href={`https://wa.me/${WHATSAPP}?text=Olá ADM! Pedido de ${formatBRL(total)} em ${orderForm.cidade} - PIX enviado`} target="_blank" className="block bg-green-600 text-white py-4 rounded-2xl text-center font-bold text-sm">💬 Enviar no WhatsApp (18) 99148-8302</a>
-                  <button type="button" onClick={()=>{ setShowOrderFlow(false); setView("cliente"); setOrderStep(1); setCart([]); }} className="bg-gray-100 w-full py-4 rounded-2xl font-bold text-sm">Ir para Meus Pedidos - Ao Vivo 🟢</button>
-                  <div className="text-[10px] text-gray-400">🔄 A cada 5 pedidos sua lista será limpa automaticamente</div>
+                  <div className="bg-green-50 border-2 border-green-300 p-4 rounded-2xl"><div className="text-sm font-bold text-green-700">✅ Pedido #{orders[0]?.id||"criado"} criado! Novo modelo 10% + 90% 🟢</div><div className="text-xs mt-1">Pague apenas 10% agora para o site confirmar. 90% restante você paga direto para o montador na hora do serviço - Sem medo de calote!</div></div>
+                  
+                  <div className="bg-[#0A2A6B] text-white p-5 rounded-2xl">
+                    <div className="text-xs opacity-80">🔒 Taxa de agendamento - 10% para o SITE (pago agora)</div>
+                    <div className="font-mono font-bold text-sm mt-1 break-all">{PIX_KEY}</div>
+                    <div className="text-3xl font-bold mt-2">{formatBRL(total*0.10)}</div>
+                    <div className="text-xs opacity-60 mt-1">10% de {formatBRL(total)} | {cart.reduce((s,i)=>s+i.qtd,0)} itens | {orderForm.cidade}</div>
+                    <div className="mt-3 bg-white/20 p-3 rounded-xl text-left">
+                      <div className="text-[10px] font-bold">COMO FUNCIONA NOVO MODELO:</div>
+                      <div className="text-[10px] mt-1">✅ Agora: Você paga {formatBRL(total*0.10)} (10%) para o site garantir agendamento</div>
+                      <div className="text-[10px]">✅ Depois: Você paga {formatBRL(total*0.90)} (90%) direto para o montador na sua casa</div>
+                      <div className="text-[10px]">✅ Montador só recebe 90% após finalizar - Sem risco para você!</div>
+                    </div>
+                  </div>
+
+                  <button type="button" onClick={()=>{ navigator.clipboard.writeText(PIX_KEY); notify("Chave PIX do site copiada! Pague 10%","info",1); }} className="bg-[#0A2A6B] text-white w-full py-4 rounded-2xl font-bold text-sm">📋 COPIAR PIX SITE - Pagar 10% ({formatBRL(total*0.10)})</button>
+                  
+                  <div className="bg-yellow-50 border border-yellow-300 p-3 rounded-xl text-left">
+                    <div className="text-xs font-bold text-yellow-800">💰 Restante para o montador (pago na entrega):</div>
+                    <div className="text-lg font-bold text-[#FF7A00]">{formatBRL(total*0.90)}</div>
+                    <div className="text-[10px] text-gray-600">Você pagará este valor direto para o montador quando ele finalizar na sua casa. PIX do montador aparecerá após ele aceitar seu pedido.</div>
+                  </div>
+
+                  <a href={`https://wa.me/${WHATSAPP}?text=Olá ADM! Pedido novo modelo 10% - Taxa de ${formatBRL(total*0.10)} de ${formatBRL(total)} em ${orderForm.cidade} - PIX 10% enviado`} target="_blank" className="block bg-green-600 text-white py-4 rounded-2xl text-center font-bold text-sm">💬 Enviar comprovante 10% no WhatsApp</a>
+                  <button type="button" onClick={()=>{ setShowOrderFlow(false); setView("cliente"); setOrderStep(1); }} className="bg-gray-100 w-full py-4 rounded-2xl font-bold text-sm">Ir para Meus Pedidos - Pagar 10% 🟢</button>
+                  <div className="text-[10px] text-gray-400">🔄 A cada 5 pedidos sua lista será limpa automaticamente | Modelo 10% + 90% anti-calote</div>
                 </div>
               )}
             </div>
@@ -878,25 +928,47 @@ export default function App() {
                   {p.status==="cancelado" && <div className="mt-3 text-xs bg-red-100 text-red-700 p-3 rounded-xl">❌ Cancelado {p.cancelado_at? new Date(p.cancelado_at).toLocaleString("pt-BR"):""} - Fale com ADM se pagou</div>}
                   {p.status==="aguardando_comprovante" && (
                     <div className="mt-3 p-4 bg-yellow-50 border-2 border-yellow-300 rounded-2xl">
-                      <div className="text-sm font-bold">📤 Envie o comprovante PIX - Ao Vivo 🟢</div>
-                      <div className="text-xs mt-1">Chave: <b>{PIX_KEY}</b> - Total {formatBRL(p.total)}</div>
-                      <input type="file" accept="image/*" onChange={e=>{ const r=new FileReader(); r.onload=()=>setComprovante(r.result); r.readAsDataURL(e.target.files[0]); }} className="text-xs mt-3 w-full"/>
-                      <button type="button" onClick={()=>enviarComprovante(p.id, comprovante)} className="bg-[#0A2A6B] text-white w-full py-3 rounded-xl text-sm mt-3 font-bold">ENVIAR COMPROVANTE 🔔 ADM</button>
+                      <div className="text-sm font-bold">📤 Pague apenas 10% agora - Novo modelo anti-calote 🟢</div>
+                      <div className="text-xs mt-2 bg-white p-2 rounded-xl">
+                        <div>✅ Total serviço: {formatBRL(p.total)}</div>
+                        <div className="font-bold text-[#0A2A6B]">🔒 Taxa site (10% pago agora): {formatBRL(p.taxa_site||p.total*0.10)}</div>
+                        <div className="font-bold text-[#FF7A00]">💰 Restante montador (90% pago na entrega): {formatBRL(p.restante_montador||p.total*0.90)}</div>
+                      </div>
+                      <div className="text-xs mt-2">Chave SITE: <b>{PIX_KEY}</b> - Pague {formatBRL(p.taxa_site||p.total*0.10)}</div>
+                      <input type="file" accept="image/*" onChange={e=>{ const r=new FileReader(); r.onload=()=>setComprovante(r.result); r.readAsDataURL(e.target.files[0]); }} className="text-xs mt-3 w-full border p-2 rounded-xl bg-white"/>
+                      <button type="button" onClick={()=>enviarComprovante(p.id, comprovante)} className="bg-[#0A2A6B] text-white w-full py-3 rounded-xl text-sm mt-3 font-bold">ENVIAR COMPROVANTE 10% 🔔 ADM</button>
+                      <div className="text-[10px] text-gray-500 mt-2">Após ADM confirmar, montador aceita e você paga 90% restante direto para ele na sua casa</div>
                     </div>
                   )}
-                  {p.status==="aguardando_confirmacao_adm" && <div className="mt-3 text-sm bg-blue-50 border border-blue-200 p-3 rounded-xl">✅ Comprovante recebido! ADM vai confirmar em tempo real - Você ouvirá som 🔔 {isLive?"🟢":"🔴"}</div>}
-                  {p.status==="aguardando_montador" && <div className="mt-3 text-sm bg-green-50 border border-green-200 p-3 rounded-xl">✅ Pagamento confirmado! Aguardando montador aceitar - Som 🔔 {isLive?"🟢":"🔴"}</div>}
+                  {p.status==="aguardando_confirmacao_adm" && <div className="mt-3 text-sm bg-blue-50 border border-blue-200 p-3 rounded-xl">✅ Comprovante 10% ({formatBRL(p.taxa_site||p.total*0.10)}) recebido! ADM confirma e libera para montador. Você só paga 90% ({formatBRL(p.restante_montador||p.total*0.90)}) na entrega! 🔔 {isLive?"🟢":"🔴"}</div>}
+                  {p.status==="aguardando_montador" && <div className="mt-3 text-sm bg-green-50 border border-green-200 p-3 rounded-xl">✅ Taxa 10% confirmada! Aguardando montador aceitar. Na entrega você paga {formatBRL(p.restante_montador||p.total*0.90)} direto para montador 🔔 {isLive?"🟢":"🔴"}</div>}
                   {(p.status==="aceito") && montador && (
                     <div className="mt-3 p-4 bg-blue-50 border-2 border-blue-400 rounded-2xl animate-pulse">
-                      <div className="text-xs font-bold text-[#0A2A6B]">🔔🔧 MONTADOR ACEITOU - A CAMINHO! - Ao Vivo 🟢</div>
+                      <div className="text-xs font-bold text-[#0A2A6B]">🔔🔧 MONTADOR ACEITOU - A CAMINHO! - Novo modelo 10%+90% 🟢</div>
                       <div className="font-bold text-lg mt-1">{montador.nome} ⭐ {Number(montador.avaliacao||5).toFixed(1)}</div>
                       <div className="text-sm">📱 {montador.telefone} | {montador.cidade}</div>
                       <div className="text-xs text-gray-600 mt-1">{(montador.cidades||[]).join(", ")} | {montador.total_servicos||0} serviços | {isLive?"🟢 Online":"🔴 Offline"}</div>
                       <div className="text-xs mt-2 font-bold text-green-700">⏱️ Chega em até 30min - Aceito {p.aceiteAt? new Date(p.aceiteAt).toLocaleString("pt-BR") : p.aceite_at? new Date(p.aceite_at).toLocaleString("pt-BR"):""}</div>
+                      
+                      <div className="mt-3 bg-white p-3 rounded-xl border-2 border-[#FF7A00]">
+                        <div className="text-xs font-bold text-[#FF7A00]">💰 PAGAMENTO RESTANTE PARA O MONTADOR (90%):</div>
+                        <div className="text-xl font-bold text-[#0A2A6B]">{formatBRL(p.restante_montador||p.total*0.90)}</div>
+                        <div className="text-xs">PIX Montador: <b>{montador.pix||montador.telefone}</b></div>
+                        <div className="flex gap-2 mt-2">
+                          <button type="button" onClick={()=>{ navigator.clipboard.writeText(montador.pix||""); notify(`PIX montador ${montador.nome} copiado: ${formatBRL(p.restante_montador||p.total*0.90)}`,"info",1); }} className="flex-1 bg-[#FF7A00] text-white py-2 rounded-xl text-xs font-bold">📋 Copiar PIX Montador - {formatBRL(p.restante_montador||p.total*0.90)}</button>
+                        </div>
+                        <div className="mt-2">
+                          <div className="text-[10px] font-bold">Envie comprovante dos 90% após pagar montador:</div>
+                          <input type="file" accept="image/*" onChange={e=>{ const r=new FileReader(); r.onload=()=>setComprovanteRestante(r.result); r.readAsDataURL(e.target.files[0]); }} className="text-[10px] mt-1 w-full border p-1 rounded bg-gray-50"/>
+                          <button type="button" onClick={()=>enviarComprovanteRestante(p.id, comprovanteRestante)} className="bg-green-600 text-white w-full py-2 rounded-xl text-xs mt-2 font-bold">✅ Enviar comprovante 90% e Finalizar ⭐</button>
+                        </div>
+                      </div>
+
                       <div className="flex gap-2 mt-3">
-                        <a href={`https://wa.me/55${(montador.telefone||"").replace(/\D/g,"")}?text=Olá ${montador.nome}, sobre meu pedido #${p.id} em ${p.cidade}`} target="_blank" className="flex-1 bg-green-600 text-white text-center py-3 rounded-xl font-bold text-sm">💬 WhatsApp</a>
+                        <a href={`https://wa.me/55${(montador.telefone||"").replace(/\D/g,"")}?text=Olá ${montador.nome}, pedido #${p.id} em ${p.cidade} - Vou pagar ${formatBRL(p.restante_montador||p.total*0.90)} via PIX`} target="_blank" className="flex-1 bg-green-600 text-white text-center py-3 rounded-xl font-bold text-sm">💬 WhatsApp Montador</a>
                         <a href={`tel:${montador.telefone}`} className="flex-1 bg-[#0A2A6B] text-white text-center py-3 rounded-xl font-bold text-sm">📞 Ligar</a>
                       </div>
+                      <div className="mt-2 text-[10px] bg-red-50 p-2 rounded-xl text-red-700">❌ Não pode cancelar após montador aceitar - Fale com suporte 24h 💬</div>
                     </div>
                   )}
                   {p.status==="finalizado" && (
@@ -1478,7 +1550,7 @@ function MontadorPanel({ currentUser, setCurrentUser, users, orders, isLive, ace
           </div>
           <div className="bg-white p-4 rounded-3xl shadow">
             <div className="font-bold">Como funciona pagamento - Tempo Real 🟢</div>
-            <div className="text-xs mt-2">Cliente paga 100% para ADM (contatocerto.prestadores@gmail.com). ADM confirma. Você aceita e finaliza. Você recebe 90% via PIX {currentUser.pix} em até 24h. No 6º serviço (bônus) recebe 100%! Watchdog garante site nunca offline &gt;5s.</div>
+            <div className="text-xs mt-2">NOVO MODELO 10%+90%: Cliente paga 10% para site (taxa agendamento). Você aceita, faz serviço, cliente paga 90% direto para seu PIX {currentUser.pix} em até 24h. No 6º serviço (bônus) recebe 100%! Watchdog garante site nunca offline &gt;5s.</div>
           </div>
           <div className="bg-white p-4 rounded-3xl shadow">
             <div className="font-bold">Histórico de ganhos - Ao Vivo 🟢</div>
