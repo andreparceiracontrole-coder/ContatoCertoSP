@@ -34,7 +34,7 @@ export default function App() {
   const [coupons, setCoupons] = useState(()=> JSON.parse(localStorage.getItem("ccs_coupons")||"[]"));
   const [couponInput, setCouponInput] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState(null);
-  const [newCoupon, setNewCoupon] = useState({ code:"", desconto:10, validade:"", limite:100 });
+  const [newCoupon, setNewCoupon] = useState({ code:"", desconto:10, validade:"", limite:100, target_user_id: null });
   const [currentUser, setCurrentUser] = useState(() => JSON.parse(localStorage.getItem("ccs_current") || "null"));
   const [view, setView] = useState("home");
   const [menuOpen, setMenuOpen] = useState(false);
@@ -59,6 +59,9 @@ export default function App() {
   const [showSupportChat, setShowSupportChat] = useState(false);
   const [selectedSupportUser, setSelectedSupportUser] = useState(null);
   const [supportTab, setSupportTab] = useState("todos");
+  const [selectedMontadorDetail, setSelectedMontadorDetail] = useState(null);
+  const [showMontadorModal, setShowMontadorModal] = useState(false);
+  const [distribuirCupom, setDistribuirCupom] = useState({ cupomId: "", clienteIds: [], modo: "todos" });
   const prevOrdersRef = useRef([]);
   const supportEndRef = useRef(null);
 
@@ -276,7 +279,94 @@ export default function App() {
     }
     const u = users.find(x=>x.usuario===usuario && x.senha===senha);
     if(!u) return notify("Usuário ou senha inválidos","error",1);
+    if(u.bloqueado){
+      return notify(`⛔ Conta bloqueada pelo ADM: ${u.motivo_bloqueio||"Má conduta / anti-profissionalismo"}. Entre em contato no WhatsApp 18991488302`,"error",3);
+    }
     setCurrentUser(u); setShowAuth(false); setView(u.role==="cliente"?"cliente":"montador");
+  };
+
+  const excluirMeuCadastro = async ()=>{
+    if(!currentUser) return;
+    const confirm1 = window.confirm(`⚠️ ATENÇÃO: Você vai EXCLUIR PERMANENTEMENTE seu cadastro como ${currentUser.role}.\n\nIsso vai apagar:\n- Seu perfil\n- Seus pedidos\n- Suas mensagens no suporte\n- Seus cupons\n\nEssa ação NÃO pode ser desfeita! Tem certeza?`);
+    if(!confirm1) return;
+    const confirm2 = window.prompt(`Digite EXCLUIR para confirmar a exclusão permanente de ${currentUser.nome}`);
+    if(confirm2!=="EXCLUIR") return notify("Exclusão cancelada - digite EXCLUIR corretamente","error",1);
+
+    const userId = currentUser.id;
+    try{
+      // Apaga do Supabase
+      await supabase.from("users").delete().eq("id", userId);
+      await supabase.from("orders").delete().eq("cliente_id", userId);
+      await supabase.from("orders").delete().eq("montador_id", userId);
+      await supabase.from("support_messages").delete().eq("user_id", userId);
+      await supabase.from("coupons").delete().eq("target_user_id", userId);
+    }catch(e){ console.log("Erro Supabase ao excluir, continua local", e); }
+
+    // Apaga local
+    const novosUsers = users.filter(u=>u.id!==userId);
+    setUsers(novosUsers);
+    localStorage.setItem("ccs_users", JSON.stringify(novosUsers));
+    
+    const novosOrders = orders.filter(o=>o.cliente_id!==userId && o.montador_id!==userId && o.clienteId!==userId && o.montadorId!==userId);
+    setOrders(novosOrders);
+    localStorage.setItem("ccs_orders", JSON.stringify(novosOrders));
+
+    const novosSuporte = supportMessages.filter(m=>m.user_id!==userId);
+    setSupportMessages(novosSuporte);
+    localStorage.setItem("ccs_support", JSON.stringify(novosSuporte));
+
+    const novosCupons = coupons.filter(c=>c.target_user_id!==userId);
+    setCoupons(novosCupons);
+    localStorage.setItem("ccs_coupons", JSON.stringify(novosCupons));
+
+    localStorage.removeItem("ccs_current");
+    setCurrentUser(null);
+    setView("home");
+    notify(`✅ Cadastro de ${currentUser.nome} excluído permanentemente com sucesso! Todos os dados foram apagados.`,"success",3);
+  };
+
+  const excluirUsuarioADM = async (userId, nome)=>{
+    if(!window.confirm(`⚠️ ADM: Excluir PERMANENTEMENTE o usuário ${nome}?\n\nIsso apaga:\n- Perfil\n- Pedidos\n- Mensagens\n- Cupons\n\nEssa ação não pode ser desfeita!`)) return;
+    const motivo = window.prompt(`Motivo da exclusão (para registro):`, "Má conduta / anti-profissionalismo / a pedido do usuário") || "Excluído pelo ADM";
+    try{
+      await supabase.from("users").delete().eq("id", userId);
+      await supabase.from("orders").delete().eq("cliente_id", userId);
+      await supabase.from("orders").delete().eq("montador_id", userId);
+      await supabase.from("support_messages").delete().eq("user_id", userId);
+      await supabase.from("coupons").delete().eq("target_user_id", userId);
+    }catch(e){ console.log("Erro Supabase excluir", e); }
+
+    setUsers(prev=>prev.filter(u=>u.id!==userId));
+    setOrders(prev=>prev.filter(o=>o.cliente_id!==userId && o.montador_id!==userId && o.clienteId!==userId && o.montadorId!==userId));
+    setSupportMessages(prev=>prev.filter(m=>m.user_id!==userId));
+    setCoupons(prev=>prev.filter(c=>c.target_user_id!==userId));
+    
+    // Atualiza localStorage
+    localStorage.setItem("ccs_users", JSON.stringify(users.filter(u=>u.id!==userId)));
+    
+    notify(`✅ Usuário ${nome} excluído permanentemente! Motivo: ${motivo}`,"success",2);
+  };
+
+  const bloquearUsuarioADM = async (userId, bloquear)=>{
+    const user = users.find(u=>u.id==userId);
+    if(!user) return;
+    const acao = bloquear ? "BLOQUEAR" : "DESBLOQUEAR";
+    const motivo = bloquear ? window.prompt(`Motivo do BLOQUEIO de ${user.nome}:`, "Má conduta com cliente / anti-profissionalismo / reclamações") : "";
+    if(bloquear && !motivo) return;
+
+    const novosUsers = users.map(u=> u.id==userId ? {...u, bloqueado: bloquear, motivo_bloqueio: bloquear? motivo : null, bloqueado_em: bloquear? new Date().toISOString(): null } : u);
+    setUsers(novosUsers);
+    localStorage.setItem("ccs_users", JSON.stringify(novosUsers));
+
+    try{
+      await supabase.from("users").update({ bloqueado: bloquear, motivo_bloqueio: bloquear? motivo : null, bloqueado_em: bloquear? new Date().toISOString(): null }).eq("id", userId);
+    }catch(e){ console.log("Erro bloquear", e); }
+
+    if(selectedMontadorDetail && selectedMontadorDetail.id==userId){
+      setSelectedMontadorDetail({...selectedMontadorDetail, bloqueado: bloquear, motivo_bloqueio: bloquear? motivo : null});
+    }
+
+    notify(bloquear ? `⛔ Usuário ${user.nome} BLOQUEADO! Motivo: ${motivo}` : `✅ Usuário ${user.nome} DESBLOQUEADO com sucesso!`,"success",2);
   };
 
   const addToCart = (item)=>{
@@ -394,20 +484,67 @@ const criarPedido = async ()=>{
   const criarCupom = async ()=>{
     if(!newCoupon.code) return notify("Digite o código do cupom","error",1);
     const codigo = newCoupon.code.toUpperCase().trim();
-    if(coupons.some(c=>c.code===codigo)) return notify("Cupom já existe","error",1);
-    const cupom = { id: Date.now(), code: codigo, desconto: Number(newCoupon.desconto), validade: newCoupon.validade||null, limite: Number(newCoupon.limite)||100, usados:0, created_at: new Date().toISOString(), ativo:true };
+    if(coupons.some(c=>c.code===codigo && !c.target_user_id)) return notify("Cupom já existe","error",1);
+    const cupom = { id: Date.now(), code: codigo, desconto: Number(newCoupon.desconto), validade: newCoupon.validade||null, limite: Number(newCoupon.limite)||100, usados:0, created_at: new Date().toISOString(), ativo:true, target_user_id: newCoupon.target_user_id||null };
     const novos = [cupom, ...coupons];
     setCoupons(novos);
     localStorage.setItem("ccs_coupons", JSON.stringify(novos));
     try{ 
       const { error } = await supabase.from("coupons").insert(cupom);
       if(error) throw error;
-      notify(`Cupom ${cupom.code} salvo no banco: ${cupom.desconto}% OFF`,"success",2);
+      notify(`Cupom ${cupom.code} salvo: ${cupom.desconto}% OFF ${cupom.target_user_id?"para cliente específico":"para todos"}`,"success",2);
     }catch(e){ 
-      console.log("Cupom salvo só local - crie tabela coupons no Supabase", e);
-      notify(`Cupom ${cupom.code} criado LOCAL: ${cupom.desconto}% OFF - Rode SQL no Supabase para salvar online`,"success",3);
+      console.log("Cupom salvo só local", e);
+      notify(`Cupom ${cupom.code} criado LOCAL: ${cupom.desconto}% OFF`,"success",3);
     }
-    setNewCoupon({ code:"", desconto:10, validade:"", limite:100 });
+    setNewCoupon({ code:"", desconto:10, validade:"", limite:100, target_user_id: null });
+  };
+
+  const distribuirCuponsParaClientes = async ()=>{
+    if(!distribuirCupom.cupomId) return notify("Selecione o cupom","error",1);
+    const cupomOrigem = coupons.find(c=>c.id==distribuirCupom.cupomId);
+    if(!cupomOrigem) return notify("Cupom não encontrado","error",1);
+    
+    let clientesAlvo = [];
+    if(distribuirCupom.modo==="todos"){
+      clientesAlvo = users.filter(u=>u.role==="cliente");
+    } else if(distribuirCupom.modo==="selecionados"){
+      clientesAlvo = users.filter(u=> distribuirCupom.clienteIds.includes(u.id));
+    }
+    if(clientesAlvo.length===0) return notify("Selecione pelo menos 1 cliente","error",1);
+
+    const novosCupons = [];
+    const novasMensagens = [];
+    clientesAlvo.forEach(cliente=>{
+      const cupomPersonalizado = { ...cupomOrigem, id: Date.now()+Math.random(), code: cupomOrigem.code, target_user_id: cliente.id, target_nome: cliente.nome, distribuido_em: new Date().toISOString() };
+      novosCupons.push(cupomPersonalizado);
+      // Envia mensagem de suporte como se fosse entrega do cupom
+      const msg = { id: Date.now()+Math.random(), user_id: cliente.id, user_nome: cliente.nome, user_role: cliente.role, mensagem: `🎟️ Você ganhou um cupom! Use o código ${cupomOrigem.code} e ganhe ${cupomOrigem.desconto}% OFF no seu próximo pedido. Válido até ${cupomOrigem.validade? new Date(cupomOrigem.validade).toLocaleDateString("pt-BR"):"sem validade"}. Aproveite!`, from_admin: true, created_at: new Date().toISOString(), lida: false };
+      novasMensagens.push(msg);
+    });
+
+    const todosCupons = [...novosCupons, ...coupons];
+    setCoupons(todosCupons);
+    localStorage.setItem("ccs_coupons", JSON.stringify(todosCupons));
+    
+    const todasMsgs = [...supportMessages, ...novasMensagens];
+    setSupportMessages(todasMsgs);
+    localStorage.setItem("ccs_support", JSON.stringify(todasMsgs));
+
+    try{
+      for(let cp of novosCupons){ await supabase.from("coupons").insert(cp).then(()=>{}).catch(()=>{}); }
+      for(let mg of novasMensagens){ await supabase.from("support_messages").insert({ id: mg.id, user_id: mg.user_id, user_nome: mg.user_nome, user_role: mg.user_role, mensagem: mg.mensagem, from_admin: true, created_at: mg.created_at }).then(()=>{}).catch(()=>{}); }
+    }catch{}
+
+    notify(`🎟️ Cupom ${cupomOrigem.code} distribuído para ${clientesAlvo.length} cliente(s) com som 🔔`,"success",4);
+    setDistribuirCupom({ cupomId:"", clienteIds:[], modo:"todos" });
+  };
+
+  const abrirDetalhesMontador = (montadorId)=>{
+    const montador = users.find(u=>u.id==montadorId);
+    if(!montador) return;
+    setSelectedMontadorDetail(montador);
+    setShowMontadorModal(true);
   };
 
   const removerCupom = async (id)=>{
@@ -883,11 +1020,40 @@ const criarPedido = async ()=>{
                 <button type="button" onClick={criarCupom} className="bg-[#0A2A6B] text-white w-full py-3 rounded-xl mt-4 font-bold">+ Criar Cupom e liberar com som 🔔</button>
               </div>
               <div className="bg-white p-4 rounded-3xl shadow">
-                <h4 className="font-bold">Cupons Ativos ({coupons.length})</h4>
+                <h4 className="font-bold">🎟️ Distribuir Cupons para Clientes - Envio em Tempo Real com Som 🔔</h4>
+                <div className="mt-3 grid gap-3">
+                  <select value={distribuirCupom.cupomId} onChange={e=>setDistribuirCupom({...distribuirCupom, cupomId:e.target.value})} className="border rounded-xl p-3 text-sm">
+                    <option value="">Selecione o cupom</option>
+                    {coupons.filter(c=>!c.target_user_id).map(c=><option key={c.id} value={c.id}>{c.code} - {c.desconto}% OFF - {c.validade? new Date(c.validade).toLocaleDateString("pt-BR"):"sem validade"}</option>)}
+                  </select>
+                  <div className="flex gap-2">
+                    <button type="button" onClick={()=>setDistribuirCupom({...distribuirCupom, modo:"todos"})} className={`flex-1 py-2 rounded-xl text-xs font-bold ${distribuirCupom.modo==="todos"?"bg-[#0A2A6B] text-white":"bg-gray-100"}`}>Todos os {users.filter(u=>u.role==="cliente").length} clientes</button>
+                    <button type="button" onClick={()=>setDistribuirCupom({...distribuirCupom, modo:"selecionados"})} className={`flex-1 py-2 rounded-xl text-xs font-bold ${distribuirCupom.modo==="selecionados"?"bg-[#0A2A6B] text-white":"bg-gray-100"}`}>Selecionar clientes</button>
+                  </div>
+                  {distribuirCupom.modo==="selecionados" && (
+                    <div className="max-h-40 overflow-auto border rounded-xl p-2 space-y-1">
+                      {users.filter(u=>u.role==="cliente").map(cli=>(
+                        <label key={cli.id} className="flex items-center gap-2 text-xs p-1 hover:bg-gray-50 rounded">
+                          <input type="checkbox" checked={distribuirCupom.clienteIds.includes(cli.id)} onChange={e=>{
+                            if(e.target.checked) setDistribuirCupom({...distribuirCupom, clienteIds:[...distribuirCupom.clienteIds, cli.id]});
+                            else setDistribuirCupom({...distribuirCupom, clienteIds: distribuirCupom.clienteIds.filter(id=>id!==cli.id)});
+                          }}/>
+                          {cli.nome} - {cli.cidade} - {cli.telefone} - {orders.filter(o=>o.cliente_id==cli.id).length} pedidos
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                  <button type="button" onClick={distribuirCuponsParaClientes} className="bg-green-600 text-white w-full py-3 rounded-xl font-bold">🎟️ Distribuir Cupom com Som e Notificação 🔔</button>
+                  <div className="text-[10px] text-gray-500">Cliente recebe mensagem no Suporte 24h + notificação sonora + cupom aparece na área de cupons dele. Em tempo real.</div>
+                </div>
+              </div>
+
+              <div className="bg-white p-4 rounded-3xl shadow">
+                <h4 className="font-bold">Cupons Ativos ({coupons.length}) - Clique no montador para ver detalhes</h4>
                 <div className="mt-3 space-y-2">
                   {coupons.map(cp=>(
-                    <div key={cp.id} className="flex justify-between items-center border p-3 rounded-xl">
-                      <div><b>{cp.code}</b> - {cp.desconto}% OFF - Val: {cp.validade? new Date(cp.validade).toLocaleDateString("pt-BR") : "sem validade"} - Usos {cp.usados}/{cp.limite}</div>
+                    <div key={cp.id} className={`flex justify-between items-center border p-3 rounded-xl ${cp.target_user_id?"bg-green-50":""}`}>
+                      <div><b>{cp.code}</b> - {cp.desconto}% OFF - Val: {cp.validade? new Date(cp.validade).toLocaleDateString("pt-BR") : "sem validade"} - Usos {cp.usados}/{cp.limite} {cp.target_user_id? `🎯 Para: ${cp.target_nome|| users.find(u=>u.id==cp.target_user_id)?.nome||"cliente específico"}` : "🌍 Para todos"}</div>
                       <button type="button" onClick={()=>removerCupom(cp.id)} className="bg-red-100 text-red-600 px-3 py-1 rounded-full text-xs">Remover</button>
                     </div>
                   ))}
@@ -910,8 +1076,8 @@ const criarPedido = async ()=>{
                     const faltam = progresso===0 && finalizados>0 ? 0 : 6 - progresso;
                     const ganhoBonus = orders.filter(o=> (o.montador_id==m.id || o.montadorId==m.id) && o.bonus_montador).reduce((s,p)=>s+(p.ganho_montador||p.total),0);
                     return (
-                      <div key={m.id} className="border p-3 rounded-xl flex justify-between items-center">
-                        <div><b>{m.nome}</b> - {finalizados} finalizados - {bonusGanhos} bônus ganhos<br/><div className="text-xs">Progresso: {progresso}/5 | Faltam {faltam===6?5:faltam} | Ganho bônus {formatBRL(ganhoBonus)}</div>
+                      <div key={m.id} onClick={()=>abrirDetalhesMontador(m.id)} className="border p-3 rounded-xl flex justify-between items-center hover:bg-yellow-50 cursor-pointer">
+                        <div><b className="underline text-[#0A2A6B]">{m.nome} 👁️</b> - {finalizados} finalizados - {bonusGanhos} bônus ganhos<br/><div className="text-xs">Progresso: {progresso}/5 | Faltam {faltam===6?5:faltam} | Ganho bônus {formatBRL(ganhoBonus)}</div>
                         <div className="w-32 bg-gray-200 h-2 rounded-full mt-1"><div className="bg-green-600 h-2 rounded-full" style={{width: `${(progresso/6)*100}%`}}></div></div></div>
                         <div className={`text-xs px-2 py-1 rounded-full ${progresso===5?"bg-yellow-400 animate-pulse":"bg-gray-100"}`}>{progresso===5?"🔥 Próximo 100%":""}</div>
                       </div>
@@ -984,15 +1150,33 @@ const criarPedido = async ()=>{
                 <h3 className="font-bold">👥 Todos os Usuários - {users.length} total</h3>
                 <div className="mt-4 grid md:grid-cols-2 gap-6">
                   <div>
-                    <h4 className="font-bold text-sm bg-green-100 p-2 rounded-xl">🛒 Clientes ({users.filter(u=>u.role==="cliente").length})</h4>
+                    <h4 className="font-bold text-sm bg-green-100 p-2 rounded-xl">🛒 Clientes ({users.filter(u=>u.role==="cliente").length}) - ADM pode Bloquear/Excluir</h4>
                     {users.filter(u=>u.role==="cliente").map(u=>(
-                      <div key={u.id} className="text-xs border-b py-2"><b>{u.nome}</b><br/>{u.email} - {u.telefone} - {u.cidade} - Pedidos: {orders.filter(o=>o.cliente_id==u.id).length}<br/><span className="text-gray-400">Cadastro: {u.created_at? new Date(u.created_at).toLocaleString("pt-BR"): "local"} - Usuário: {u.usuario}</span></div>
+                      <div key={u.id} className={`text-xs border-b py-2 p-2 rounded-xl ${u.bloqueado?"bg-red-50 border-red-200":""}`}>
+                        <div className="flex justify-between items-start">
+                          <div><b>{u.nome} {u.bloqueado?"⛔ BLOQUEADO":""}</b><br/>{u.email} - {u.telefone} - {u.cidade} - Pedidos: {orders.filter(o=>o.cliente_id==u.id).length}<br/><span className="text-gray-400">Cadastro: {u.created_at? new Date(u.created_at).toLocaleString("pt-BR"): "local"} - Usuário: {u.usuario}</span>{u.bloqueado && <div className="text-red-600 font-bold">Motivo: {u.motivo_bloqueio}</div>}</div>
+                          <div className="flex flex-col gap-1">
+                            <button type="button" onClick={()=>bloquearUsuarioADM(u.id, !u.bloqueado)} className={`${u.bloqueado?"bg-green-600":"bg-orange-500"} text-white px-2 py-1 rounded-full text-[10px] font-bold`}>{u.bloqueado?"Desbloquear":"Bloquear"}</button>
+                            <button type="button" onClick={()=>excluirUsuarioADM(u.id, u.nome)} className="bg-red-600 text-white px-2 py-1 rounded-full text-[10px] font-bold">Excluir</button>
+                          </div>
+                        </div>
+                      </div>
                     ))}
                   </div>
                   <div>
-                    <h4 className="font-bold text-sm bg-orange-100 p-2 rounded-xl">🔧 Montadores ({users.filter(u=>u.role==="montador").length})</h4>
+                    <h4 className="font-bold text-sm bg-orange-100 p-2 rounded-xl">🔧 Montadores ({users.filter(u=>u.role==="montador").length}) - Clique no nome para ver detalhes + Bloquear/Excluir por má conduta</h4>
                     {users.filter(u=>u.role==="montador").map(u=>(
-                      <div key={u.id} className="text-xs border-b py-2"><b>{u.nome} {u.disponivel?"🟢 ONLINE":"🔴 OFFLINE"}</b><br/>{u.telefone} - CPF: {u.cpf} - PIX: {u.pix}<br/>Cidades: {(u.cidades||[]).join(", ")} - ⭐{Number(u.avaliacao||5).toFixed(1)} - {u.total_servicos||0} serviços<br/><span className="text-gray-400">Usuário: {u.usuario} | {u.email}</span></div>
+                      <div key={u.id} className={`text-xs border-b py-2 rounded-xl p-2 ${u.bloqueado?"bg-red-50 border border-red-300":"hover:bg-orange-50"}`}>
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1 cursor-pointer" onClick={()=>abrirDetalhesMontador(u.id)}>
+                            <b className="text-[#0A2A6B] underline">{u.nome} {u.disponivel?"🟢 ONLINE":"🔴 OFFLINE"} {u.bloqueado?"⛔ BLOQUEADO":""} 👁️ Ver detalhes</b><br/>{u.telefone} - CPF: {u.cpf} - PIX: {u.pix}<br/>Cidades: {(u.cidades||[]).join(", ")} - ⭐{Number(u.avaliacao||5).toFixed(1)} - {u.total_servicos||0} serviços - Finalizados: {orders.filter(o=>(o.montador_id==u.id||o.montadorId==u.id)&&o.status==="finalizado").length}<br/><span className="text-gray-400">Usuário: {u.usuario} | {u.email} | Clique para ver tudo</span>{u.bloqueado && <div className="text-red-600 font-bold mt-1">⛔ Motivo bloqueio: {u.motivo_bloqueio}</div>}
+                          </div>
+                          <div className="flex flex-col gap-1 ml-2">
+                            <button type="button" onClick={(e)=>{ e.stopPropagation(); bloquearUsuarioADM(u.id, !u.bloqueado); }} className={`${u.bloqueado?"bg-green-600":"bg-orange-500"} text-white px-2 py-1 rounded-full text-[10px] font-bold`}>{u.bloqueado?"Desbloquear":"Bloquear por má conduta"}</button>
+                            <button type="button" onClick={(e)=>{ e.stopPropagation(); excluirUsuarioADM(u.id, u.nome); }} className="bg-red-600 text-white px-2 py-1 rounded-full text-[10px] font-bold">Excluir permanente</button>
+                          </div>
+                        </div>
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -1116,13 +1300,96 @@ const criarPedido = async ()=>{
         </div>
       )}
 
+      {/* MODAL DETALHES DO MONTADOR - ADM */}
+      {showMontadorModal && selectedMontadorDetail && (
+        <div className="fixed inset-0 z-[70] bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-auto">
+            <div className="sticky top-0 bg-[#0A2A6B] text-white p-4 flex justify-between items-center rounded-t-3xl">
+              <div><div className="font-bold text-lg">🔧 {selectedMontadorDetail.nome} - Detalhes Completos</div><div className="text-xs opacity-80">{selectedMontadorDetail.disponivel?"🟢 ONLINE":"🔴 OFFLINE"} - ⭐ {Number(selectedMontadorDetail.avaliacao||5).toFixed(1)} - {selectedMontadorDetail.total_servicos||0} serviços</div></div>
+              <button type="button" onClick={()=>setShowMontadorModal(false)} className="w-8 h-8 bg-white/20 rounded-full">✕</button>
+            </div>
+            
+            <div className="p-4 space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-gray-50 p-3 rounded-xl"><div className="text-[10px] text-gray-500">Nome Completo</div><div className="font-bold text-sm">{selectedMontadorDetail.nome}</div></div>
+                <div className="bg-gray-50 p-3 rounded-xl"><div className="text-[10px] text-gray-500">Cidade Base</div><div className="font-bold text-sm">{selectedMontadorDetail.cidade}</div></div>
+                <div className="bg-gray-50 p-3 rounded-xl"><div className="text-[10px] text-gray-500">Telefone / WhatsApp</div><div className="font-bold text-sm">{selectedMontadorDetail.telefone}</div><a href={`https://wa.me/55${(selectedMontadorDetail.telefone||"").replace(/\D/g,"")}`} target="_blank" className="text-[10px] text-green-600 underline">Abrir WhatsApp</a></div>
+                <div className="bg-gray-50 p-3 rounded-xl"><div className="text-[10px] text-gray-500">E-mail</div><div className="font-bold text-xs">{selectedMontadorDetail.email}</div></div>
+                <div className="bg-gray-50 p-3 rounded-xl"><div className="text-[10px] text-gray-500">CPF (Validado)</div><div className="font-bold text-sm">{selectedMontadorDetail.cpf}</div></div>
+                <div className="bg-gray-50 p-3 rounded-xl"><div className="text-[10px] text-gray-500">Chave PIX</div><div className="font-bold text-sm">{selectedMontadorDetail.pix}</div></div>
+                <div className="bg-gray-50 p-3 rounded-xl"><div className="text-[10px] text-gray-500">Usuário</div><div className="font-bold text-sm">{selectedMontadorDetail.usuario}</div></div>
+                <div className="bg-gray-50 p-3 rounded-xl"><div className="text-[10px] text-gray-500">Cadastro</div><div className="font-bold text-xs">{selectedMontadorDetail.created_at? new Date(selectedMontadorDetail.created_at).toLocaleString("pt-BR") : "Local"}</div></div>
+              </div>
+
+              <div className="bg-orange-50 p-3 rounded-xl">
+                <div className="font-bold text-sm">📍 Cidades que atende (máx 3)</div>
+                <div className="flex flex-wrap gap-2 mt-2">{(selectedMontadorDetail.cidades||[]).map(c=><span key={c} className="bg-[#0A2A6B] text-white text-xs px-3 py-1 rounded-full">{c}</span>)}</div>
+                {(selectedMontadorDetail.cidades||[]).length===0 && <div className="text-xs text-gray-500">Atende todo SP</div>}
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                <div className="bg-[#0A2A6B] text-white p-3 rounded-xl text-center"><div className="text-[10px]">Finalizados</div><div className="font-bold text-lg">{orders.filter(o=>(o.montador_id==selectedMontadorDetail.id||o.montadorId==selectedMontadorDetail.id)&&o.status==="finalizado").length}</div></div>
+                <div className="bg-green-600 text-white p-3 rounded-xl text-center"><div className="text-[10px]">Ganho Total (90%)</div><div className="font-bold text-sm">{formatBRL(orders.filter(o=>(o.montador_id==selectedMontadorDetail.id||o.montadorId==selectedMontadorDetail.id)&&o.status==="finalizado").reduce((s,p)=>s+p.total*0.9,0))}</div></div>
+                <div className="bg-[#FF7A00] text-white p-3 rounded-xl text-center"><div className="text-[10px]">Avaliação</div><div className="font-bold">⭐ {Number(selectedMontadorDetail.avaliacao||5).toFixed(1)}</div></div>
+              </div>
+
+              <div className="bg-white border p-3 rounded-xl">
+                <div className="font-bold text-sm">📦 Últimos Pedidos Finalizados</div>
+                <div className="mt-2 space-y-1 max-h-32 overflow-auto">
+                  {orders.filter(o=>(o.montador_id==selectedMontadorDetail.id||o.montadorId==selectedMontadorDetail.id)&&o.status==="finalizado").slice(0,10).map(o=>(
+                    <div key={o.id} className="text-xs flex justify-between border-b py-1"><span>#{o.id} - {o.cidade} - {formatBRL(o.total)} {o.bonus_montador?"🎁 100%":"90%"}</span><span>{o.avaliacao?`⭐${o.avaliacao.nota}`:"Sem avaliação"}</span></div>
+                  ))}
+                  {orders.filter(o=>(o.montador_id==selectedMontadorDetail.id||o.montadorId==selectedMontadorDetail.id)&&o.status==="finalizado").length===0 && <div className="text-xs text-gray-400">Nenhum finalizado ainda</div>}
+                </div>
+              </div>
+
+              <div className="bg-yellow-50 border p-3 rounded-xl">
+                <div className="font-bold text-sm">⭐ Avaliações Recebidas</div>
+                <div className="mt-2 space-y-1 max-h-32 overflow-auto">
+                  {orders.filter(o=>(o.montador_id==selectedMontadorDetail.id||o.montadorId==selectedMontadorDetail.id)&&o.avaliacao).map(o=>(
+                    <div key={o.id} className="text-xs bg-white p-2 rounded-xl">#{o.id} ⭐{o.avaliacao.nota} - "{o.avaliacao.comentario}" - Cliente: {o.avaliacao.cliente}</div>
+                  ))}
+                  {orders.filter(o=>(o.montador_id==selectedMontadorDetail.id||o.montadorId==selectedMontadorDetail.id)&&o.avaliacao).length===0 && <div className="text-xs text-gray-400">Nenhuma avaliação</div>}
+                </div>
+              </div>
+
+              <div className="bg-blue-50 border p-3 rounded-xl">
+                <div className="font-bold text-sm">💬 Mensagens no Suporte 24h</div>
+                <div className="mt-2 space-y-1 max-h-32 overflow-auto">
+                  {supportMessages.filter(m=>m.user_id==selectedMontadorDetail.id).map(m=>(
+                    <div key={m.id} className={`text-xs p-2 rounded-xl ${m.from_admin?"bg-[#0A2A6B] text-white ml-4":"bg-white"}`}>{new Date(m.created_at).toLocaleString("pt-BR")} - {m.from_admin?"ADM":"Ele"}: {m.mensagem}</div>
+                  ))}
+                  {supportMessages.filter(m=>m.user_id==selectedMontadorDetail.id).length===0 && <div className="text-xs text-gray-400">Nenhuma mensagem</div>}
+                </div>
+              </div>
+
+              <div className="bg-red-50 border border-red-200 p-3 rounded-xl">
+                <div className="font-bold text-sm text-red-700">⚠️ Ações ADM - Má conduta / Anti-profissionalismo</div>
+                <div className="text-[10px] text-gray-600">Bloqueie montadores que agirem de má fé com clientes ou com anti-profissionalismo. Conta bloqueada não consegue fazer login.</div>
+                <div className="flex gap-2 mt-2">
+                  <button type="button" onClick={()=>bloquearUsuarioADM(selectedMontadorDetail.id, !selectedMontadorDetail.bloqueado)} className={`flex-1 ${selectedMontadorDetail.bloqueado?"bg-green-600":"bg-orange-500"} text-white py-2 rounded-xl font-bold text-xs`}>{selectedMontadorDetail.bloqueado?"✅ Desbloquear":"⛔ Bloquear por má conduta"}</button>
+                  <button type="button" onClick={()=>{ if(window.confirm(`Excluir permanentemente ${selectedMontadorDetail.nome}?`)){ excluirUsuarioADM(selectedMontadorDetail.id, selectedMontadorDetail.nome); setShowMontadorModal(false); } }} className="flex-1 bg-red-600 text-white py-2 rounded-xl font-bold text-xs">🗑️ Excluir permanente</button>
+                </div>
+                {selectedMontadorDetail.bloqueado && <div className="mt-2 text-xs text-red-700 font-bold">Bloqueado em {selectedMontadorDetail.bloqueado_em? new Date(selectedMontadorDetail.bloqueado_em).toLocaleString("pt-BR"):""} - Motivo: {selectedMontadorDetail.motivo_bloqueio}</div>}
+              </div>
+
+              <div className="flex gap-2">
+                <a href={`https://wa.me/55${(selectedMontadorDetail.telefone||"").replace(/\D/g,"")}?text=Olá ${selectedMontadorDetail.nome}, aqui é ADM Contato Certo SP`} target="_blank" className="flex-1 bg-green-600 text-white text-center py-3 rounded-xl font-bold">💬 WhatsApp</a>
+                <a href={`tel:${selectedMontadorDetail.telefone}`} className="flex-1 bg-[#0A2A6B] text-white text-center py-3 rounded-xl font-bold">📞 Ligar</a>
+                <button type="button" onClick={()=>setShowMontadorModal(false)} className="flex-1 bg-gray-100 py-3 rounded-xl font-bold">Fechar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <footer className="bg-[#0A2A6B] text-white text-center py-6 mt-10"><div>2026 - Contato Certo SP - AO VIVO {isLive?"🟢":"🔴"} 🔊 Suporte 24h 💬</div><div className="text-xs">contatocerto.prestadores@gmail.com - (18) 99148-8302 - Clique no ícone 💬 canto inferior direito</div></footer>
     </div>
   );
 }
 
 
-function MontadorPanel({ currentUser, setCurrentUser, users, orders, isLive, aceitarPedido, finalizarPedido, formatBRL, notify, setUsers }){
+function MontadorPanel({ currentUser, setCurrentUser, users, orders, isLive, aceitarPedido, finalizarPedido, formatBRL, notify, setUsers, excluirMeuCadastro }){
   const [tab, setTab] = React.useState("disponiveis");
   const [novaCidade, setNovaCidade] = React.useState("");
   const [timerNow, setTimerNow] = React.useState(Date.now());
@@ -1337,6 +1604,11 @@ function MontadorPanel({ currentUser, setCurrentUser, users, orders, isLive, ace
             <div className="font-bold">⭐ Avaliações recebidas</div>
             {orders.filter(o=> (o.montador_id==currentUser.id) && o.avaliacao).map(o=><div key={o.id} className="text-xs mt-2 p-2 bg-yellow-50 rounded-xl">#{o.id} ⭐{o.avaliacao.nota} - "{o.avaliacao.comentario}" - Cliente: {o.avaliacao.cliente}</div>)}
             {orders.filter(o=> o.montador_id==currentUser.id && o.avaliacao).length===0 && <div className="text-xs text-gray-400 mt-2">Nenhuma avaliação ainda. Finalize serviços para receber.</div>}
+          </div>
+          <div className="bg-red-50 border border-red-200 p-4 rounded-3xl">
+            <div className="font-bold text-red-700 text-sm">⚠️ Zona de Perigo</div>
+            <div className="text-xs text-gray-600 mt-1">Exclua permanentemente seu cadastro como montador e todos os dados (LGPD).</div>
+            <button type="button" onClick={()=>excluirMeuCadastro()} className="bg-red-600 text-white w-full py-3 rounded-xl mt-3 font-bold text-sm">🗑️ Excluir meu cadastro permanentemente</button>
           </div>
         </div>
       )}
