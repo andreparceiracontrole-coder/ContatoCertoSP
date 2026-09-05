@@ -79,44 +79,88 @@ export default function App() {
         setUsers(JSON.parse(localStorage.getItem("ccs_users")||"[]"));
         setOrders(JSON.parse(localStorage.getItem("ccs_orders")||"[]"));
         setCoupons(JSON.parse(localStorage.getItem("ccs_coupons")||"[]"));
+        setSupportMessages(JSON.parse(localStorage.getItem("ccs_support")||"[]"));
         setLoading(false);
         return;
       }
-      const { data: u } = await supabase.from("users").select("*").order("created_at", {ascending:false});
-      const { data: o } = await supabase.from("orders").select("*").order("created_at", {ascending:false});
-      // Busca mensagens de suporte
+      // USERS - sempre tenta, fallback local
+      try{
+        const { data: u, error: errU } = await supabase.from("users").select("*").order("created_at", {ascending:false});
+        if(u && !errU && u.length>=0){
+          setUsers(u);
+          localStorage.setItem("ccs_users", JSON.stringify(u));
+          if(u.length>0) setIsLive(true);
+        } else {
+          const localU = JSON.parse(localStorage.getItem("ccs_users")||"[]");
+          if(localU.length>0) setUsers(localU);
+        }
+      }catch(e){ 
+        const localU = JSON.parse(localStorage.getItem("ccs_users")||"[]");
+        if(localU.length>0) setUsers(localU);
+        console.log("Erro users", e);
+      }
+
+      // ORDERS - sempre tenta
+      let ordersData = null;
+      try{
+        const { data: o, error: errO } = await supabase.from("orders").select("*").order("created_at", {ascending:false});
+        if(o && !errO){
+          ordersData = o;
+        }
+      }catch(e){ console.log("Erro orders", e); }
+
+      if(!ordersData){
+        ordersData = JSON.parse(localStorage.getItem("ccs_orders")||"[]");
+        // converte formato local se já for mapeado
+        if(ordersData.length>0 && ordersData[0].cliente_id===undefined && ordersData[0].clienteId!==undefined){
+          // já está no formato mapeado, mantém
+        }
+      }
+
+      // Busca mensagens de suporte - opcional, não quebra se não existir
       try {
         const resS = await supabase.from("support_messages").select("*").order("created_at", {ascending:true});
-        if(resS.data && !resS.error && resS.data.length>0){
-          setSupportMessages(resS.data.map(m=>({ id: m.id, user_id: m.user_id, user_nome: m.user_nome, user_role: m.user_role, mensagem: m.mensagem, resposta: m.resposta, from_admin: m.from_admin, created_at: m.created_at, lida: m.lida })));
-          localStorage.setItem("ccs_support", JSON.stringify(resS.data.map(m=>({ id: m.id, user_id: m.user_id, user_nome: m.user_nome, user_role: m.user_role, mensagem: m.mensagem, resposta: m.resposta, from_admin: m.from_admin, created_at: m.created_at, lida: m.lida }))));
+        if(resS.data && !resS.error){
+          if(resS.data.length>0){
+            const mappedS = resS.data.map(m=>({ id: m.id, user_id: m.user_id, user_nome: m.user_nome, user_role: m.user_role, mensagem: m.mensagem, resposta: m.resposta, from_admin: m.from_admin, created_at: m.created_at, lida: m.lida }));
+            setSupportMessages(mappedS);
+            localStorage.setItem("ccs_support", JSON.stringify(mappedS));
+          }
         }
-      } catch(e){ console.log("Tabela support_messages não existe, usando local", e); }
-      // Busca cupons - não apaga local se Supabase estiver vazio ou sem tabela
+      } catch(e){ /* tabela pode não existir ainda */ }
+
+      // Busca cupons - opcional
       let couponsRemote = null;
       try {
         const resC = await supabase.from("coupons").select("*").order("created_at", {ascending:false});
         if(resC.data && !resC.error) couponsRemote = resC.data;
-      } catch(e) { console.log("Tabela coupons não existe ainda, usando local", e); }
-      
-      if (u) setUsers(u);
+      } catch(e) { /* tabela pode não existir */ }
       
       const couponsLocal = JSON.parse(localStorage.getItem("ccs_coupons")||"[]");
       if (couponsRemote && couponsRemote.length>0) {
-        // Se tem cupons no Supabase, usa eles (fonte da verdade)
         setCoupons(couponsRemote);
         localStorage.setItem("ccs_coupons", JSON.stringify(couponsRemote));
       } else if (couponsRemote && couponsRemote.length===0 && couponsLocal.length>0) {
-        // Supabase vazio mas local tem - mantém local (caso RLS bloqueou insert)
         setCoupons(couponsLocal);
       } else if (!couponsRemote) {
-        // Sem tabela, usa local
         setCoupons(couponsLocal);
       } else {
-        setCoupons(couponsRemote||[]);
+        setCoupons(couponsRemote||couponsLocal);
       }
-      if (o) {
-        let mapped = o.map(x=>({ id: x.id, clienteId: x.cliente_id, cliente_id: x.cliente_id, itens: x.itens, subtotal: x.subtotal, desconto: x.desconto, total: x.total, endereco: x.endereco, bairro: x.bairro, cidade: x.cidade, data: x.data, horario: x.horario, foto: x.foto, status: x.status, comprovante: x.comprovante, montadorId: x.montador_id, montador_id: x.montador_id, createdAt: x.created_at, aceiteAt: x.aceite_at, finalizadoAt: x.finalizado_at, avaliacao: x.avaliacao, cancelado_at: x.cancelado_at }));
+
+      if (ordersData) {
+        let mapped = null;
+        // Se já está mapeado (do localStorage)
+        if(ordersData.length>0 && ordersData[0].id && (ordersData[0].cliente_id!==undefined || ordersData[0].clienteId!==undefined) && ordersData[0].total!==undefined && ordersData[0].cidade!==undefined){
+          // Verifica se vem do Supabase (tem cliente_id) ou local já mapeado
+          if(ordersData[0].created_at!==undefined){
+            mapped = ordersData.map(x=>({ id: x.id, clienteId: x.cliente_id, cliente_id: x.cliente_id, itens: x.itens, subtotal: x.subtotal, desconto: x.desconto, total: x.total, endereco: x.endereco, bairro: x.bairro, cidade: x.cidade, data: x.data, horario: x.horario, foto: x.foto, status: x.status, comprovante: x.comprovante, montadorId: x.montador_id, montador_id: x.montador_id, createdAt: x.created_at, aceiteAt: x.aceite_at, finalizadoAt: x.finalizado_at, avaliacao: x.avaliacao, cancelado_at: x.cancelado_at, bonus_montador: x.bonus_montador, ganho_montador: x.ganho_montador, cupom: x.cupom }));
+          } else {
+            mapped = ordersData;
+          }
+        } else {
+          mapped = ordersData;
+        }
         // Respeita cancelados locais para não voltar o pedido
         try{
           const cancelados = JSON.parse(localStorage.getItem("ccs_cancelados")||"[]");
@@ -181,78 +225,109 @@ export default function App() {
   useEffect(()=>{
     let channel;
     try{
-      channel = supabase.channel("contato-certo-v4-notif")
-        .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, ()=>fetchData())
-        .on("postgres_changes", { event: "*", schema: "public", table: "users" }, ()=>fetchData())
+      // Canal principal só com tabelas garantidas (orders e users)
+      channel = supabase.channel("contato-certo-v5-online")
+        .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, ()=>{
+          console.log("🔔 Realtime orders mudou");
+          fetchData();
+        })
+        .on("postgres_changes", { event: "*", schema: "public", table: "users" }, ()=>{
+          console.log("🔔 Realtime users mudou");
+          fetchData();
+        })
+        .subscribe((status)=>{ 
+          console.log("Realtime status:", status);
+          if(status==="SUBSCRIBED"){
+            setIsLive(true);
+            console.log("✅ Tempo real CONECTADO");
+          }
+        });
+    }catch(e){ console.log("Erro realtime principal", e); setIsLive(false); }
+
+    let channel2;
+    try{
+      // Canal secundário para cupons e suporte - não quebra se tabela não existir
+      channel2 = supabase.channel("contato-certo-v5-extra")
         .on("postgres_changes", { event: "*", schema: "public", table: "coupons" }, ()=>fetchData())
         .on("postgres_changes", { event: "*", schema: "public", table: "support_messages" }, (payload)=>{
           fetchData();
           if(currentUser?.role==="admin"){
             notify(`💬 Nova mensagem de suporte 24h!`, "success", 4);
           }
-          if(currentUser && payload.new && payload.new.user_id==currentUser.id && payload.new.from_admin){
-            notify(`💬 ADM respondeu seu suporte: ${payload.new.mensagem?.slice(0,30)}`, "success", 3);
+          if(currentUser && payload?.new && payload.new.user_id==currentUser.id && payload.new.from_admin){
+            notify(`💬 ADM respondeu: ${payload.new.mensagem?.slice(0,30)}`, "success", 3);
           }
         })
-        .subscribe((s)=>{ if(s==="SUBSCRIBED") setIsLive(true); });
-    }catch{}
-    const interval = setInterval(()=>fetchData(), 3000);
-    return ()=>{ if(channel) supabase.removeChannel(channel); clearInterval(interval); };
-  },[currentUser, users]);
+        .subscribe();
+    }catch(e){ console.log("Erro realtime extra (tabelas podem não existir)", e); }
+
+    const interval = setInterval(()=>{
+      fetchData();
+      setIsLive(true); // força online a cada fetch bem sucedido
+    }, 3000);
+
+    return ()=>{ 
+      if(channel) try{ supabase.removeChannel(channel); }catch{}
+      if(channel2) try{ supabase.removeChannel(channel2); }catch{}
+      clearInterval(interval); 
+    };
+  },[]);
 
   useEffect(()=>{ localStorage.setItem("ccs_current", JSON.stringify(currentUser)); },[currentUser]);
   useEffect(()=>{ localStorage.setItem("ccs_coupons", JSON.stringify(coupons)); },[coupons]);
   useEffect(()=>{ localStorage.setItem("ccs_support", JSON.stringify(supportMessages)); },[supportMessages]);
   useEffect(()=>{ supportEndRef.current?.scrollIntoView({behavior:"smooth"}); },[supportMessages, showSupportChat, selectedSupportUser]);
 
-  // Deep Links - Link direto para o app
+  // Deep Links - Link direto para o app - roda só 1 vez
   useEffect(()=>{
-    const params = new URLSearchParams(window.location.search);
-    const viewParam = params.get("view");
-    const action = params.get("action");
-    const cupomParam = params.get("cupom");
-    const cidadeParam = params.get("cidade");
+    try{
+      const params = new URLSearchParams(window.location.search);
+      const viewParam = params.get("view");
+      const action = params.get("action");
+      const cupomParam = params.get("cupom");
+      const cidadeParam = params.get("cidade");
 
-    if(cupomParam){
-      setCouponInput(cupomParam.toUpperCase());
-      const found = coupons.find(c=>c.code===cupomParam.toUpperCase());
-      if(found){ setAppliedCoupon(found); notify(`Cupom ${found.code} aplicado via link! ${found.desconto}% OFF`,"success",2); }
-    }
-    if(cidadeParam){
-      setOrderForm(prev=>({...prev, cidade: cidadeParam}));
-      setSearch(cidadeParam);
-    }
-    if(viewParam){
-      if(["cliente","montador","admin","home"].includes(viewParam)){
-        if(currentUser){
-          if(viewParam==="cliente" && currentUser.role==="cliente") setView("cliente");
-          if(viewParam==="montador" && currentUser.role==="montador") setView("montador");
-          if(viewParam==="admin" && currentUser.role==="admin") setView("admin");
-        } else {
-          if(viewParam==="cliente" || viewParam==="montador"){
-            setAuthMode(viewParam);
-            setIsLogin(false);
-            setShowAuth(true);
-          }
+      if(cupomParam){
+        setCouponInput(cupomParam.toUpperCase());
+      }
+      if(cidadeParam){
+        setOrderForm(prev=>({...prev, cidade: cidadeParam}));
+        setSearch(cidadeParam);
+      }
+      if(viewParam && ["cliente","montador","admin","home"].includes(viewParam)){
+        if(viewParam==="cliente" || viewParam==="montador"){
+          setAuthMode(viewParam);
+          setIsLogin(false);
+          setShowAuth(true);
         }
         if(viewParam==="home") setView("home");
       }
+      if(action==="cadastro-cliente"){
+        setAuthMode("cliente");
+        setIsLogin(false);
+        setShowAuth(true);
+      }
+      if(action==="cadastro-montador"){
+        setAuthMode("montador");
+        setIsLogin(false);
+        setShowAuth(true);
+      }
+    }catch{}
+  },[]);
+
+  // Aplica cupom via URL quando cupons carregarem
+  useEffect(()=>{
+    const params = new URLSearchParams(window.location.search);
+    const cupomParam = params.get("cupom");
+    if(cupomParam && coupons.length>0){
+      const found = coupons.find(c=>c.code===cupomParam.toUpperCase() && c.ativo!==false);
+      if(found && !appliedCoupon){
+        setAppliedCoupon(found);
+        setCouponInput(found.code);
+        notify(`Cupom ${found.code} aplicado via link! ${found.desconto}% OFF`,"success",2);
+      }
     }
-    if(action==="novo-pedido" && currentUser?.role==="cliente"){
-      setShowOrderFlow(true);
-      setOrderStep(1);
-    }
-    if(action==="cadastro-cliente"){
-      setAuthMode("cliente");
-      setIsLogin(false);
-      setShowAuth(true);
-    }
-    if(action==="cadastro-montador"){
-      setAuthMode("montador");
-      setIsLogin(false);
-      setShowAuth(true);
-    }
-  },[coupons, currentUser]);
+  },[coupons]);
 
   const filteredCatalog = useMemo(()=>{
     return CATALOGO.filter(item=>{
