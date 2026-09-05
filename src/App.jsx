@@ -75,14 +75,28 @@ export default function App() {
       }
       const { data: u } = await supabase.from("users").select("*").order("created_at", {ascending:false});
       const { data: o } = await supabase.from("orders").select("*").order("created_at", {ascending:false});
-      const { data: c } = await supabase.from("coupons").select("*").order("created_at", {ascending:false}).then(r=>r).catch(()=>({data:null}));
+      // Busca cupons - não apaga local se Supabase estiver vazio ou sem tabela
+      let couponsRemote = null;
+      try {
+        const resC = await supabase.from("coupons").select("*").order("created_at", {ascending:false});
+        if(resC.data && !resC.error) couponsRemote = resC.data;
+      } catch(e) { console.log("Tabela coupons não existe ainda, usando local", e); }
+      
       if (u) setUsers(u);
-      if (c && c.length>=0) {
-        setCoupons(c);
-        localStorage.setItem("ccs_coupons", JSON.stringify(c));
+      
+      const couponsLocal = JSON.parse(localStorage.getItem("ccs_coupons")||"[]");
+      if (couponsRemote && couponsRemote.length>0) {
+        // Se tem cupons no Supabase, usa eles (fonte da verdade)
+        setCoupons(couponsRemote);
+        localStorage.setItem("ccs_coupons", JSON.stringify(couponsRemote));
+      } else if (couponsRemote && couponsRemote.length===0 && couponsLocal.length>0) {
+        // Supabase vazio mas local tem - mantém local (caso RLS bloqueou insert)
+        setCoupons(couponsLocal);
+      } else if (!couponsRemote) {
+        // Sem tabela, usa local
+        setCoupons(couponsLocal);
       } else {
-        // fallback local
-        setCoupons(JSON.parse(localStorage.getItem("ccs_coupons")||"[]"));
+        setCoupons(couponsRemote||[]);
       }
       if (o) {
         let mapped = o.map(x=>({ id: x.id, clienteId: x.cliente_id, cliente_id: x.cliente_id, itens: x.itens, subtotal: x.subtotal, desconto: x.desconto, total: x.total, endereco: x.endereco, bairro: x.bairro, cidade: x.cidade, data: x.data, horario: x.horario, foto: x.foto, status: x.status, comprovante: x.comprovante, montadorId: x.montador_id, montador_id: x.montador_id, createdAt: x.created_at, aceiteAt: x.aceite_at, finalizadoAt: x.finalizado_at, avaliacao: x.avaliacao, cancelado_at: x.cancelado_at }));
@@ -304,16 +318,27 @@ const criarPedido = async ()=>{
 
   const criarCupom = async ()=>{
     if(!newCoupon.code) return notify("Digite o código do cupom","error",1);
-    const cupom = { id: Date.now(), code: newCoupon.code.toUpperCase().trim(), desconto: Number(newCoupon.desconto), validade: newCoupon.validade||null, limite: Number(newCoupon.limite)||100, usados:0, created_at: new Date().toISOString(), ativo:true };
+    const codigo = newCoupon.code.toUpperCase().trim();
+    if(coupons.some(c=>c.code===codigo)) return notify("Cupom já existe","error",1);
+    const cupom = { id: Date.now(), code: codigo, desconto: Number(newCoupon.desconto), validade: newCoupon.validade||null, limite: Number(newCoupon.limite)||100, usados:0, created_at: new Date().toISOString(), ativo:true };
     const novos = [cupom, ...coupons];
     setCoupons(novos);
-    try{ await supabase.from("coupons").insert(cupom); }catch(e){ console.log("Cupom local", e); }
+    localStorage.setItem("ccs_coupons", JSON.stringify(novos));
+    try{ 
+      const { error } = await supabase.from("coupons").insert(cupom);
+      if(error) throw error;
+      notify(`Cupom ${cupom.code} salvo no banco: ${cupom.desconto}% OFF`,"success",2);
+    }catch(e){ 
+      console.log("Cupom salvo só local - crie tabela coupons no Supabase", e);
+      notify(`Cupom ${cupom.code} criado LOCAL: ${cupom.desconto}% OFF - Rode SQL no Supabase para salvar online`,"success",3);
+    }
     setNewCoupon({ code:"", desconto:10, validade:"", limite:100 });
-    notify(`Cupom ${cupom.code} criado: ${cupom.desconto}% OFF`,"success",2);
   };
 
   const removerCupom = async (id)=>{
-    setCoupons(prev=>prev.filter(c=>c.id!==id));
+    const novos = coupons.filter(c=>c.id!==id);
+    setCoupons(novos);
+    localStorage.setItem("ccs_coupons", JSON.stringify(novos));
     try{ await supabase.from("coupons").delete().eq("id", id); }catch{}
     notify("Cupom removido","info",1);
   };
