@@ -1,13 +1,21 @@
 {
-  "name": "Contato Certo SP",
-  "short_name": "ContatoCertoSP",
-  "description": "Montadores de móveis premium em SP",
+  "name": "Contato Certo SP - Montadores",
+  "short_name": "ContatoCerto",
+  "description": "Montadores de m\u00f3veis em todo SP - Taxa 10% + 90% na entrega - Ao Vivo",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0A2A6B",
-  "theme_color": "#0A2A6B",
+  "theme_color": "#FF7A00",
   "icons": [
-    { "src": "/logo.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/logo.png", "sizes": "512x512", "type": "image/png" }
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
   ]
 }
