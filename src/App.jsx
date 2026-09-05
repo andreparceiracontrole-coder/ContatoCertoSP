@@ -25,6 +25,29 @@ const playBeep = (times=1) => {
   } catch {}
 };
 
+const compressImage = (file, maxSize=300, quality=0.7) => {
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = (e)=>{
+      const img = new Image();
+      img.onload = ()=>{
+        const canvas = document.createElement('canvas');
+        let w = img.width, h = img.height;
+        if(w>h){ if(w>maxSize){ h*=maxSize/w; w=maxSize; } } else { if(h>maxSize){ w*=maxSize/h; h=maxSize; } }
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img,0,0,w,h);
+        const base64 = canvas.toDataURL('image/jpeg', quality);
+        resolve(base64);
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+};
+
 export default function App() {
   const [users, setUsers] = useState(()=> JSON.parse(localStorage.getItem("ccs_users")||"[]"));
   const [orders, setOrders] = useState(()=> JSON.parse(localStorage.getItem("ccs_orders")||"[]"));
@@ -778,7 +801,11 @@ export default function App() {
             <div className="mt-6 grid md:grid-cols-3 gap-4">
               {users.filter(u=>u.role==="montador").slice(0,6).map(m=>(
                 <div key={m.id} className="bg-white rounded-3xl p-4 shadow border">
-                  <div className="flex justify-between"><b>{m.nome}</b><span className="text-xs">{m.disponivel?"🟢":"🔴"}</span></div>
+                  <div className="flex gap-3 items-center">
+                    <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-[#0A2A6B] flex-shrink-0 bg-gray-100">{m.foto ? <img src={m.foto} className="w-full h-full object-cover"/> : <div className="w-full h-full bg-[#0A2A6B] text-white flex items-center justify-center font-bold text-sm">{m.nome?.charAt(0)||"M"}</div>}</div>
+                    <div className="flex-1"><div className="flex justify-between"><b className="text-sm">{m.nome}</b><span className="text-xs">{m.disponivel?"🟢":"🔴"}</span></div>
+                    <div className="text-[10px]">{m.foto?"📸 Foto OK":"Sem foto"}</div></div>
+                  </div>
                   <div className="text-xs">⭐ {Number(m.avaliacao||5).toFixed(1)} | {(m.cidades||[]).join(", ")||"Todo SP"} | {orders.filter(o=>(o.montador_id==m.id||o.montadorId==m.id)&&o.status==="finalizado").length} serviços</div>
                   <div className="text-xs text-gray-500">{m.cidade} - {m.telefone}</div>
                   <button type="button" onClick={()=>abrirDetalhesMontador(m.id)} className="mt-2 bg-[#0A2A6B] text-white w-full py-2 rounded-xl text-xs">Ver detalhes 👁️</button>
@@ -1311,14 +1338,22 @@ export default function App() {
                   {p.status==="aguardando_montador" && <div className="mt-3 text-sm bg-green-50 border border-green-200 p-3 rounded-xl">✅ Taxa 10% confirmada! Aguardando montador aceitar. Na entrega você paga {formatBRL(p.restante_montador||p.total*0.90)} direto para montador 🔔 {isLive?"🟢":"🔴"}</div>}
                   {(p.status==="aceito") && montador && (
                     <div className="mt-3 p-4 bg-blue-50 border-2 border-blue-400 rounded-2xl animate-pulse">
-                      <div className="text-xs font-bold text-[#0A2A6B]">🔔🔧 MONTADOR ACEITOU - A CAMINHO! - Informações completas 🟢 Ao Vivo</div>
+                      <div className="text-xs font-bold text-[#0A2A6B]">🔔🔧 MONTADOR ACEITOU - A CAMINHO! - Com foto compactada 🟢 Ao Vivo</div>
                       <div className="mt-3 bg-white p-4 rounded-2xl border">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <div className="font-bold text-lg">{montador.nome} ⭐ {Number(montador.avaliacao||5).toFixed(1)}</div>
-                            <div className="text-xs text-gray-500">ID Montador: {montador.id} | {montador.total_servicos||0} serviços finalizados | {isLive?"🟢 Online agora":"🔴 Offline"}</div>
+                        <div className="flex gap-3 items-start">
+                          {/* FOTO COMPACTADA - NÃO ESTOURA SITE */}
+                          <div className="w-16 h-16 rounded-full overflow-hidden border-3 border-[#0A2A6B] flex-shrink-0 bg-gray-100 shadow">
+                            {montador.foto ? <img src={montador.foto} alt="foto montador" className="w-full h-full object-cover"/> : <div className="w-full h-full flex items-center justify-center bg-[#0A2A6B] text-white font-bold text-lg">{montador.nome?.charAt(0)||"M"}</div>}
                           </div>
-                          <span className={`text-[10px] px-2 py-1 rounded-full ${montador.disponivel?"bg-green-100 text-green-700":"bg-red-100 text-red-700"}`}>{montador.disponivel?"🟢 Online":"🔴 Offline"}</span>
+                          <div className="flex-1">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <div className="font-bold text-lg flex items-center gap-2">{montador.nome} ⭐ {Number(montador.avaliacao||5).toFixed(1)} {montador.foto && <span className="text-[10px] bg-green-100 text-green-700 px-2 py-1 rounded-full">📸 Foto OK</span>}</div>
+                                <div className="text-xs text-gray-500">ID Montador: {montador.id} | {montador.total_servicos||0} serviços finalizados | {isLive?"🟢 Online agora":"🔴 Offline"}</div>
+                              </div>
+                              <span className={`text-[10px] px-2 py-1 rounded-full ${montador.disponivel?"bg-green-100 text-green-700":"bg-red-100 text-red-700"}`}>{montador.disponivel?"🟢 Online":"🔴 Offline"}</span>
+                            </div>
+                          </div>
                         </div>
                         <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
                           <div className="bg-gray-50 p-2 rounded-xl"><b>📱 WhatsApp:</b><br/>{montador.telefone}</div>
@@ -1410,8 +1445,8 @@ export default function App() {
                           
                           {p.status==="aceito" && montador && (
                             <div className="mt-3 bg-blue-50 border-2 border-blue-400 p-3 rounded-xl">
-                              <div className="text-xs font-bold text-[#0A2A6B]">🔧 Montador que aceitou seu pedido:</div>
-                              <div className="mt-2"><b>{montador.nome}</b> ⭐{Number(montador.avaliacao||5).toFixed(1)} - {montador.total_servicos||0} serviços</div>
+                              <div className="text-xs font-bold text-[#0A2A6B]">🔧 Montador que aceitou seu pedido (foto compactada):</div>
+                              <div className="mt-2 flex items-center gap-2"><div className="w-12 h-12 rounded-full overflow-hidden border-2 border-[#0A2A6B] flex-shrink-0">{montador.foto ? <img src={montador.foto} className="w-full h-full object-cover"/> : <div className="w-full h-full bg-[#0A2A6B] text-white flex items-center justify-center font-bold">{montador.nome?.charAt(0)||"M"}</div>}</div><div><b>{montador.nome}</b> ⭐{Number(montador.avaliacao||5).toFixed(1)} - {montador.total_servicos||0} serviços<br/><span className="text-[10px]">{montador.foto?"📸 Com foto":"Sem foto"}</span></div></div>
                               <div className="text-xs">📱 {montador.telefone} | 📍 {montador.cidade}</div>
                               <div className="text-xs">Cidades: {(montador.cidades||[]).join(", ")}</div>
                               <div className="text-xs font-bold text-green-700 mt-1">⏱️ Aceito {p.aceiteAt? new Date(p.aceiteAt).toLocaleString("pt-BR") : p.aceite_at? new Date(p.aceite_at).toLocaleString("pt-BR"):""} - Chega em 30min</div>
@@ -1975,11 +2010,52 @@ function MontadorPanel({ currentUser, setCurrentUser, users, orders, isLive, ace
 
       {tab==="perfil" && (
         <div className="mt-4 space-y-4">
+          {/* AVISO PARA MONTADORES JÁ CADASTRADOS - FOTO OBRIGATÓRIA */}
+          {!currentUser.foto && (
+            <div className="bg-red-50 border-2 border-red-500 p-4 rounded-3xl animate-pulse">
+              <div className="font-bold text-red-700">⚠️ ATENÇÃO - FOTO DE PERFIL OBRIGATÓRIA! 📸</div>
+              <div className="text-xs mt-2 text-red-600">Olá {currentUser.nome}! Nova regra: foto de perfil obrigatória para todos montadores já cadastrados!</div>
+              <div className="text-xs mt-1">Sua foto aparece para cliente quando você aceita pedido (notificação compactada 300x300). Sem foto você NÃO poderá aceitar pedidos e ficar online!</div>
+              <div className="text-xs mt-2 font-bold">📱 Faça upload agora da galeria do seu celular abaixo - será compactada automaticamente para caber no site sem estourar!</div>
+            </div>
+          )}
+
           <div className="bg-white p-4 rounded-3xl shadow">
-            <div className="font-bold">👤 {currentUser.nome} {isLive?"🟢 Ao Vivo":"🔴"}</div>
-            <div className="text-xs">📱 {currentUser.telefone} | ✉️ {currentUser.email}</div>
-            <div className="text-xs">CPF: {currentUser.cpf} | PIX: {currentUser.pix}</div>
-            <div className="text-xs">⭐ {Number(currentUser.avaliacao||5).toFixed(1)} | {currentUser.total_servicos||0} serviços | {currentUser.disponivel?"🟢 Online":"🔴 Offline"}</div>
+            <div className="flex items-center gap-4">
+              <div className="w-20 h-20 rounded-full overflow-hidden border-3 border-[#0A2A6B] bg-gray-100 flex-shrink-0">
+                {currentUser.foto ? <img src={currentUser.foto} className="w-full h-full object-cover"/> : <div className="w-full h-full flex items-center justify-center text-[10px]">Sem foto</div>}
+              </div>
+              <div className="flex-1">
+                <div className="font-bold">👤 {currentUser.nome} {isLive?"🟢 Ao Vivo":"🔴"} {currentUser.foto?"📸✅":"📸❌"}</div>
+                <div className="text-xs">📱 {currentUser.telefone} | ✉️ {currentUser.email}</div>
+                <div className="text-xs">CPF: {currentUser.cpf} | PIX: {currentUser.pix}</div>
+                <div className="text-xs">⭐ {Number(currentUser.avaliacao||5).toFixed(1)} | {currentUser.total_servicos||0} serviços | {currentUser.disponivel?"🟢 Online":"🔴 Offline"} | Foto: {currentUser.foto?"Obrigatória OK ✅":"Falta foto ❌"}</div>
+              </div>
+            </div>
+            <div className="mt-4 bg-yellow-50 border-2 border-yellow-400 p-3 rounded-2xl">
+              <div className="font-bold text-xs">📸 Foto de perfil obrigatória - Upload da galeria do celular:</div>
+              <div className="flex items-center gap-3 mt-2">
+                <input type="file" accept="image/*" id="foto-perfil-input" onChange={async (e)=>{
+                  const file = e.target.files[0];
+                  if(!file) return;
+                  try{
+                    const compressed = await compressImage(file, 300, 0.7);
+                    const updated = {...currentUser, foto: compressed};
+                    setCurrentUser(updated);
+                    localStorage.setItem("ccs_current", JSON.stringify(updated));
+                    const novosUsers = users.map(u=> u.id==currentUser.id ? {...u, foto: compressed} : u);
+                    setUsers(novosUsers);
+                    localStorage.setItem("ccs_users", JSON.stringify(novosUsers));
+                    try{ await supabase.from("users").update({ foto: compressed }).eq("id", currentUser.id); }catch{}
+                    notify("Foto de perfil atualizada e compactada! 300x300 - Não estoura site ✅","success",2);
+                  }catch{ notify("Erro ao compactar foto","error",1); }
+                }} className="flex-1 text-xs p-2 border-2 border-dashed rounded-xl bg-white"/>
+                <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-green-500">
+                  {currentUser.foto ? <img src={currentUser.foto} className="w-full h-full object-cover"/> : <div className="w-full h-full bg-gray-200 flex items-center justify-center text-[8px]">?</div>}
+                </div>
+              </div>
+              <div className="text-[10px] text-gray-500 mt-2">Compactada automaticamente: 300x300 JPEG 70% (~20-40KB) - Cabe no site sem estourar layout</div>
+            </div>
           </div>
           <div className="bg-white p-4 rounded-3xl shadow">
             <div className="font-bold">📍 Cidades que atende (máx 3)</div>
@@ -2007,14 +2083,44 @@ function MontadorPanel({ currentUser, setCurrentUser, users, orders, isLive, ace
 }
 
 function RegisterForm({mode,onSubmit}){
-  const [f,setF]=useState({nome:"",cidade:"",telefone:"",email:"",usuario:"",senha:"",cpf:"",pix:"",cidades:[],role:mode==="cliente"?"cliente":"montador"});
+  const [f,setF]=useState({nome:"",cidade:"",telefone:"",email:"",usuario:"",senha:"",cpf:"",pix:"",cidades:[],foto:"",role:mode==="cliente"?"cliente":"montador"});
   const [ci,setCi]=useState("");
-  return <div className="space-y-2">
+  const [previewFoto,setPreviewFoto]=useState("");
+  const [uploadingFoto,setUploadingFoto]=useState(false);
+  const handleFoto = async (e)=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    if(file.size>5*1024*1024){ alert("Foto muito grande! Máx 5MB"); return; }
+    setUploadingFoto(true);
+    try{
+      const compressed = await compressImage(file, 300, 0.7);
+      setF({...f, foto: compressed});
+      setPreviewFoto(compressed);
+    }catch{ alert("Erro ao compactar foto"); }
+    setUploadingFoto(false);
+  };
+  return <div className="space-y-3">
     <input placeholder="Nome completo" value={f.nome} onChange={e=>setF({...f,nome:e.target.value})} className="w-full border rounded-xl p-3"/>
     <input placeholder="Cidade" value={f.cidade} onChange={e=>setF({...f,cidade:e.target.value})} className="w-full border rounded-xl p-3"/>
     <input placeholder="WhatsApp (18)" value={f.telefone} onChange={e=>setF({...f,telefone:e.target.value})} className="w-full border rounded-xl p-3"/>
     <input placeholder="E-mail" value={f.email} onChange={e=>setF({...f,email:e.target.value})} className="w-full border rounded-xl p-3"/>
     {mode==="montador" && <>
+      <div className="bg-yellow-50 border-2 border-yellow-400 p-3 rounded-2xl">
+        <div className="font-bold text-xs text-yellow-800">📸 FOTO DE PERFIL OBRIGATÓRIA *</div>
+        <div className="text-[10px] text-gray-600 mt-1">Sua foto aparece para cliente quando aceita pedido - Compactada automaticamente para não estourar site (300x300, ~30KB)</div>
+        <div className="mt-3 flex items-center gap-3">
+          <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden border-2 border-[#0A2A6B]">
+            {previewFoto ? <img src={previewFoto} className="w-full h-full object-cover"/> : <span className="text-xs">Sem foto</span>}
+          </div>
+          <div className="flex-1">
+            <input type="file" accept="image/*" capture="user" onChange={handleFoto} className="w-full text-xs p-2 border-2 border-dashed rounded-xl bg-white"/>
+            <div className="text-[10px] text-gray-500 mt-1">📱 Upload da galeria do celular - JPG/PNG até 5MB - Será compactada para 300x300</div>
+            {uploadingFoto && <div className="text-xs text-blue-600 mt-1">⏳ Compactando foto...</div>}
+            {previewFoto && <div className="text-xs text-green-600 mt-1">✅ Foto pronta - Compactada!</div>}
+          </div>
+        </div>
+        {!f.foto && <div className="text-xs text-red-600 mt-2 font-bold">⚠️ Foto obrigatória para montador! Sem foto não poderá aceitar pedidos.</div>}
+      </div>
       <input placeholder="CPF" value={f.cpf} onChange={e=>setF({...f,cpf:e.target.value})} className="w-full border rounded-xl p-3"/>
       <input placeholder="Chave PIX" value={f.pix} onChange={e=>setF({...f,pix:e.target.value})} className="w-full border rounded-xl p-3"/>
       <div className="flex gap-2"><input placeholder="Cidade que atende (até 3)" value={ci} onChange={e=>setCi(e.target.value)} className="flex-1 border rounded-xl p-3"/><button type="button" onClick={()=>{ if(f.cidades.length<3 && ci){ setF({...f,cidades:[...f.cidades,ci]}); setCi(""); } }} className="bg-gray-100 px-4 rounded-xl">+</button></div>
@@ -2022,7 +2128,10 @@ function RegisterForm({mode,onSubmit}){
     </>}
     <input placeholder="Usuário" value={f.usuario} onChange={e=>setF({...f,usuario:e.target.value})} className="w-full border rounded-xl p-3"/>
     <input type="password" placeholder="Senha" value={f.senha} onChange={e=>setF({...f,senha:e.target.value})} className="w-full border rounded-xl p-3"/>
-    <button type="button" onClick={()=>onSubmit(f)} className="bg-[#FF7A00] text-white w-full py-4 rounded-2xl font-bold">Finalizar Cadastro 🟢 Ao Vivo</button>
+    <button type="button" onClick={()=>{
+      if(mode==="montador" && !f.foto){ alert("Foto de perfil obrigatória para montador! Por favor, envie sua foto."); return; }
+      onSubmit(f);
+    }} className="bg-[#FF7A00] text-white w-full py-4 rounded-2xl font-bold">Finalizar Cadastro 🟢 Ao Vivo {mode==="montador" && !f.foto?"(FOTO OBRIGATÓRIA)":""}</button>
   </div>;
 }
 function LoginForm({onSubmit}){
