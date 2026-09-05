@@ -54,7 +54,13 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [adminTab, setAdminTab] = useState("pedidos");
   const [avaliacaoForm, setAvaliacaoForm] = useState({ pedidoId:null, nota:5, comentario:"" });
+  const [supportMessages, setSupportMessages] = useState(()=> JSON.parse(localStorage.getItem("ccs_support")||"[]"));
+  const [supportInput, setSupportInput] = useState("");
+  const [showSupportChat, setShowSupportChat] = useState(false);
+  const [selectedSupportUser, setSelectedSupportUser] = useState(null);
+  const [supportTab, setSupportTab] = useState("todos");
   const prevOrdersRef = useRef([]);
+  const supportEndRef = useRef(null);
 
   const notify = (msg, type="info", sound=1) => {
     setToast(msg); setToastType(type);
@@ -75,6 +81,14 @@ export default function App() {
       }
       const { data: u } = await supabase.from("users").select("*").order("created_at", {ascending:false});
       const { data: o } = await supabase.from("orders").select("*").order("created_at", {ascending:false});
+      // Busca mensagens de suporte
+      try {
+        const resS = await supabase.from("support_messages").select("*").order("created_at", {ascending:true});
+        if(resS.data && !resS.error && resS.data.length>0){
+          setSupportMessages(resS.data.map(m=>({ id: m.id, user_id: m.user_id, user_nome: m.user_nome, user_role: m.user_role, mensagem: m.mensagem, resposta: m.resposta, from_admin: m.from_admin, created_at: m.created_at, lida: m.lida })));
+          localStorage.setItem("ccs_support", JSON.stringify(resS.data.map(m=>({ id: m.id, user_id: m.user_id, user_nome: m.user_nome, user_role: m.user_role, mensagem: m.mensagem, resposta: m.resposta, from_admin: m.from_admin, created_at: m.created_at, lida: m.lida }))));
+        }
+      } catch(e){ console.log("Tabela support_messages não existe, usando local", e); }
       // Busca cupons - não apaga local se Supabase estiver vazio ou sem tabela
       let couponsRemote = null;
       try {
@@ -167,6 +181,16 @@ export default function App() {
       channel = supabase.channel("contato-certo-v4-notif")
         .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, ()=>fetchData())
         .on("postgres_changes", { event: "*", schema: "public", table: "users" }, ()=>fetchData())
+        .on("postgres_changes", { event: "*", schema: "public", table: "coupons" }, ()=>fetchData())
+        .on("postgres_changes", { event: "*", schema: "public", table: "support_messages" }, (payload)=>{
+          fetchData();
+          if(currentUser?.role==="admin"){
+            notify(`💬 Nova mensagem de suporte 24h!`, "success", 4);
+          }
+          if(currentUser && payload.new && payload.new.user_id==currentUser.id && payload.new.from_admin){
+            notify(`💬 ADM respondeu seu suporte: ${payload.new.mensagem?.slice(0,30)}`, "success", 3);
+          }
+        })
         .subscribe((s)=>{ if(s==="SUBSCRIBED") setIsLive(true); });
     }catch{}
     const interval = setInterval(()=>fetchData(), 3000);
@@ -175,6 +199,57 @@ export default function App() {
 
   useEffect(()=>{ localStorage.setItem("ccs_current", JSON.stringify(currentUser)); },[currentUser]);
   useEffect(()=>{ localStorage.setItem("ccs_coupons", JSON.stringify(coupons)); },[coupons]);
+  useEffect(()=>{ localStorage.setItem("ccs_support", JSON.stringify(supportMessages)); },[supportMessages]);
+  useEffect(()=>{ supportEndRef.current?.scrollIntoView({behavior:"smooth"}); },[supportMessages, showSupportChat, selectedSupportUser]);
+
+  // Deep Links - Link direto para o app
+  useEffect(()=>{
+    const params = new URLSearchParams(window.location.search);
+    const viewParam = params.get("view");
+    const action = params.get("action");
+    const cupomParam = params.get("cupom");
+    const cidadeParam = params.get("cidade");
+
+    if(cupomParam){
+      setCouponInput(cupomParam.toUpperCase());
+      const found = coupons.find(c=>c.code===cupomParam.toUpperCase());
+      if(found){ setAppliedCoupon(found); notify(`Cupom ${found.code} aplicado via link! ${found.desconto}% OFF`,"success",2); }
+    }
+    if(cidadeParam){
+      setOrderForm(prev=>({...prev, cidade: cidadeParam}));
+      setSearch(cidadeParam);
+    }
+    if(viewParam){
+      if(["cliente","montador","admin","home"].includes(viewParam)){
+        if(currentUser){
+          if(viewParam==="cliente" && currentUser.role==="cliente") setView("cliente");
+          if(viewParam==="montador" && currentUser.role==="montador") setView("montador");
+          if(viewParam==="admin" && currentUser.role==="admin") setView("admin");
+        } else {
+          if(viewParam==="cliente" || viewParam==="montador"){
+            setAuthMode(viewParam);
+            setIsLogin(false);
+            setShowAuth(true);
+          }
+        }
+        if(viewParam==="home") setView("home");
+      }
+    }
+    if(action==="novo-pedido" && currentUser?.role==="cliente"){
+      setShowOrderFlow(true);
+      setOrderStep(1);
+    }
+    if(action==="cadastro-cliente"){
+      setAuthMode("cliente");
+      setIsLogin(false);
+      setShowAuth(true);
+    }
+    if(action==="cadastro-montador"){
+      setAuthMode("montador");
+      setIsLogin(false);
+      setShowAuth(true);
+    }
+  },[coupons, currentUser]);
 
   const filteredCatalog = useMemo(()=>{
     return CATALOGO.filter(item=>{
@@ -357,6 +432,51 @@ const criarPedido = async ()=>{
     setAppliedCoupon(null);
     setCouponInput("");
     notify("Cupom removido","info",1);
+  };
+
+  const enviarMensagemSuporte = async ()=>{
+    if(!supportInput.trim()) return;
+    if(!currentUser) return notify("Faça login para falar com suporte","error",1);
+    const msg = { 
+      id: Date.now(), 
+      user_id: currentUser.id, 
+      user_nome: currentUser.nome, 
+      user_role: currentUser.role, 
+      mensagem: supportInput, 
+      from_admin: false,
+      resposta: null,
+      created_at: new Date().toISOString(),
+      lida: false
+    };
+    const novos = [...supportMessages, msg];
+    setSupportMessages(novos);
+    localStorage.setItem("ccs_support", JSON.stringify(novos));
+    setSupportInput("");
+    try{
+      await supabase.from("support_messages").insert({ id: msg.id, user_id: msg.user_id, user_nome: msg.user_nome, user_role: msg.user_role, mensagem: msg.mensagem, from_admin: false, created_at: msg.created_at });
+    }catch(e){ console.log("Suporte local", e); }
+    notify("Mensagem enviada para ADM! Aguarde resposta com som 🔔","success",2);
+  };
+
+  const responderSuporte = async (userId, texto)=>{
+    if(!texto.trim()) return;
+    const msg = {
+      id: Date.now(),
+      user_id: userId,
+      user_nome: "ADM",
+      user_role: "admin",
+      mensagem: texto,
+      from_admin: true,
+      created_at: new Date().toISOString(),
+      lida: false
+    };
+    const novos = [...supportMessages, msg];
+    setSupportMessages(novos);
+    localStorage.setItem("ccs_support", JSON.stringify(novos));
+    try{
+      await supabase.from("support_messages").insert({ id: msg.id, user_id: userId, user_nome: "ADM", user_role: "admin", mensagem: texto, from_admin: true, created_at: msg.created_at });
+    }catch{}
+    notify(`Resposta enviada para cliente com som 🔔`,"success",2);
   };
 
   const enviarAvaliacao = async (pedidoId)=>{
@@ -802,6 +922,62 @@ const criarPedido = async ()=>{
             </div>
           )}
 
+          {adminTab==="suporte" && (
+            <div className="mt-4 grid md:grid-cols-[300px_1fr] gap-4 h-[70vh]">
+              {/* Lista de conversas */}
+              <div className="bg-white rounded-3xl shadow p-3 overflow-auto">
+                <h3 className="font-bold text-sm">💬 Conversas Suporte 24h - {supportMessages.filter(m=>!m.from_admin).length} mensagens</h3>
+                <div className="flex gap-2 mt-2">
+                  <button type="button" onClick={()=>setSupportTab("todos")} className={`text-[10px] px-2 py-1 rounded-full ${supportTab==="todos"?"bg-[#0A2A6B] text-white":"bg-gray-100"}`}>Todos</button>
+                  <button type="button" onClick={()=>setSupportTab("nao-lidas")} className={`text-[10px] px-2 py-1 rounded-full ${supportTab==="nao-lidas"?"bg-red-500 text-white":"bg-gray-100"}`}>Não lidas ({supportMessages.filter(m=>!m.from_admin && !m.lida).length})</button>
+                </div>
+                <div className="mt-3 space-y-2">
+                  {[...new Map(supportMessages.map(m=>[m.user_id, m])).values()].filter(u=> supportTab==="nao-lidas" ? supportMessages.some(msg=>msg.user_id==u.user_id && !msg.from_admin && !msg.lida) : true).map(conversa=>{
+                    const userMsgs = supportMessages.filter(m=>m.user_id==conversa.user_id);
+                    const naoLidas = userMsgs.filter(m=>!m.from_admin && !m.lida).length;
+                    const ultima = userMsgs[userMsgs.length-1];
+                    const userInfo = users.find(us=>us.id==conversa.user_id);
+                    return (
+                      <div key={conversa.user_id} onClick={()=>setSelectedSupportUser(conversa.user_id)} className={`p-3 rounded-xl cursor-pointer border ${selectedSupportUser==conversa.user_id?"bg-[#0A2A6B] text-white":"bg-gray-50 hover:bg-gray-100"} ${naoLidas>0?"border-red-300 animate-pulse":""}`}>
+                        <div className="flex justify-between items-center"><b className="text-xs">{conversa.user_nome} - {conversa.user_role}</b>{naoLidas>0 && <span className="bg-red-600 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center">{naoLidas}</span>}</div>
+                        <div className="text-[10px] opacity-70 truncate">{ultima?.mensagem?.slice(0,40)}...</div>
+                        <div className="text-[9px] opacity-50">{userInfo?.telefone||""} - {userInfo?.cidade||""}</div>
+                      </div>
+                    )
+                  })}
+                  {supportMessages.length===0 && <div className="text-xs text-gray-400 text-center mt-10">Nenhuma mensagem de suporte ainda</div>}
+                </div>
+              </div>
+
+              {/* Chat aberto */}
+              <div className="bg-white rounded-3xl shadow flex flex-col overflow-hidden">
+                {!selectedSupportUser ? (
+                  <div className="flex-1 flex items-center justify-center text-gray-400 text-sm">Selecione uma conversa à esquerda para responder em tempo real 💬</div>
+                ) : (
+                  <>
+                    <div className="bg-[#0A2A6B] text-white p-3 flex justify-between items-center">
+                      <div><b className="text-sm">Chat com {users.find(u=>u.id==selectedSupportUser)?.nome|| supportMessages.find(m=>m.user_id==selectedSupportUser)?.user_nome} - {users.find(u=>u.id==selectedSupportUser)?.telefone}</b><div className="text-[10px] opacity-70">Tempo real - Responda e cliente recebe com som 🔔</div></div>
+                      <button type="button" onClick={()=>{ const novos = supportMessages.map(m=> m.user_id==selectedSupportUser && !m.from_admin ? {...m, lida:true} : m); setSupportMessages(novos); localStorage.setItem("ccs_support", JSON.stringify(novos)); }} className="text-[10px] bg-white/20 px-2 py-1 rounded-full">Marcar como lido</button>
+                    </div>
+                    <div className="flex-1 overflow-auto p-3 space-y-2 bg-gray-50">
+                      {supportMessages.filter(m=>m.user_id==selectedSupportUser).map(msg=>(
+                        <div key={msg.id} className={`p-3 rounded-2xl max-w-[80%] text-xs ${msg.from_admin? "bg-[#0A2A6B] text-white ml-auto" : "bg-white border shadow"}`}>
+                          <div className="font-bold text-[9px] opacity-60">{msg.from_admin? "Você (ADM)" : `${msg.user_nome}`} - {new Date(msg.created_at).toLocaleString("pt-BR")}</div>
+                          <div className="mt-1">{msg.mensagem}</div>
+                        </div>
+                      ))}
+                      <div ref={supportEndRef}></div>
+                    </div>
+                    <div className="p-3 border-t flex gap-2 bg-white">
+                      <input value={supportInput} onChange={e=>setSupportInput(e.target.value)} onKeyDown={e=>{ if(e.key==="Enter"){ responderSuporte(selectedSupportUser, supportInput); setSupportInput(""); } }} placeholder="Digite sua resposta para o cliente..." className="flex-1 border rounded-full px-4 py-3 text-sm"/>
+                      <button type="button" onClick={()=>{ responderSuporte(selectedSupportUser, supportInput); setSupportInput(""); }} className="bg-green-600 text-white px-6 py-3 rounded-full font-bold">Enviar 🔔</button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
           {adminTab==="usuarios" && (
             <div className="mt-4 space-y-4">
               <div className="bg-white p-6 rounded-3xl shadow">
@@ -902,8 +1078,45 @@ const criarPedido = async ()=>{
       )}
 
       {toast && <div className={`fixed bottom-20 left-4 right-4 p-4 rounded-2xl z-[60] shadow-2xl font-bold text-center animate-bounce ${toastType==="success"?"bg-green-600 text-white":toastType==="error"?"bg-red-600 text-white":"bg-[#0A2A6B] text-white"}`}>🔔 {toast}</div>}
-      <button type="button" onClick={()=>notify("Para instalar: toque em Compartilhar e depois em Adicionar à Tela Inicial","info",1)} className="fixed bottom-4 right-4 bg-[#0A2A6B] text-white px-5 py-3 rounded-full shadow-2xl text-sm font-bold">BAIXAR APLICATIVO</button>
-      <footer className="bg-[#0A2A6B] text-white text-center py-6 mt-10"><div>2026 - Contato Certo SP - AO VIVO {isLive?"🟢":"🔴"} 🔊</div><div className="text-xs">contatocerto.prestadores@gmail.com - (18) 99148-8302</div></footer>
+      
+      {/* BOTÃO FLUTUANTE SUPORTE 24H - SUBSTITUI DOWNLOAD */}
+      <button type="button" onClick={()=>setShowSupportChat(!showSupportChat)} className="fixed bottom-4 right-4 z-50 w-16 h-16 bg-gradient-to-br from-green-500 to-[#0A2A6B] text-white rounded-full shadow-2xl flex items-center justify-center text-2xl animate-pulse hover:scale-110 transition-transform">
+        💬
+        {supportMessages.filter(m=> m.user_id==currentUser?.id && m.from_admin && !m.lida).length>0 && <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold">{supportMessages.filter(m=> m.user_id==currentUser?.id && m.from_admin && !m.lida).length}</span>}
+        {currentUser?.role==="admin" && supportMessages.filter(m=> !m.from_admin && !m.lida).length>0 && <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold animate-bounce">{supportMessages.filter(m=> !m.from_admin && !m.lida).length}</span>}
+      </button>
+      <div className="fixed bottom-20 right-4 z-40 bg-[#0A2A6B] text-white text-[10px] px-2 py-1 rounded-full shadow hidden md:block">Suporte 24h</div>
+
+      {/* CHAT SUPORTE CLIENTE/MONTADOR */}
+      {showSupportChat && (
+        <div className="fixed bottom-24 right-4 z-50 w-[92vw] md:w-96 h-[70vh] md:h-[500px] bg-white rounded-3xl shadow-2xl border flex flex-col overflow-hidden animate-in">
+          <div className="bg-gradient-to-r from-[#0A2A6B] to-green-600 text-white p-4 flex justify-between items-center">
+            <div><div className="font-bold">💬 Suporte 24h - Contato Certo SP</div><div className="text-[10px] opacity-80">{currentUser? `Olá ${currentUser.nome} - Resposta em até 5min` : "Faça login para falar com ADM"} {isLive?"🟢 Ao Vivo":"🔴"}</div></div>
+            <button type="button" onClick={()=>setShowSupportChat(false)} className="w-8 h-8 bg-white/20 rounded-full">✕</button>
+          </div>
+          
+          <div className="flex-1 overflow-auto p-3 space-y-2 bg-gray-50">
+            {supportMessages.filter(m=> currentUser?.role==="admin" ? true : m.user_id==currentUser?.id).length===0 && (
+              <div className="text-center text-gray-400 text-xs mt-10">👋 Olá! Como podemos ajudar?<br/>Envie sua dúvida sobre pagamento, cancelamento, pedido ou montagem.<br/>ADM responde em tempo real com som 🔔</div>
+            )}
+            {supportMessages.filter(m=> currentUser?.role!=="admin" ? m.user_id==currentUser?.id : true).map(msg=>(
+              <div key={msg.id} className={`p-3 rounded-2xl max-w-[85%] text-xs ${msg.from_admin? "bg-[#0A2A6B] text-white self-start" : "bg-white border shadow self-end ml-auto"}`}>
+                <div className="font-bold text-[10px] opacity-70">{msg.from_admin? "👨‍💼 ADM" : `${msg.user_nome} (${msg.user_role})` } - {new Date(msg.created_at).toLocaleTimeString("pt-BR")}</div>
+                <div className="mt-1">{msg.mensagem}</div>
+              </div>
+            ))}
+            <div ref={supportEndRef}></div>
+          </div>
+
+          <div className="p-3 bg-white border-t flex gap-2">
+            <input value={supportInput} onChange={e=>setSupportInput(e.target.value)} onKeyDown={e=>{ if(e.key==="Enter") enviarMensagemSuporte(); }} placeholder={currentUser? "Digite sua mensagem..." : "Faça login primeiro"} disabled={!currentUser} className="flex-1 border rounded-full px-4 py-3 text-sm"/>
+            <button type="button" onClick={enviarMensagemSuporte} disabled={!currentUser} className="bg-green-600 text-white w-12 h-12 rounded-full font-bold">➤</button>
+          </div>
+          <div className="bg-gray-100 p-2 text-[10px] text-center text-gray-500">WhatsApp direto: 18991488302 | contatocerto.prestadores@gmail.com</div>
+        </div>
+      )}
+
+      <footer className="bg-[#0A2A6B] text-white text-center py-6 mt-10"><div>2026 - Contato Certo SP - AO VIVO {isLive?"🟢":"🔴"} 🔊 Suporte 24h 💬</div><div className="text-xs">contatocerto.prestadores@gmail.com - (18) 99148-8302 - Clique no ícone 💬 canto inferior direito</div></footer>
     </div>
   );
 }
