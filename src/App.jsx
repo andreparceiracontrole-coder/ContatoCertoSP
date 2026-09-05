@@ -725,10 +725,34 @@ export default function App() {
             </div>
           </section>
           <section id="como-funciona" className="px-4 py-12 max-w-6xl mx-auto">
-            <h2 className="font-bold text-3xl text-[#0A2A6B]">Como Funciona</h2>
+            <h2 className="font-bold text-3xl text-[#0A2A6B]">Como Funciona - Novo Modelo 10% + 90% 🟢</h2>
             <div className="mt-6 grid md:grid-cols-2 gap-6">
-              <div className="bg-white rounded-3xl p-5 shadow"><b>Cliente:</b> Cadastro → Busca → Endereço → PIX → Comprovante (🔔 ADM) → Pagamento confirmado (🔔) → Montador aceita (🔔🔔) → Finaliza → Avalie 1-5 ⭐</div>
-              <div className="bg-white rounded-3xl p-5 shadow border-l-4 border-l-[#FF7A00]"><b>Montador:</b> Cadastro → 3 cidades → Fique online → Receba pedido com SOM 🔔🔔🔔 → Aceite em 30min → Finalize → Cliente avalia + Bônus 6º 100%</div>
+              <div className="bg-white rounded-3xl p-5 shadow border-l-4 border-l-[#0A2A6B]">
+                <div className="font-bold text-[#0A2A6B]">👤 Cliente - Paga só 10% para agendar:</div>
+                <div className="text-sm mt-2 space-y-2">
+                  <div>1️⃣ <b>Cadastro</b> → Busca serviço → Adiciona no carrinho</div>
+                  <div>2️⃣ <b>Fazer pedido</b> → Abre aba para colocar <b>endereço completo</b> + enviar <b>comprovante dos 10%</b></div>
+                  <div>3️⃣ <b>Taxa de agendamento 10%:</b> Você paga apenas 10% do valor total via PIX <b>{PIX_KEY}</b> para o site confirmar agendamento. Ex: Serviço R$ 100 = taxa R$ 10</div>
+                  <div>4️⃣ <b>Envio comprovante:</b> Comprovante dos 10% vai para ADM no painel + WhatsApp 18991488302 automaticamente com som 🔔</div>
+                  <div>5️⃣ <b>ADM confirma</b> → Libera para montadores → Montador aceita (🔔🔔)</div>
+                  <div>6️⃣ <b>Montador a caminho:</b> Você vê informações completas do montador que aceitou</div>
+                  <div>7️⃣ <b>Finalização:</b> Montador finaliza → Você paga <b>90% restante direto para o montador</b> via PIX dele na sua casa + avalia 1-5 ⭐</div>
+                  <div className="mt-3 bg-blue-50 p-3 rounded-xl text-xs"><b>Exemplo:</b> Serviço R$ 150 = Você paga R$ 15 (10%) para site agendar + R$ 135 (90%) para montador ao finalizar. Sem risco de pagar tudo antes!</div>
+                </div>
+              </div>
+              <div className="bg-white rounded-3xl p-5 shadow border-l-4 border-l-[#FF7A00]">
+                <div className="font-bold text-[#FF7A00]">🔧 Montador - Recebe 90% na entrega:</div>
+                <div className="text-sm mt-2 space-y-2">
+                  <div>1️⃣ <b>Cadastro</b> → 3 cidades que atende → Fique online 🟢</div>
+                  <div>2️⃣ <b>Receba pedido</b> com SOM 🔔🔔🔔 → Cliente já pagou 10% de taxa para o site</div>
+                  <div>3️⃣ <b>Aceite em 30min</b> → Cliente vê suas informações completas (nome, telefone, avaliação, cidades)</div>
+                  <div>4️⃣ <b>Vá até o cliente</b> → Faça montagem</div>
+                  <div>5️⃣ <b>Finalize:</b> Ao finalizar, cliente paga <b>90% restante direto para seu PIX {`{currentUser?.pix||'cadastrado'}`}</b> na hora</div>
+                  <div>6️⃣ <b>Ganho:</b> Você recebe 90% do valor total direto do cliente. Ex: Serviço R$ 100 = você recebe R$ 90 na hora</div>
+                  <div>7️⃣ <b>Bônus 6º 100%:</b> A cada 6 serviços finalizados, no 6º você recebe 100% (site devolve taxa) 🎁</div>
+                  <div className="mt-3 bg-orange-50 p-3 rounded-xl text-xs"><b>Proteção anti-calote:</b> Se cliente não pagar 90%, clique em Reportar não pagamento → cliente é bloqueado e taxa de 10% fica com você como compensação parcial. Suporte 24h 💬</div>
+                </div>
+              </div>
             </div>
           </section>
           <section id="quem-somos" className="px-4 py-12 max-w-6xl mx-auto">
@@ -896,22 +920,70 @@ export default function App() {
                 </>
               )}
               {orderStep===2 && (
-                <div className="space-y-3">
-                  <div className="bg-blue-50 p-3 rounded-xl text-xs">📍 Informe onde será a montagem - Montador recebe em tempo real 🟢</div>
-                  <input value={orderForm.endereco} onChange={e=>setOrderForm({...orderForm,endereco:e.target.value})} placeholder="Endereço completo (Rua, número)" className="w-full p-4 border rounded-2xl text-sm"/>
-                  <div className="grid grid-cols-2 gap-3">
-                    <input value={orderForm.bairro} onChange={e=>setOrderForm({...orderForm,bairro:e.target.value})} placeholder="Bairro" className="w-full p-4 border rounded-2xl text-sm"/>
-                    <input value={orderForm.cidade} onChange={e=>setOrderForm({...orderForm,cidade:e.target.value})} placeholder="Cidade em SP" className="w-full p-4 border rounded-2xl text-sm"/>
+                <div className="space-y-4">
+                  <div className="bg-[#0A2A6B] text-white p-4 rounded-2xl">
+                    <div className="font-bold text-sm">📍 Novo Pedido - Endereço + Taxa 10% - Modelo 10%+90% 🟢</div>
+                    <div className="text-xs mt-2 opacity-90">Escolha onde será a montagem e envie comprovante da taxa de agendamento 10% para ADM confirmar em tempo real + WhatsApp 18991488302</div>
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <input type="date" value={orderForm.data} onChange={e=>setOrderForm({...orderForm,data:e.target.value})} className="w-full p-4 border rounded-2xl text-sm"/>
-                    <input type="time" value={orderForm.horario} onChange={e=>setOrderForm({...orderForm,horario:e.target.value})} className="w-full p-4 border rounded-2xl text-sm"/>
+
+                  <div className="bg-white border-2 border-[#0A2A6B] p-4 rounded-2xl">
+                    <div className="font-bold text-sm text-[#0A2A6B]">📍 Endereço da montagem:</div>
+                    <div className="space-y-3 mt-3">
+                      <input value={orderForm.endereco} onChange={e=>setOrderForm({...orderForm,endereco:e.target.value})} placeholder="Endereço completo (Rua, número, complemento)" className="w-full p-4 border-2 rounded-2xl text-sm focus:border-[#0A2A6B]"/>
+                      <div className="grid grid-cols-2 gap-3">
+                        <input value={orderForm.bairro} onChange={e=>setOrderForm({...orderForm,bairro:e.target.value})} placeholder="Bairro" className="w-full p-4 border rounded-2xl text-sm"/>
+                        <input value={orderForm.cidade} onChange={e=>setOrderForm({...orderForm,cidade:e.target.value})} placeholder="Cidade em SP" className="w-full p-4 border rounded-2xl text-sm"/>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <input type="date" value={orderForm.data} onChange={e=>setOrderForm({...orderForm,data:e.target.value})} className="w-full p-4 border rounded-2xl text-sm"/>
+                        <input type="time" value={orderForm.horario} onChange={e=>setOrderForm({...orderForm,horario:e.target.value})} className="w-full p-4 border rounded-2xl text-sm"/>
+                      </div>
+                    </div>
                   </div>
-                  <div className="bg-yellow-50 p-3 rounded-xl text-xs">💰 Total: {formatBRL(total)} {appliedCoupon?`com cupom ${appliedCoupon.code}`:""} - PIX {PIX_KEY}</div>
+
+                  <div className="bg-blue-50 border-2 border-blue-300 p-4 rounded-2xl">
+                    <div className="font-bold text-sm text-[#0A2A6B]">💰 Explicação Taxa Agendamento - Modelo 10% + 90%:</div>
+                    <div className="mt-3 space-y-2 text-xs">
+                      <div className="flex justify-between bg-white p-2 rounded-xl"><span>Total serviço:</span><span className="font-bold">{formatBRL(total)}</span></div>
+                      <div className="flex justify-between bg-[#0A2A6B] text-white p-3 rounded-xl"><span>🔒 Taxa agendamento 10% (pago AGORA para site):</span><span className="font-bold text-lg">{formatBRL(total*0.10)}</span></div>
+                      <div className="flex justify-between bg-[#FF7A00] text-white p-3 rounded-xl"><span>💰 Restante montador 90% (pago NA ENTREGA):</span><span className="font-bold text-lg">{formatBRL(total*0.90)}</span></div>
+                      <div className="bg-white p-3 rounded-xl mt-2 text-[11px] leading-relaxed">
+                        <div>✅ <b>10% do valor ({formatBRL(total*0.10)})</b> é taxa de agendamento para o site garantir seu horário. Pago agora via PIX <b>{PIX_KEY}</b></div>
+                        <div className="mt-1">✅ <b>90% restante ({formatBRL(total*0.90)})</b> você paga <b>direto para o montador</b> via PIX dele quando ele finalizar o serviço na sua casa</div>
+                        <div className="mt-1">✅ Sem risco de pagar tudo antes! Montador só recebe após finalizar</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-yellow-50 border-2 border-yellow-400 p-4 rounded-2xl">
+                    <div className="font-bold text-sm">📤 Envie comprovante dos 10% para ADM (painel + WhatsApp 18991488302):</div>
+                    <div className="mt-3 bg-[#0A2A6B] text-white p-3 rounded-xl text-center">
+                      <div className="text-xs opacity-80">PIX Site - Taxa 10%</div>
+                      <div className="font-mono text-sm font-bold break-all mt-1">{PIX_KEY}</div>
+                      <div className="text-xl font-bold mt-2">{formatBRL(total*0.10)}</div>
+                      <button type="button" onClick={()=>{ navigator.clipboard.writeText(PIX_KEY); notify(`PIX site copiado: ${formatBRL(total*0.10)} - Taxa 10%`,"success",1); }} className="bg-white text-[#0A2A6B] px-4 py-2 rounded-full text-xs font-bold mt-2">📋 Copiar PIX Site</button>
+                    </div>
+                    <div className="mt-3">
+                      <div className="text-xs font-bold">Selecione comprovante PIX dos 10% ({formatBRL(total*0.10)}):</div>
+                      <input type="file" accept="image/*" onChange={e=>{ const r=new FileReader(); r.onload=()=>setComprovante(r.result); r.readAsDataURL(e.target.files[0]); }} className="w-full mt-2 p-3 border-2 border-dashed rounded-xl bg-white text-sm"/>
+                      {comprovante && <div className="mt-2 text-xs text-green-700 bg-green-50 p-2 rounded-xl">✅ Comprovante 10% selecionado - Pronto para enviar!</div>}
+                    </div>
+                  </div>
+
                   <div className="flex gap-2">
                     <button type="button" onClick={()=>setOrderStep(1)} className="flex-1 bg-gray-100 py-4 rounded-2xl font-bold text-sm">⬅️ Voltar</button>
-                    <button type="button" onClick={criarPedido} className="flex-[2] bg-[#FF7A00] text-white py-4 rounded-2xl font-bold text-sm">Confirmar Pedido 🟢 Ao Vivo</button>
+                    <button type="button" onClick={async ()=>{
+                      if(!orderForm.endereco || !orderForm.cidade) return notify("Preencha endereço e cidade","error",1);
+                      if(!comprovante) return notify(`Selecione comprovante dos 10% (${formatBRL(total*0.10)}) para enviar ao ADM`,"error",2);
+                      await criarPedido();
+                      // Envia comprovante logo após criar
+                      setTimeout(()=>{
+                        const ultimoPedido = orders[0];
+                        if(ultimoPedido) enviarComprovante(ultimoPedido.id, comprovante);
+                      }, 1000);
+                    }} disabled={!comprovante} className={`flex-[2] py-4 rounded-2xl font-bold text-sm ${comprovante?"bg-[#FF7A00] text-white":"bg-gray-300 text-gray-500"}`}>📤 Fazer Pedido + Enviar 10% para ADM 🟢</button>
                   </div>
+                  <div className="text-[10px] text-gray-500 text-center">Ao clicar, seu pedido vai para ADM + comprovante 10% vai para painel ADM e WhatsApp 18991488302 automaticamente com som 🔔</div>
                 </div>
               )}
               {orderStep===3 && (
@@ -998,11 +1070,27 @@ export default function App() {
                   {p.status==="aguardando_montador" && <div className="mt-3 text-sm bg-green-50 border border-green-200 p-3 rounded-xl">✅ Taxa 10% confirmada! Aguardando montador aceitar. Na entrega você paga {formatBRL(p.restante_montador||p.total*0.90)} direto para montador 🔔 {isLive?"🟢":"🔴"}</div>}
                   {(p.status==="aceito") && montador && (
                     <div className="mt-3 p-4 bg-blue-50 border-2 border-blue-400 rounded-2xl animate-pulse">
-                      <div className="text-xs font-bold text-[#0A2A6B]">🔔🔧 MONTADOR ACEITOU - A CAMINHO! - Novo modelo 10%+90% 🟢</div>
-                      <div className="font-bold text-lg mt-1">{montador.nome} ⭐ {Number(montador.avaliacao||5).toFixed(1)}</div>
-                      <div className="text-sm">📱 {montador.telefone} | {montador.cidade}</div>
-                      <div className="text-xs text-gray-600 mt-1">{(montador.cidades||[]).join(", ")} | {montador.total_servicos||0} serviços | {isLive?"🟢 Online":"🔴 Offline"}</div>
-                      <div className="text-xs mt-2 font-bold text-green-700">⏱️ Chega em até 30min - Aceito {p.aceiteAt? new Date(p.aceiteAt).toLocaleString("pt-BR") : p.aceite_at? new Date(p.aceite_at).toLocaleString("pt-BR"):""}</div>
+                      <div className="text-xs font-bold text-[#0A2A6B]">🔔🔧 MONTADOR ACEITOU - A CAMINHO! - Informações completas 🟢 Ao Vivo</div>
+                      <div className="mt-3 bg-white p-4 rounded-2xl border">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <div className="font-bold text-lg">{montador.nome} ⭐ {Number(montador.avaliacao||5).toFixed(1)}</div>
+                            <div className="text-xs text-gray-500">ID Montador: {montador.id} | {montador.total_servicos||0} serviços finalizados | {isLive?"🟢 Online agora":"🔴 Offline"}</div>
+                          </div>
+                          <span className={`text-[10px] px-2 py-1 rounded-full ${montador.disponivel?"bg-green-100 text-green-700":"bg-red-100 text-red-700"}`}>{montador.disponivel?"🟢 Online":"🔴 Offline"}</span>
+                        </div>
+                        <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                          <div className="bg-gray-50 p-2 rounded-xl"><b>📱 WhatsApp:</b><br/>{montador.telefone}</div>
+                          <div className="bg-gray-50 p-2 rounded-xl"><b>📍 Cidade base:</b><br/>{montador.cidade}</div>
+                          <div className="bg-gray-50 p-2 rounded-xl"><b>✉️ Email:</b><br/>{montador.email||"Não informado"}</div>
+                          <div className="bg-gray-50 p-2 rounded-xl"><b>💳 PIX Montador:</b><br/><span className="font-mono text-[11px]">{montador.pix||"Mesmo do telefone"}</span></div>
+                          <div className="bg-gray-50 p-2 rounded-xl col-span-2"><b>🏙️ Cidades que atende:</b><br/>{(montador.cidades||[]).join(", ")||"Todo SP"}</div>
+                          <div className="bg-yellow-50 p-2 rounded-xl"><b>⭐ Avaliação:</b><br/>{Number(montador.avaliacao||5).toFixed(1)} de 5.0 ({montador.total_servicos||0} avaliações)</div>
+                          <div className="bg-green-50 p-2 rounded-xl"><b>⏱️ Aceitou em:</b><br/>{p.aceiteAt? new Date(p.aceiteAt).toLocaleString("pt-BR") : p.aceite_at? new Date(p.aceite_at).toLocaleString("pt-BR"):"Agora"}<br/>Chega em até 30min</div>
+                        </div>
+                        {montador.bloqueado && <div className="mt-2 bg-red-100 p-2 rounded-xl text-xs text-red-700">⛔ Montador bloqueado: {montador.motivo_bloqueio}</div>}
+                      </div>
+                      <div className="text-xs mt-3 font-bold text-green-700">⏱️ Chega em até 30min - Pedido #{p.id} - {p.cidade}</div>
                       
                       <div className="mt-3 bg-white p-3 rounded-xl border-2 border-[#FF7A00]">
                         <div className="text-xs font-bold text-[#FF7A00]">💰 PAGAMENTO RESTANTE PARA O MONTADOR (90%):</div>
@@ -1164,10 +1252,35 @@ export default function App() {
                 const cliente = users.find(u=>u.id==o.cliente_id);
                 const montador = users.find(u=>u.id==o.montador_id);
                 return (
-                  <div key={o.id} className="bg-white p-4 rounded-3xl shadow">
-                    <div className="flex justify-between"><b>#{o.id} - {o.cidade} {o.cupom?`🎟️ ${o.cupom}`:""} {o.bonus_montador?"🎁 BÔNUS 100%":""}</b><span className="text-xs bg-yellow-100 px-2 py-1 rounded-full">{o.status}</span></div>
-                    <div className="text-xs">Cliente: {cliente?.nome} {cliente?.telefone} - {o.endereco}</div>
-                    <div className="text-xs">Itens: {(o.itens||[]).map(i=>`${i.nome} x${i.qtd}`).join(", ")} - Total {formatBRL(o.total)}</div>
+                  <div key={o.id} className="bg-white p-4 rounded-3xl shadow border-2 border-gray-100">
+                    <div className="flex justify-between"><b>#{o.id} - {o.cidade} {o.cupom?`🎟️ ${o.cupom}`:""} {o.bonus_montador?"🎁 BÔNUS 100%":""} - Taxa 10% {formatBRL(o.taxa_site||o.total*0.10)} | Restante 90% {formatBRL(o.restante_montador||o.total*0.90)}</b><span className="text-xs bg-yellow-100 px-2 py-1 rounded-full">{o.status}</span></div>
+                    <div className="mt-2 bg-blue-50 p-3 rounded-xl">
+                      <div className="text-xs font-bold text-[#0A2A6B]">👤 Cliente completo:</div>
+                      <div className="text-xs mt-1"><b>{cliente?.nome}</b> | 📱 {cliente?.telefone} | ✉️ {cliente?.email||"sem email"} | 📍 {cliente?.cidade}</div>
+                      <div className="text-xs">{o.endereco} - {o.bairro} | {o.data} {o.horario} | {cliente?.usuario}</div>
+                    </div>
+                    <div className="text-xs mt-2">Itens: {(o.itens||[]).map(i=>`${i.nome} x${i.qtd}`).join(", ")} - Total {formatBRL(o.total)} (Taxa site 10% {formatBRL(o.taxa_site||o.total*0.10)} + Montador 90% {formatBRL(o.restante_montador||o.total*0.90)})</div>
+                    {montador && (
+                      <div className="mt-2 bg-orange-50 border-2 border-orange-300 p-3 rounded-xl">
+                        <div className="text-xs font-bold text-[#FF7A00]">🔧 Montador que aceitou - Informações completas:</div>
+                        <div className="text-xs mt-1 grid grid-cols-2 gap-1">
+                          <div><b>Nome:</b> {montador.nome} ⭐{Number(montador.avaliacao||5).toFixed(1)} ({montador.total_servicos||0} serviços)</div>
+                          <div><b>ID:</b> {montador.id}</div>
+                          <div><b>📱 Telefone:</b> {montador.telefone}</div>
+                          <div><b>📍 Cidade base:</b> {montador.cidade}</div>
+                          <div><b>✉️ Email:</b> {montador.email}</div>
+                          <div><b>💳 PIX:</b> {montador.pix}</div>
+                          <div className="col-span-2"><b>🏙️ Cidades atende:</b> {(montador.cidades||[]).join(", ")}</div>
+                          <div><b>CPF:</b> {montador.cpf||"não informado"}</div>
+                          <div><b>Status:</b> {montador.disponivel?"🟢 Online":"🔴 Offline"} {montador.bloqueado?"⛔ BLOQUEADO":""}</div>
+                        </div>
+                        <div className="text-[10px] mt-2">Aceitou em: {o.aceite_at? new Date(o.aceite_at).toLocaleString("pt-BR") : o.aceiteAt? new Date(o.aceiteAt).toLocaleString("pt-BR"):""} | Finalizou: {o.finalizado_at? new Date(o.finalizado_at).toLocaleString("pt-BR"):"não finalizado"}</div>
+                        <div className="flex gap-2 mt-2">
+                          <a href={`https://wa.me/55${(montador.telefone||"").replace(/\D/g,"")}`} target="_blank" className="text-[10px] bg-green-600 text-white px-2 py-1 rounded-full">WhatsApp Montador</a>
+                          <button type="button" onClick={()=>abrirDetalhesMontador(montador.id)} className="text-[10px] bg-[#0A2A6B] text-white px-2 py-1 rounded-full">Ver perfil completo 👁️</button>
+                        </div>
+                      </div>
+                    )}
                     {o.comprovante && <img src={o.comprovante} className="w-32 h-32 object-cover mt-2 rounded-xl" alt="comprovante"/>}
                     <div className="flex gap-2 mt-3">
                       {o.status==="aguardando_confirmacao_adm" && <button type="button" onClick={()=>confirmarPagamentoADM(o.id)} className="bg-green-600 text-white px-4 py-2 rounded-xl text-xs font-bold">✅ Confirmar Pagamento 🔔</button>}
