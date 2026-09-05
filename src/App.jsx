@@ -65,6 +65,7 @@ export default function App() {
   const [selectedPedidoDetail, setSelectedPedidoDetail] = useState(null);
   const [lastOrderTotal, setLastOrderTotal] = useState(0);
   const [lastOrderInfo, setLastOrderInfo] = useState(null);
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
   const prevOrdersRef = useRef([]);
   const supportEndRef = useRef(null);
   const lastFetchRef = useRef(Date.now());
@@ -686,10 +687,93 @@ export default function App() {
           <span className={`text-xs px-2 py-1 rounded-full animate-pulse ${isLive?"bg-green-500 text-white":"bg-red-500 text-white"}`}>{isLive?"● Ao Vivo":"● Reconectando..."}</span>
         </div>
         <div className="flex items-center gap-2">
+          <button type="button" onClick={()=>setShowDownloadModal(true)} className="hidden sm:flex items-center gap-1 bg-[#FF7A00] text-white px-3 py-2 rounded-xl text-xs font-bold animate-pulse">📲 App</button>
+          <button type="button" onClick={()=>setShowDownloadModal(true)} className="sm:hidden bg-[#FF7A00] text-white w-10 h-10 rounded-xl text-sm font-bold">📲</button>
           {currentUser ? <button type="button" onClick={()=>{ setCurrentUser(null); setView("home"); localStorage.removeItem("ccs_current"); }} className="text-sm bg-gray-100 px-4 py-2 rounded-full">Sair</button> : <button type="button" onClick={()=>{ setShowAuth(true); setIsLogin(true); }} className="bg-[#0A2A6B] text-white px-4 py-2 rounded-xl">Entrar</button>}
           <button type="button" onClick={()=>setMenuOpen(!menuOpen)} className="w-10 h-10 bg-[#0A2A6B] text-white rounded-xl">☰</button>
         </div>
       </header>
+
+      {/* Botão flutuante download - estratégico - não atrapalha fluxo mas todos veem */}
+      <div className="fixed bottom-20 left-4 right-4 md:left-auto md:right-4 md:w-96 z-30 bg-[#0A2A6B] text-white p-3 rounded-2xl shadow-2xl flex items-center justify-between border-2 border-[#FF7A00] animate-bounce" style={{animationDuration:'3s'}}>
+        <div className="flex items-center gap-2">
+          <div className="w-10 h-10 bg-[#FF7A00] rounded-xl flex items-center justify-center text-lg">📲</div>
+          <div>
+            <div className="font-bold text-xs">Baixe nosso App!</div>
+            <div className="text-[10px] opacity-80">Instale em 1 clique • Ao Vivo 🟢</div>
+          </div>
+        </div>
+        <button type="button" onClick={()=>setShowDownloadModal(true)} className="bg-white text-[#0A2A6B] px-4 py-2 rounded-full text-xs font-bold">BAIXAR</button>
+      </div>
+
+      {/* Modal Download App */}
+      {showDownloadModal && (
+        <div className="fixed inset-0 z-[90] bg-black/70 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-md max-h-[90vh] overflow-auto">
+            <div className="bg-[#0A2A6B] text-white p-5 rounded-t-3xl flex justify-between items-center">
+              <div>
+                <div className="font-bold text-lg">📲 Baixar Aplicativo</div>
+                <div className="text-xs opacity-80">Contato Certo SP • Ao Vivo 🟢</div>
+              </div>
+              <button type="button" onClick={()=>setShowDownloadModal(false)} className="w-8 h-8 bg-white/20 rounded-full">✕</button>
+            </div>
+            <div className="p-5 space-y-4">
+              <div className="bg-green-50 border-2 border-green-300 p-4 rounded-2xl text-center">
+                <div className="text-3xl">📱</div>
+                <div className="font-bold mt-2">Instale como App em 1 clique!</div>
+                <div className="text-xs mt-1 text-gray-600">Funciona igual APK, com ícone na tela inicial e notificações com som 🔔</div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="bg-[#0A2A6B] text-white p-4 rounded-2xl">
+                  <div className="font-bold text-sm">📲 Opção 1 - Instalar agora (Recomendado - 5 segundos):</div>
+                  <div className="text-xs mt-2 space-y-1 opacity-90">
+                    <div>1️⃣ Abra no Chrome do celular: <b>contatocertosp.vercel.app</b></div>
+                    <div>2️⃣ Clique nos 3 pontinhos (⋮) no topo</div>
+                    <div>3️⃣ Clique em <b>Instalar app</b> ou <b>Adicionar à tela inicial</b></div>
+                    <div>4️⃣ Pronto! Ícone aparece na sua tela igual APK</div>
+                  </div>
+                  <a href="https://contatocertosp.vercel.app" target="_blank" className="block bg-white text-[#0A2A6B] text-center py-3 rounded-xl font-bold text-sm mt-3">🌐 Abrir site para instalar</a>
+                </div>
+
+                <div className="bg-gray-50 border-2 border-dashed p-4 rounded-2xl">
+                  <div className="font-bold text-sm">📦 Opção 2 - Baixar APK (para Play Store):</div>
+                  <div className="text-xs mt-2 text-gray-600">
+                    Gere APK real em 1 minuto:
+                    <div className="mt-2 bg-white p-2 rounded-xl text-[11px]">
+                      1. Acesse <b>pwabuilder.com</b><br/>
+                      2. Cole: <b>contatocertosp.vercel.app</b><br/>
+                      3. Clique Start → Android → Generate<br/>
+                      4. Baixe app-release.apk
+                    </div>
+                  </div>
+                  <div className="flex gap-2 mt-3">
+                    <a href="https://www.pwabuilder.com/" target="_blank" className="flex-1 bg-black text-white text-center py-3 rounded-xl font-bold text-xs">🔨 PWABuilder - Gerar APK</a>
+                    <a href="https://contatocertosp.vercel.app" target="_blank" className="flex-1 bg-[#FF7A00] text-white text-center py-3 rounded-xl font-bold text-xs">🌐 Site</a>
+                  </div>
+                </div>
+
+                <div className="bg-blue-50 p-3 rounded-xl">
+                  <div className="font-bold text-xs text-[#0A2A6B]">ℹ️ Informações do App:</div>
+                  <div className="text-[11px] mt-1 space-y-1">
+                    <div>📦 Pacote: com.contatocerto.sp</div>
+                    <div>🔢 Versão: 1.0.20260904 - Modelo 10%+90%</div>
+                    <div>🟢 Status: Ao Vivo Tempo Real</div>
+                    <div>📲 Tamanho: ~3MB (PWA) | ~5MB (APK)</div>
+                    <div>🎵 TikTok: @contatocerto_prestadores</div>
+                    <div>📸 Instagram: contatocerto.of</div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <button type="button" onClick={()=>{ navigator.clipboard.writeText('https://contatocertosp.vercel.app'); notify('Link copiado! Cole no Chrome para instalar','success',1); }} className="bg-gray-100 py-3 rounded-xl font-bold text-xs">📋 Copiar link do App</button>
+                  <button type="button" onClick={()=>setShowDownloadModal(false)} className="bg-[#0A2A6B] text-white py-3 rounded-xl font-bold text-xs">Fechar</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {menuOpen && (
         <div className="fixed inset-0 z-50 bg-black/40" onClick={()=>setMenuOpen(false)}>
@@ -717,9 +801,12 @@ export default function App() {
             <div className="relative px-6 py-16 md:py-24 max-w-6xl mx-auto">
               <h1 className="font-extrabold text-white text-4xl md:text-6xl">Montadores de Móveis Profissionais em Todo SP</h1>
               <p className="text-white/80 mt-4 text-lg max-w-2xl">330 serviços oficiais com atualização em tempo real 🟢 - Pagamento seguro 10% + 90% - Suporte 24h 💬</p>
-              <div className="mt-8 flex flex-col sm:flex-row gap-4 max-w-md">
-                <button type="button" onClick={()=>{ setAuthMode("cliente"); setIsLogin(false); setShowAuth(true); }} className="bg-white text-[#0A2A6B] rounded-2xl py-5 font-bold flex-1">SOU CLIENTE</button>
-                <button type="button" onClick={()=>{ setAuthMode("montador"); setIsLogin(false); setShowAuth(true); }} className="bg-[#FF7A00] text-white rounded-2xl py-5 font-bold flex-1">SOU MONTADOR</button>
+              <div className="mt-8 flex flex-col gap-4 max-w-md">
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <button type="button" onClick={()=>{ setAuthMode("cliente"); setIsLogin(false); setShowAuth(true); }} className="bg-white text-[#0A2A6B] rounded-2xl py-5 font-bold flex-1">SOU CLIENTE</button>
+                  <button type="button" onClick={()=>{ setAuthMode("montador"); setIsLogin(false); setShowAuth(true); }} className="bg-[#FF7A00] text-white rounded-2xl py-5 font-bold flex-1">SOU MONTADOR</button>
+                </div>
+                <button type="button" onClick={()=>setShowDownloadModal(true)} className="bg-black/30 backdrop-blur border-2 border-white text-white rounded-2xl py-4 font-bold flex items-center justify-center gap-2 hover:bg-white hover:text-[#0A2A6B] transition">📲 BAIXAR APLICATIVO - Instale em 1 clique</button>
               </div>
               <div className="mt-4 text-white/60 text-xs">🟢 {users.filter(u=>u.role==="montador" && u.disponivel).length} montadores online agora | {users.filter(u=>u.role==="cliente").length} clientes cadastrados</div>
             </div>
