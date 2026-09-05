@@ -65,6 +65,13 @@ export default function App() {
   const [selectedPedidoDetail, setSelectedPedidoDetail] = useState(null);
   const [lastOrderTotal, setLastOrderTotal] = useState(0);
   const [lastOrderInfo, setLastOrderInfo] = useState(null);
+  // NOVO FLUXO - Catálogo com busca inteligente (sem mexer no layout principal)
+  const [showBuscaInteligente, setShowBuscaInteligente] = useState(false);
+  const [buscaInteligenteTerm, setBuscaInteligenteTerm] = useState("");
+  const [servicoInteligente, setServicoInteligente] = useState(null);
+  const [etapaInteligente, setEtapaInteligente] = useState(1);
+  const [comprovanteInteligente, setComprovanteInteligente] = useState("");
+  const [formInteligente, setFormInteligente] = useState({ endereco:"", bairro:"", cidade:"", data:"", horario:"" });
   const prevOrdersRef = useRef([]);
   const supportEndRef = useRef(null);
   const lastFetchRef = useRef(Date.now());
@@ -1050,6 +1057,199 @@ export default function App() {
                   <div className="text-[10px] text-gray-400">🔄 A cada 5 pedidos sua lista será limpa automaticamente | Modelo 10% + 90% anti-calote</div>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* NOVO MODAL - Catálogo com Busca Inteligente - Isolado, sem mexer no layout principal nem tempo real */}
+          {showBuscaInteligente && (
+            <div className="fixed inset-0 z-[85] bg-black/60 flex items-center justify-center p-4">
+              <div className="bg-white rounded-3xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl border-2 border-[#0A2A6B]">
+                {/* Header modal */}
+                <div className="bg-[#0A2A6B] text-white p-4 flex justify-between items-center">
+                  <div>
+                    <div className="font-bold">
+                      {etapaInteligente===1 && "🔍 Catálogo Inteligente - Busca Rápida 🟢"}
+                      {etapaInteligente===2 && `📍 ${servicoInteligente?.nome} - Endereço e Data`}
+                      {etapaInteligente===3 && `💰 Pagamento Taxa 10% - ${servicoInteligente?.nome}`}
+                    </div>
+                    <div className="text-[10px] opacity-70">
+                      {etapaInteligente===1 && "Digite guarda-roupa, cama, cozinha... busca inteligente normalizada"}
+                      {etapaInteligente===2 && "Preencha onde será a montagem"}
+                      {etapaInteligente===3 && `Pague 10% (${formatBRL((servicoInteligente?.preco||0)*0.10)}) via PIX para ADM confirmar`}
+                    </div>
+                  </div>
+                  <button type="button" onClick={()=>setShowBuscaInteligente(false)} className="w-8 h-8 bg-white/20 rounded-full">✕</button>
+                </div>
+
+                <div className="flex-1 overflow-auto p-4 bg-gray-50">
+                  {/* ETAPA 1 - Busca inteligente */}
+                  {etapaInteligente===1 && (
+                    <div className="space-y-4">
+                      <div className="bg-white p-4 rounded-2xl shadow border-2 border-[#FF7A00]">
+                        <div className="font-bold text-sm text-[#0A2A6B]">🔍 Busca Inteligente - Digite o que precisa montar:</div>
+                        <input value={buscaInteligenteTerm} onChange={e=>setBuscaInteligenteTerm(e.target.value)} placeholder="Ex: guarda roupa 6 portas, cama box, cozinha planejada..." className="w-full mt-3 p-4 border-2 rounded-2xl text-sm focus:border-[#0A2A6B]" autoFocus/>
+                        <div className="mt-2 text-[10px] text-gray-500">Busca inteligente: ignora acentos, maiúsculas, encontra por nome e categoria</div>
+                      </div>
+
+                      <div className="flex gap-2 flex-wrap">
+                        {CATEGORIAS.map(c=><button key={c} onClick={()=>setBuscaInteligenteTerm(c==="TODAS"?"":c)} className={`px-3 py-2 rounded-full text-xs font-bold ${buscaInteligenteTerm===c||(buscaInteligenteTerm===""&&c==="TODAS")?"bg-[#0A2A6B] text-white":"bg-white border hover:bg-gray-100"}`}>{c}</button>)}
+                      </div>
+
+                      <div className="grid sm:grid-cols-2 gap-3">
+                        {(() => {
+                          const termo = normalize(buscaInteligenteTerm||"");
+                          let lista = CATALOGO;
+                          if(termo){
+                            lista = CATALOGO.filter(item => {
+                              const nome = normalize(item.nome||"");
+                              const cat = normalize(item.categoria||"");
+                              return nome.includes(termo) || cat.includes(termo) || termo.split(" ").every(t=> nome.includes(t)||cat.includes(t));
+                            });
+                          }
+                          return lista.slice(0, 60).map(item=>(
+                            <div key={item.id} className="bg-white border rounded-2xl p-4 flex justify-between items-center shadow-sm hover:shadow-md hover:border-[#FF7A00] transition cursor-pointer" onClick={()=>{ setServicoInteligente(item); setFormInteligente({ endereco: currentUser?.endereco||"", bairro:"", cidade: currentUser?.cidade||"", data:"", horario:"" }); setEtapaInteligente(2); }}>
+                              <div className="flex-1">
+                                <div className="text-[10px] bg-[#0A2A6B] text-white px-2 py-1 rounded-full inline-block">{item.categoria}</div>
+                                <div className="text-sm font-bold mt-1">{item.nome}</div>
+                                <div className="font-bold text-[#FF7A00] text-sm">{formatBRL(item.preco)}</div>
+                                <div className="text-[10px] text-gray-400">ID {item.id} • Taxa 10% {formatBRL(item.preco*0.10)} + 90% {formatBRL(item.preco*0.90)} na entrega</div>
+                              </div>
+                              <div className="bg-[#FF7A00] text-white w-10 h-10 rounded-full flex items-center justify-center font-bold">→</div>
+                            </div>
+                          ));
+                        })()}
+                      </div>
+                      <div className="text-center text-xs text-gray-400">
+                        {(() => {
+                          const termo = normalize(buscaInteligenteTerm||"");
+                          let lista = CATALOGO;
+                          if(termo) lista = CATALOGO.filter(item => normalize(item.nome).includes(termo) || normalize(item.categoria).includes(termo));
+                          return `${lista.length} serviços encontrados - Mostrando ${Math.min(60, lista.length)} - Use busca inteligente`;
+                        })()}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ETAPA 2 - Informações do serviço + endereço/data/hora */}
+                  {etapaInteligente===2 && servicoInteligente && (
+                    <div className="space-y-4">
+                      <div className="bg-white p-5 rounded-2xl shadow border-2 border-[#0A2A6B]">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <div className="text-[10px] bg-[#FF7A00] text-white px-3 py-1 rounded-full inline-block">{servicoInteligente.categoria}</div>
+                            <div className="font-bold text-lg mt-2 text-[#0A2A6B]">{servicoInteligente.nome}</div>
+                            <div className="font-bold text-2xl text-[#FF7A00] mt-1">{formatBRL(servicoInteligente.preco)}</div>
+                            <div className="text-xs text-gray-500 mt-1">ID {servicoInteligente.id} • Serviço completo com montagem profissional</div>
+                          </div>
+                          <button type="button" onClick={()=>setEtapaInteligente(1)} className="text-xs bg-gray-100 px-3 py-2 rounded-full">⬅️ Trocar serviço</button>
+                        </div>
+                        <div className="mt-4 grid grid-cols-2 gap-3 text-xs">
+                          <div className="bg-blue-50 p-3 rounded-xl"><b>Total serviço:</b><br/><span className="font-bold text-lg">{formatBRL(servicoInteligente.preco)}</span></div>
+                          <div className="bg-[#0A2A6B] text-white p-3 rounded-xl"><b>🔒 Taxa 10% (agora):</b><br/><span className="font-bold text-lg">{formatBRL(servicoInteligente.preco*0.10)}</span></div>
+                          <div className="bg-[#FF7A00] text-white p-3 rounded-xl col-span-2"><b>💰 Restante montador 90% (na entrega):</b> {formatBRL(servicoInteligente.preco*0.90)} - Pago direto para montador via PIX dele</div>
+                        </div>
+                      </div>
+
+                      <div className="bg-white p-4 rounded-2xl shadow">
+                        <div className="font-bold text-sm">📍 Onde será a montagem? - Tempo real 🟢</div>
+                        <div className="space-y-3 mt-3">
+                          <input value={formInteligente.endereco} onChange={e=>setFormInteligente({...formInteligente, endereco:e.target.value})} placeholder="Endereço completo (Rua, número, complemento)" className="w-full p-4 border-2 rounded-2xl text-sm focus:border-[#0A2A6B]"/>
+                          <div className="grid grid-cols-2 gap-3">
+                            <input value={formInteligente.bairro} onChange={e=>setFormInteligente({...formInteligente, bairro:e.target.value})} placeholder="Bairro" className="w-full p-4 border rounded-2xl text-sm"/>
+                            <input value={formInteligente.cidade} onChange={e=>setFormInteligente({...formInteligente, cidade:e.target.value})} placeholder="Cidade em SP" className="w-full p-4 border rounded-2xl text-sm"/>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <input type="date" value={formInteligente.data} onChange={e=>setFormInteligente({...formInteligente, data:e.target.value})} className="w-full p-4 border rounded-2xl text-sm"/>
+                            <input type="time" value={formInteligente.horario} onChange={e=>setFormInteligente({...formInteligente, horario:e.target.value})} className="w-full p-4 border rounded-2xl text-sm"/>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2">
+                        <button type="button" onClick={()=>setEtapaInteligente(1)} className="flex-1 bg-gray-100 py-4 rounded-2xl font-bold text-sm">⬅️ Voltar</button>
+                        <button type="button" onClick={()=>{ if(!formInteligente.endereco||!formInteligente.cidade) return notify("Preencha endereço e cidade","error",1); setEtapaInteligente(3); }} className="flex-[2] bg-[#0A2A6B] text-white py-4 rounded-2xl font-bold text-sm">Continuar para Pagamento 10% ➡️</button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ETAPA 3 - Pagamento 10% via PIX + comprovante para ADM */}
+                  {etapaInteligente===3 && servicoInteligente && (
+                    <div className="space-y-4">
+                      <div className="bg-green-50 border-2 border-green-300 p-4 rounded-2xl text-center">
+                        <div className="font-bold text-green-700">✅ Pedido pronto - Pague 10% para confirmar</div>
+                        <div className="text-xs mt-1">{servicoInteligente.nome} - {formInteligente.cidade} - {formInteligente.data} {formInteligente.horario}</div>
+                      </div>
+
+                      <div className="bg-[#0A2A6B] text-white p-5 rounded-2xl text-center">
+                        <div className="text-xs opacity-80">🔒 Taxa de agendamento 10% para o SITE (pago agora) - Modelo 10%+90%</div>
+                        <div className="font-mono font-bold text-sm mt-2 break-all">{PIX_KEY}</div>
+                        <div className="text-3xl font-bold mt-2">{formatBRL(servicoInteligente.preco*0.10)}</div>
+                        <div className="text-xs opacity-60 mt-1">10% de {formatBRL(servicoInteligente.preco)} | Restante 90% {formatBRL(servicoInteligente.preco*0.90)} para montador na entrega</div>
+                        <button type="button" onClick={()=>{ navigator.clipboard.writeText(PIX_KEY); notify(`PIX site copiado: ${formatBRL(servicoInteligente.preco*0.10)}`,"success",1); }} className="bg-white text-[#0A2A6B] px-4 py-2 rounded-full text-xs font-bold mt-3">📋 Copiar PIX Site - 10%</button>
+                      </div>
+
+                      <div className="bg-yellow-50 border-2 border-yellow-400 p-4 rounded-2xl">
+                        <div className="font-bold text-sm">📤 Envie comprovante dos 10% para ADM (painel + WhatsApp 18991488302):</div>
+                        <input type="file" accept="image/*" onChange={e=>{ const r=new FileReader(); r.onload=()=>setComprovanteInteligente(r.result); r.readAsDataURL(e.target.files[0]); }} className="w-full mt-3 p-3 border-2 border-dashed rounded-xl bg-white text-sm"/>
+                        {comprovanteInteligente && <div className="mt-2 text-xs text-green-700 bg-green-50 p-2 rounded-xl">✅ Comprovante 10% selecionado - {formatBRL(servicoInteligente.preco*0.10)}</div>}
+                        <div className="mt-3 bg-white p-3 rounded-xl text-[11px]">
+                          <div>✅ 10% ({formatBRL(servicoInteligente.preco*0.10)}) para site garantir agendamento via PIX {PIX_KEY}</div>
+                          <div>✅ 90% ({formatBRL(servicoInteligente.preco*0.90)}) você paga direto para montador na sua casa</div>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2">
+                        <button type="button" onClick={()=>setEtapaInteligente(2)} className="flex-1 bg-gray-100 py-4 rounded-2xl font-bold text-sm">⬅️ Voltar</button>
+                        <button type="button" onClick={async ()=>{
+                          if(!comprovanteInteligente) return notify(`Selecione comprovante dos 10% (${formatBRL(servicoInteligente.preco*0.10)})`,"error",1);
+                          const taxa_site = servicoInteligente.preco * 0.10;
+                          const restante_montador = servicoInteligente.preco * 0.90;
+                          const pedidoId = Date.now();
+                          const pedidoDB = {
+                            id: pedidoId,
+                            cliente_id: currentUser.id,
+                            itens: [{...servicoInteligente, qtd:1}],
+                            subtotal: servicoInteligente.preco,
+                            desconto: 0,
+                            total: servicoInteligente.preco,
+                            taxa_site,
+                            restante_montador,
+                            endereco: formInteligente.endereco,
+                            bairro: formInteligente.bairro,
+                            cidade: formInteligente.cidade,
+                            data: formInteligente.data,
+                            horario: formInteligente.horario,
+                            foto: "",
+                            status:"aguardando_confirmacao_adm",
+                            comprovante: comprovanteInteligente,
+                            comprovante_restante:"",
+                            montador_id: null,
+                            created_at: new Date().toISOString(),
+                            cupom: null
+                          };
+                          const pedidoLocal = { ...pedidoDB, clienteId: pedidoDB.cliente_id, montadorId:null, createdAt: pedidoDB.created_at };
+                          setOrders(prev=>[pedidoLocal, ...prev]);
+                          setLastOrderTotal(pedidoDB.total);
+                          setLastOrderInfo(pedidoDB);
+                          try{
+                            const { error } = await supabase.from("orders").insert(pedidoDB);
+                            if(error){
+                              const fallback = { id: pedidoId, cliente_id: currentUser.id, itens: pedidoDB.itens, subtotal: pedidoDB.subtotal, desconto:0, total: pedidoDB.total, endereco: pedidoDB.endereco, bairro: pedidoDB.bairro, cidade: pedidoDB.cidade, data: pedidoDB.data, horario: pedidoDB.horario, status:"aguardando_confirmacao_adm", comprovante: comprovanteInteligente, montador_id:null, created_at: pedidoDB.created_at };
+                              await supabase.from("orders").insert(fallback);
+                            }
+                          }catch(e){}
+                          setShowBuscaInteligente(false);
+                          setEtapaInteligente(1);
+                          setServicoInteligente(null);
+                          setComprovanteInteligente("");
+                          notify(`Pedido #${pedidoId} criado via busca inteligente! Taxa 10% ${formatBRL(taxa_site)} enviada para ADM + WhatsApp 18991488302 com som 🔔 - Aguarde confirmação`,"success",3);
+                        }} disabled={!comprovanteInteligente} className={`flex-[2] py-4 rounded-2xl font-bold text-sm ${comprovanteInteligente?"bg-[#FF7A00] text-white":"bg-gray-300 text-gray-500"}`}>📤 Fazer Pedido + Enviar 10% ADM 🟢</button>
+                      </div>
+                      <div className="text-[10px] text-gray-500 text-center">Comprovante vai para painel ADM + WhatsApp 18991488302 automaticamente com som 🔔 - Modelo 10%+90% sem alterar tempo real</div>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           )}
 
