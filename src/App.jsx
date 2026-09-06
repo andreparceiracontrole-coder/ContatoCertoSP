@@ -263,7 +263,7 @@ export default function App() {
       <header className="sticky top-0 z-40 backdrop-blur-2xl bg-white/90 border-b border-slate-200/70">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-[64px] sm:h-[72px] flex items-center justify-between gap-2">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#0A2A6B] to-[#FF7A00] flex items-center justify-center text-white font-black shadow shrink-0">CC</div>
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white border border-slate-200 shadow-sm p-1.5 shrink-0"><img src="/logo.png" alt="Contato Certo SP" className="w-full h-full object-contain"/></div>
             <div className="min-w-0">
               <div className="font-black text-[14px] sm:text-[16px] tracking-tight text-[#0A2A6B] leading-none">CONTATO CERTO SP</div>
               <div className="flex items-center gap-1.5 mt-1">
@@ -489,109 +489,229 @@ export default function App() {
 
       {view==="cliente" && currentUser && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
-          <div className="flex flex-wrap gap-2 mb-6">
-            {["pedidos","suporte","perfil"].map(tab=>(
-              <button key={tab} onClick={()=>setClienteTab(tab)} className={`h-10 px-5 rounded-full text-sm font-bold border ${clienteTab===tab ? "bg-[#0A2A6B] text-white border-[#0A2A6B]" : "bg-white border-slate-200"}`}>{tab.toUpperCase()}</button>
-            ))}
-          </div>
-          {clienteTab==="pedidos" && (
-            <div className="space-y-4">
-              <div className="flex justify-between items-center"><h3 className="font-black text-lg">Meus Pedidos • {orders.filter(o=>o.cliente_id==currentUser.id).length}</h3><button onClick={()=>setShowOrderFlow(true)} className="h-10 px-5 rounded-full bg-[#0A2A6B] text-white text-sm font-bold">+ Novo Pedido</button></div>
-              {orders.filter(o=>o.cliente_id==currentUser.id).map(p=>(
-                <div key={p.id} className="bg-white rounded-[1.7rem] p-5 border shadow-sm">
-                  <div className="flex justify-between"><span className="font-black">Pedido #{p.id}</span><span className={`text-xs px-3 py-1 rounded-full font-bold ${p.status==="finalizado"?"bg-green-100 text-green-700":p.status==="aceito"?"bg-blue-100 text-blue-700":"bg-yellow-100 text-yellow-700"}`}>{p.status?.toUpperCase()}</span></div>
-                  <div className="mt-3 text-sm bg-slate-50 p-3 rounded-xl"><div className="font-bold">{(p.itens||[]).map(i=>`${i.nome} x${i.qtd}`).join(", ")}</div><div className="font-black mt-1 text-[#FF7A00]">{formatBRL(p.total)} • {p.cidade}</div></div>
-                  {p.status==="aguardando_comprovante" && (
-                    <div className="mt-3 p-4 bg-yellow-50 border-2 border-yellow-300 rounded-2xl">
-                      <div className="text-sm font-bold">Envie comprovante PIX • {formatBRL(p.total)}</div>
-                      <div className="text-xs mt-1">Chave: <b>{PIX_KEY}</b></div>
-                      <input type="file" accept="image/*" onChange={e=>{ const r=new FileReader(); r.onload=()=>setComprovante(r.result); r.readAsDataURL(e.target.files[0]); }} className="mt-3 w-full text-xs"/>
-                      <button onClick={()=>enviarComprovante(p.id, comprovante)} className="w-full mt-3 h-12 rounded-full bg-[#0A2A6B] text-white font-bold">ENVIAR COMPROVANTE</button>
-                    </div>
-                  )}
-                  {(p.status==="aguardando_comprovante" || p.status==="aguardando_confirmacao_adm" || p.status==="aguardando_montador") && <button onClick={()=>cancelarPedido(p.id)} className="mt-3 w-full h-11 rounded-full bg-red-50 border border-red-200 text-red-600 font-bold text-sm">Cancelar pedido</button>}
-                </div>
+          <div className="flex items-center gap-3 mb-6">
+            <img src="/logo.png" className="w-10 h-10 object-contain"/>
+            <div><div className="font-black text-[18px] tracking-tight">Painel Cliente Premium</div><div className="text-[11px] text-slate-500 font-bold tracking-widest">CONTATO CERTO SP • AO VIVO 🟢</div></div>
+            <div className="ml-auto flex gap-2">
+              {["pedidos","suporte","perfil"].map(tab=>(
+                <button key={tab} onClick={()=>setClienteTab(tab)} className={`h-11 px-5 rounded-full text-[12px] font-black tracking-widest border active:scale-95 transition ${clienteTab===tab ? "bg-[#0A2A6B] text-white border-[#0A2A6B] shadow-lg" : "bg-white border-slate-200 text-slate-600 hover:border-[#0A2A6B]/20"}`}>{tab.toUpperCase()}</button>
               ))}
             </div>
+          </div>
+
+          {clienteTab==="pedidos" && (
+            <div className="space-y-5">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-white rounded-[1.7rem] p-5 border shadow-sm">
+                <div><h3 className="font-black text-[18px] tracking-tight">Meus Pedidos Premium</h3><div className="text-[12px] text-slate-500 mt-1 font-medium">{orders.filter(o=>o.cliente_id==currentUser.id).length} pedidos • Realtime 2s • Foto galeria 300x300</div></div>
+                <button onClick={()=>setShowOrderFlow(true)} className="h-12 px-6 rounded-full bg-gradient-to-r from-[#FF7A00] to-[#ff9500] text-white text-[13px] font-black tracking-widest shadow-lg">+ NOVO PEDIDO • CATÁLOGO</button>
+              </div>
+
+              {orders.filter(o=>o.cliente_id==currentUser.id).length===0 && (
+                <div className="bg-white rounded-[2rem] border-2 border-dashed border-slate-200 p-10 text-center"><div className="text-[48px]">📦</div><div className="font-black text-[16px] mt-3">Nenhum pedido ainda</div><div className="text-[13px] text-slate-500 mt-1">Seu estoque MESA, GUARDA-ROUPA, ESTANTE espera montagem verificada</div><button onClick={()=>setShowOrderFlow(true)} className="mt-4 h-11 px-6 rounded-full bg-[#0A2A6B] text-white font-bold text-sm">Começar agora • Catálogo Inteligente</button></div>
+              )}
+
+              {orders.filter(o=>o.cliente_id==currentUser.id).map(p=>{
+                const statusColor = p.status==="finalizado"?"bg-emerald-50 border-emerald-200 text-emerald-700":p.status==="aceito"?"bg-blue-50 border-blue-200 text-blue-700":p.status==="aguardando_montador"?"bg-amber-50 border-amber-200 text-amber-700":p.status==="aguardando_confirmacao_adm"?"bg-purple-50 border-purple-200 text-purple-700":"bg-yellow-50 border-yellow-200 text-yellow-700";
+                const montador = users.find(u=>u.id==p.montador_id);
+                return (
+                  <div key={p.id} className="group bg-white rounded-[1.9rem] p-6 border border-slate-200/70 shadow-[0_8px_30px_-16px_rgba(0,0,0,0.12)] hover:shadow-[0_20px_60px_-20px_rgba(10,42,107,0.2)] hover:-translate-y-1 transition-all duration-300 overflow-hidden">
+                    <div className="flex flex-wrap justify-between items-start gap-3">
+                      <div className="flex items-center gap-3"><div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#0A2A6B] to-[#FF7A00] flex items-center justify-center text-white font-black shadow">#{String(p.id).slice(-3)}</div><div><div className="font-black text-[15px] tracking-tight">Pedido #{p.id} • {p.cidade}</div><div className="text-[11px] text-slate-500 font-medium mt-0.5">{new Date(p.createdAt||p.created_at||Date.now()).toLocaleString("pt-BR")} • {p.data} {p.horario} • {p.endereco}</div></div></div>
+                      <span className={`text-[10px] px-3 py-1.5 rounded-full font-black tracking-widest border ${statusColor}`}>{p.status?.toUpperCase().replace(/_/g," ")}</span>
+                    </div>
+
+                    <div className="mt-4 grid sm:grid-cols-[1fr_auto] gap-3">
+                      <div className="bg-slate-50 rounded-2xl p-4 border">
+                        <div className="text-[10px] font-black tracking-widest text-slate-400">ITENS • {p.itens?.length||0} SERVIÇOS</div>
+                        <div className="mt-2 space-y-1">{(p.itens||[]).map((i,idx)=><div key={idx} className="flex justify-between text-[13px]"><span className="font-bold truncate">{i.nome}</span><span className="font-black text-[#0A2A6B] ml-2">{i.qtd}x {formatBRL(i.preco)}</span></div>)}</div>
+                        <div className="mt-3 pt-3 border-t flex justify-between font-black"><span className="text-[13px]">Total Premium</span><span className="text-[16px] text-[#FF7A00]">{formatBRL(p.total)}</span></div>
+                      </div>
+                      <div className="bg-gradient-to-br from-[#0A2A6B] to-[#1e40af] rounded-2xl p-4 text-white min-w-[200px]">
+                        <div className="text-[10px] font-black tracking-widest opacity-70">PAGAMENTO</div>
+                        <div className="mt-1 font-black text-[14px]">PIX {formatBRL(p.total)}</div>
+                        <div className="text-[11px] opacity-80 mt-1 leading-relaxed">Chave:<br/><span className="font-mono font-bold break-all">{PIX_KEY}</span></div>
+                        {p.cupom && <div className="mt-2 px-2 py-1 rounded-full bg-white/15 text-[10px] font-black">CUPOM {p.cupom} • -{formatBRL(p.desconto||0)}</div>}
+                      </div>
+                    </div>
+
+                    {montador && (
+                      <div className="mt-4 p-4 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-full bg-white border-2 border-emerald-300 overflow-hidden shadow-sm">{montador.foto ? <img src={montador.foto} className="w-full h-full object-cover"/> : <span className="flex items-center justify-center w-full h-full font-black">{montador.nome?.[0]}</span>}</div>
+                        <div className="flex-1 min-w-0"><div className="font-black text-[14px] text-emerald-900">{montador.nome} • Montador Verificado ✅</div><div className="text-[11px] text-emerald-700 font-medium">{montador.telefone} • {montador.cidades?.join(", ")} • ⭐ {montador.avaliacao||5}</div></div>
+                        <a href={`https://wa.me/${montador.telefone?.replace(/\D/g,"")}?text=Olá ${montador.nome}! Pedido #${p.id} em ${p.cidade}`} target="_blank" className="h-10 px-4 rounded-full bg-[#25D366] text-white font-black text-[11px] flex items-center gap-1">WHATSAPP</a>
+                      </div>
+                    )}
+
+                    {p.status==="aguardando_comprovante" && (
+                      <div className="mt-4 p-5 bg-gradient-to-br from-yellow-50 to-amber-50 border-2 border-yellow-300 rounded-[1.5rem]">
+                        <div className="flex items-center gap-2"><div className="w-8 h-8 rounded-full bg-yellow-400 flex items-center justify-center">⚠️</div><div className="font-black text-[14px] tracking-tight">Envie comprovante PIX para confirmar • {formatBRL(p.total)}</div></div>
+                        <div className="mt-3 grid sm:grid-cols-2 gap-3 text-[11px] font-medium"><div className="bg-white p-3 rounded-xl border"><div className="font-black tracking-widest text-[10px] text-slate-400">CHAVE PIX</div><div className="font-mono font-bold mt-1 break-all">{PIX_KEY}</div></div><div className="bg-white p-3 rounded-xl border"><div className="font-black tracking-widest text-[10px] text-slate-400">VALOR</div><div className="font-black text-[18px] text-[#FF7A00] mt-1">{formatBRL(p.total)}</div></div></div>
+                        <div className="mt-4">
+                          <label className="block text-[11px] font-black tracking-widest mb-2">📸 COMPROVANTE • GALERIA SEM CÂMERA • 300x300 ~30KB</label>
+                          <input type="file" accept="image/*" onChange={e=>{ const r=new FileReader(); r.onload=()=>setComprovante(r.result); r.readAsDataURL(e.target.files[0]); }} className="w-full text-[12px] bg-white border-2 border-dashed rounded-xl p-3"/>
+                          {comprovante && <div className="mt-3 flex items-center gap-3"><img src={comprovante} className="w-16 h-16 rounded-xl object-cover border-2 border-[#0A2A6B]"/><span className="text-[11px] font-black text-emerald-600">✅ Pronto para enviar!</span></div>}
+                          <button onClick={()=>enviarComprovante(p.id, comprovante)} className="w-full mt-3 h-[52px] rounded-full bg-[#0A2A6B] text-white font-black text-[13px] tracking-widest shadow-lg active:scale-[0.98] transition">ENVIAR COMPROVANTE • AO VIVO 🟢</button>
+                        </div>
+                      </div>
+                    )}
+
+                    {p.comprovante && (
+                      <div className="mt-3 flex gap-2">
+                        <a href={p.comprovante} target="_blank" className="h-10 px-4 rounded-full bg-slate-100 border font-bold text-[11px] flex items-center gap-1">📸 Ver Comprovante</a>
+                        {p.status==="aguardando_confirmacao_adm" && <span className="h-10 px-4 rounded-full bg-purple-50 border border-purple-200 text-purple-700 font-black text-[10px] flex items-center">⏳ Aguardando ADM confirmar</span>}
+                      </div>
+                    )}
+
+                    {(p.status==="aguardando_comprovante" || p.status==="aguardando_confirmacao_adm" || p.status==="aguardando_montador") && <button onClick={()=>cancelarPedido(p.id)} className="mt-4 w-full h-11 rounded-full bg-red-50 border-2 border-red-200 text-red-600 font-black text-[11px] tracking-widest hover:bg-red-100 transition">CANCELAR PEDIDO • LGPD</button>}
+                  </div>
+                );
+              })}
+            </div>
           )}
+
           {clienteTab==="suporte" && (
-            <div className="bg-white rounded-[1.7rem] border shadow-sm overflow-hidden flex flex-col h-[70vh]">
-              <div className="p-4 border-b font-black">Suporte 24h • Ao Vivo</div>
-              <div className="flex-1 overflow-auto p-4 space-y-3">
+            <div className="bg-white rounded-[2rem] border shadow-[0_12px_40px_-12px_rgba(0,0,0,0.15)] overflow-hidden flex flex-col h-[75vh]">
+              <div className="p-5 border-b bg-gradient-to-r from-slate-50 to-white flex items-center gap-3"><img src="/logo.png" className="w-8 h-8 object-contain"/><div><div className="font-black tracking-tight">Suporte Premium 24h • Ao Vivo 🟢</div><div className="text-[11px] text-slate-500">Contato Certo SP • Resposta em até 5min • Realtime 2s</div></div></div>
+              <div className="flex-1 overflow-auto p-5 space-y-3 bg-[#F8FAFF]">
+                {supportMessages.filter(m=>m.user_id==currentUser.id).length===0 && <div className="text-center py-10"><div className="text-[40px]">💬</div><div className="font-bold mt-2">Fale com a gente!</div><div className="text-xs text-slate-500 mt-1">Tire dúvidas sobre MESA, GUARDA-ROUPA, ESTANTE</div></div>}
                 {supportMessages.filter(m=>m.user_id==currentUser.id).map(m=>(
-                  <div key={m.id} className={`max-w-[80%] p-3 rounded-2xl text-sm ${m.from_admin ? "bg-[#0A2A6B] text-white" : "bg-slate-100 ml-auto"}`}>{m.mensagem}</div>
+                  <div key={m.id} className={`max-w-[82%] p-4 rounded-[1.2rem] text-[13px] leading-relaxed shadow-sm ${m.from_admin ? "bg-[#0A2A6B] text-white rounded-bl-none" : "bg-white border ml-auto rounded-br-none"}`}>
+                    <div className="text-[10px] font-black tracking-widest opacity-60 mb-1">{m.from_admin ? "ADM CONTATO CERTO SP" : "VOCÊ"} • {new Date(m.created_at).toLocaleTimeString("pt-BR")}</div>{m.mensagem}
+                  </div>
                 ))}
                 <div ref={supportEndRef}></div>
               </div>
-              <div className="p-4 border-t flex gap-2"><input value={supportInput} onChange={e=>setSupportInput(e.target.value)} placeholder="Digite mensagem..." className="flex-1 h-12 bg-slate-100 rounded-full px-5 outline-none"/><button onClick={enviarSuporte} className="w-12 h-12 rounded-full bg-[#0A2A6B] text-white font-bold">➤</button></div>
+              <div className="p-4 border-t bg-white flex gap-2"><input value={supportInput} onChange={e=>setSupportInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&enviarSuporte()} placeholder="Digite sua mensagem premium..." className="flex-1 h-[52px] bg-slate-100 rounded-full px-6 text-[14px] outline-none focus:bg-white focus:ring-2 focus:ring-[#0A2A6B]/20"/><button onClick={enviarSuporte} className="w-[52px] h-[52px] rounded-full bg-[#0A2A6B] text-white font-black shadow-lg active:scale-95 transition">➤</button></div>
             </div>
           )}
+
           {clienteTab==="perfil" && (
             <div className="space-y-4 max-w-xl">
-              <div className="bg-white rounded-[1.7rem] p-6 border shadow-sm"><div className="font-black text-lg">{currentUser.nome}</div><div className="text-sm text-slate-500 mt-1">{currentUser.telefone} • {currentUser.email}</div></div>
-              <button onClick={excluirMeuCadastro} className="w-full h-12 rounded-full bg-red-50 border border-red-200 text-red-600 font-bold">Excluir cadastro</button>
+              <div className="bg-white rounded-[2rem] p-7 border shadow-sm">
+                <div className="flex items-center gap-4"><img src="/logo.png" className="w-12 h-12 object-contain"/><div><div className="font-black text-[20px] tracking-tight">{currentUser.nome}</div><div className="text-[12px] text-slate-500 mt-1 font-medium">{currentUser.cidade} • {currentUser.telefone}</div><div className="text-[12px] text-slate-500">{currentUser.email} • @{currentUser.usuario}</div></div></div>
+                <div className="mt-6 grid grid-cols-2 gap-3">
+                  <div className="bg-slate-50 p-4 rounded-2xl border"><div className="text-[10px] font-black tracking-widest text-slate-400">PEDIDOS</div><div className="text-[20px] font-black mt-1">{orders.filter(o=>o.cliente_id==currentUser.id).length}</div></div>
+                  <div className="bg-[#0A2A6B] p-4 rounded-2xl text-white"><div className="text-[10px] font-black tracking-widest opacity-70">TOTAL GASTO</div><div className="text-[20px] font-black mt-1">{formatBRL(orders.filter(o=>o.cliente_id==currentUser.id&&o.status==="finalizado").reduce((s,o)=>s+(o.total||0),0))}</div></div>
+                </div>
+              </div>
+              <div className="bg-gradient-to-br from-red-50 to-orange-50 border-2 border-red-200 rounded-[1.7rem] p-5">
+                <div className="font-black text-red-800">⚠️ Zona de perigo • LGPD</div><div className="text-[12px] text-red-700 mt-1 leading-relaxed">Ao excluir, todos os seus pedidos e conversas serão apagados permanentemente. Esta ação não pode ser desfeita.</div>
+                <button onClick={excluirMeuCadastro} className="mt-4 w-full h-12 rounded-full bg-red-600 text-white font-black text-[13px] tracking-widest shadow">EXCLUIR CADASTRO PERMANENTE • LGPD</button>
+              </div>
             </div>
           )}
         </div>
       )}
 
-      {view==="montador" && currentUser && (
+            {view==="montador" && currentUser && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
-          <div className="flex flex-wrap gap-2 mb-6">
-            {["disponiveis","meus","ganhos","perfil"].map(tab=>(
-              <button key={tab} onClick={()=>setMontadorTab(tab)} className={`h-10 px-5 rounded-full text-sm font-bold border ${montadorTab===tab ? "bg-[#0A2A6B] text-white border-[#0A2A6B]" : "bg-white border-slate-200"}`}>{tab.toUpperCase()}</button>
-            ))}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6 bg-white rounded-[1.7rem] p-5 border shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#0A2A6B] to-[#FF7A00] p-[2px] shadow"><div className="w-full h-full rounded-full bg-white overflow-hidden flex items-center justify-center">{currentUser.foto ? <img src={currentUser.foto} className="w-full h-full object-cover"/> : <span className="font-black text-lg">{currentUser.nome?.[0]}</span>}</div></div>
+              <div><div className="font-black text-[18px] tracking-tight flex items-center gap-2">{currentUser.nome} <span className="px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[9px] font-black">VERIFICADO ✅</span></div><div className="text-[11px] text-slate-500 font-medium">{currentUser.cidades?.join(" • ")} • {currentUser.telefone} • PIX {currentUser.pix}</div></div>
+            </div>
+            <div className="ml-auto flex flex-wrap gap-2">
+              {["disponiveis","meus","ganhos","perfil"].map(tab=>(
+                <button key={tab} onClick={()=>setMontadorTab(tab)} className={`h-11 px-5 rounded-full text-[11px] font-black tracking-widest border active:scale-95 transition ${montadorTab===tab ? "bg-[#0A2A6B] text-white border-[#0A2A6B] shadow-lg" : "bg-white border-slate-200 text-slate-600"}`}>{tab.toUpperCase()}</button>
+              ))}
+            </div>
           </div>
+
           {montadorTab==="disponiveis" && (
-            <div className="space-y-3">
-              <h3 className="font-black">Pedidos Disponíveis • {orders.filter(o=>o.status==="aguardando_montador").length}</h3>
-              {orders.filter(o=>o.status==="aguardando_montador").map(p=>(
-                <div key={p.id} className="bg-white rounded-[1.7rem] p-5 border shadow-sm">
-                  <div className="flex justify-between"><span className="font-black">Pedido #{p.id} • {p.cidade}</span><span className="text-sm font-black text-[#FF7A00]">{formatBRL(p.total)}</span></div>
-                  <div className="mt-2 text-sm bg-slate-50 p-3 rounded-xl">{(p.itens||[]).map(i=>i.nome).join(", ")} • {p.endereco}</div>
-                  <button onClick={()=>aceitarPedido(p.id)} className="mt-3 w-full h-12 rounded-full bg-[#0A2A6B] text-white font-bold">ACEITAR PEDIDO</button>
-                </div>
-              ))}
-            </div>
-          )}
-          {montadorTab==="meus" && (
-            <div className="space-y-3">
-              {orders.filter(o=>o.montador_id==currentUser.id).map(p=>(
-                <div key={p.id} className="bg-white rounded-[1.7rem] p-5 border shadow-sm">
-                  <div className="flex justify-between"><span className="font-black">#{p.id} • {p.cidade}</span><span className={`text-xs px-3 py-1 rounded-full font-bold ${p.status==="finalizado"?"bg-green-100 text-green-700":"bg-blue-100 text-blue-700"}`}>{p.status.toUpperCase()}</span></div>
-                  <div className="mt-2 text-sm">{p.endereco} • {formatBRL(p.total)}</div>
-                  {p.status==="aceito" && <button onClick={()=>finalizarPedido(p.id)} className="mt-3 w-full h-12 rounded-full bg-green-600 text-white font-bold">FINALIZAR SERVIÇO</button>}
-                </div>
-              ))}
-            </div>
-          )}
-          {montadorTab==="ganhos" && (
             <div className="space-y-4">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="bg-[#0A2A6B] text-white p-4 rounded-2xl"><div className="text-xs opacity-70">Total Bruto</div><div className="text-xl font-black">{formatBRL(orders.filter(o=>o.montador_id==currentUser.id && o.status==="finalizado").reduce((s,o)=>s+(o.total||0),0))}</div></div>
-                <div className="bg-green-600 text-white p-4 rounded-2xl"><div className="text-xs opacity-80">Seu Ganho</div><div className="text-xl font-black">{formatBRL(orders.filter(o=>o.montador_id==currentUser.id && o.status==="finalizado").reduce((s,o)=>s+(o.ganho_montador||o.total*0.9),0))}</div></div>
-                <div className="bg-[#FF7A00] text-white p-4 rounded-2xl"><div className="text-xs opacity-80">Finalizados</div><div className="text-xl font-black">{orders.filter(o=>o.montador_id==currentUser.id && o.status==="finalizado").length}</div></div>
-                <div className="bg-slate-900 text-white p-4 rounded-2xl"><div className="text-xs opacity-70">Avaliação</div><div className="text-xl font-black">⭐ {Number(currentUser.avaliacao||5).toFixed(1)}</div></div>
+              <div className="bg-gradient-to-r from-[#0A2A6B] to-[#1e40af] rounded-[1.7rem] p-5 text-white flex flex-wrap justify-between items-center gap-3">
+                <div><h3 className="font-black text-[18px] tracking-tight">Pedidos Disponíveis na sua região</h3><div className="text-[12px] opacity-80 mt-1">Filtrado por {currentUser.cidades?.join(", ")} • {orders.filter(o=>o.status==="aguardando_montador" && (currentUser.cidades||[]).some(c=> (o.cidade||"").toLowerCase().includes(c.toLowerCase()) )).length} disponíveis • Realtime 2s 🟢</div></div>
+                <div className="px-4 py-2 rounded-full bg-white/15 border border-white/20 text-[11px] font-black tracking-widest">🔔 SOM + VIBRAÇÃO ATIVO</div>
+              </div>
+
+              {orders.filter(o=>o.status==="aguardando_montador").length===0 && <div className="bg-white rounded-[2rem] border-2 border-dashed p-10 text-center"><div className="text-[48px]">🔧</div><div className="font-black mt-3">Nenhum pedido disponível agora</div><div className="text-[12px] text-slate-500 mt-1">Ative o som, novos pedidos chegam com alerta sonoro e vibração</div></div>}
+
+              {orders.filter(o=>o.status==="aguardando_montador" && ((currentUser.cidades||[]).length===0 || (currentUser.cidades||[]).some(c=> (o.cidade||"").toLowerCase().includes(c.toLowerCase()) ))).map(p=>{
+                const cliente = users.find(u=>u.id==p.cliente_id);
+                return (
+                  <div key={p.id} className="group bg-white rounded-[1.9rem] p-6 border-2 border-slate-200/60 shadow-[0_8px_30px_-16px_rgba(0,0,0,0.12)] hover:shadow-[0_24px_70px_-20px_rgba(10,42,107,0.25)] hover:border-[#0A2A6B]/20 hover:-translate-y-1 transition-all duration-300">
+                    <div className="flex flex-wrap justify-between gap-3">
+                      <div className="flex items-center gap-3"><div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#FF7A00] to-[#ff9500] flex items-center justify-center text-white font-black shadow">#{String(p.id).slice(-3)}</div><div><div className="font-black text-[16px]">Pedido #{p.id} • {p.cidade} • {p.bairro}</div><div className="text-[11px] text-slate-500 mt-0.5">{p.endereco} • {p.data} {p.horario} • Cliente {cliente?.nome||"ID "+p.cliente_id}</div></div></div>
+                      <div className="text-right"><div className="text-[22px] font-black text-[#FF7A00] leading-none">{formatBRL(p.total)}</div><div className="text-[10px] font-bold text-emerald-600 mt-1">SEU GANHO 90% = {formatBRL(p.total*0.9)} • 6º 100% BONUS</div></div>
+                    </div>
+                    <div className="mt-4 bg-slate-50 rounded-2xl p-4 border">
+                      <div className="text-[10px] font-black tracking-widest text-slate-400">ITENS PARA MONTAR • {p.itens?.length} SERVIÇOS</div>
+                      <div className="mt-2 grid sm:grid-cols-2 gap-2">{(p.itens||[]).map((i,idx)=><div key={idx} className="flex items-center gap-2 bg-white p-2.5 rounded-xl border text-[12px]"><span className="w-6 h-6 rounded-full bg-[#0A2A6B]/10 flex items-center justify-center text-[10px]">🔧</span><span className="font-bold truncate">{i.nome}</span><span className="ml-auto font-black text-[#0A2A6B]">x{i.qtd}</span></div>)}</div>
+                    </div>
+                    <button onClick={()=>aceitarPedido(p.id)} className="mt-4 w-full h-[52px] rounded-full bg-gradient-to-r from-[#0A2A6B] to-[#1e40af] text-white font-black text-[13px] tracking-widest shadow-lg hover:shadow-xl active:scale-[0.98] transition">🔧 ACEITAR PEDIDO • CLIENTE SERÁ NOTIFICADO 🟢 • 30MIN</button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {montadorTab==="meus" && (
+            <div className="space-y-4">
+              <div className="bg-white rounded-[1.7rem] p-5 border shadow-sm flex justify-between items-center"><h3 className="font-black text-[18px]">Meus Pedidos Aceitos • {orders.filter(o=>o.montador_id==currentUser.id).length}</h3><span className="px-3 py-1 rounded-full bg-[#0A2A6B] text-white text-[11px] font-black">{orders.filter(o=>o.montador_id==currentUser.id && o.status==="aceito").length} EM ANDAMENTO</span></div>
+              {orders.filter(o=>o.montador_id==currentUser.id).length===0 && <div className="bg-white rounded-[2rem] border-2 border-dashed p-10 text-center"><div className="text-[40px]">🛠️</div><div className="font-bold mt-2">Nenhum pedido aceito</div></div>}
+              {orders.filter(o=>o.montador_id==currentUser.id).map(p=>(
+                <div key={p.id} className="bg-white rounded-[1.9rem] p-6 border shadow-sm">
+                  <div className="flex justify-between items-start"><div><div className="font-black text-[16px]">#{p.id} • {p.cidade} • {p.bairro}</div><div className="text-[12px] text-slate-500 mt-1">{p.endereco} • {p.data} {p.horario} • Total {formatBRL(p.total)}</div></div><span className={`text-[10px] px-3 py-1.5 rounded-full font-black tracking-widest border ${p.status==="finalizado"?"bg-emerald-50 border-emerald-200 text-emerald-700":"bg-blue-50 border-blue-200 text-blue-700"}`}>{p.status.toUpperCase()}</span></div>
+                  <div className="mt-3 flex gap-2">
+                    <a href={`https://wa.me/${users.find(u=>u.id==p.cliente_id)?.telefone?.replace(/\D/g,"")}`} target="_blank" className="h-11 px-5 rounded-full bg-[#25D366] text-white font-black text-[11px] flex items-center gap-1">WHATSAPP CLIENTE</a>
+                    <a href={`tel:${users.find(u=>u.id==p.cliente_id)?.telefone}`} className="h-11 px-5 rounded-full bg-slate-900 text-white font-black text-[11px] flex items-center gap-1">LIGAR 📞</a>
+                  </div>
+                  {p.status==="aceito" && <button onClick={()=>finalizarPedido(p.id)} className="mt-4 w-full h-[52px] rounded-full bg-gradient-to-r from-emerald-600 to-emerald-500 text-white font-black text-[13px] tracking-widest shadow-lg active:scale-[0.98] transition">✅ FINALIZAR SERVIÇO • CLIENTE AVALIA • GANHO {p.bonus_montador ? "100% BONUS" : "90%"} {formatBRL(p.ganho_montador||p.total*0.9)}</button>}
+                  {p.status==="finalizado" && <div className="mt-3 p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-[12px] font-bold text-emerald-800">✅ Finalizado em {new Date(p.finalizadoAt||p.finalizado_at||Date.now()).toLocaleString("pt-BR")} • Ganho {formatBRL(p.ganho_montador||0)} {p.bonus_montador ? "• 🎉 BONUS 6º 100%!" : ""}</div>}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {montadorTab==="ganhos" && (
+            <div className="space-y-5">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-gradient-to-br from-[#0A2A6B] to-[#1e40af] text-white p-5 rounded-[1.7rem] shadow-lg"><div className="text-[10px] font-black tracking-widest opacity-70">TOTAL BRUTO</div><div className="text-[22px] font-black mt-1">{formatBRL(orders.filter(o=>o.montador_id==currentUser.id && o.status==="finalizado").reduce((s,o)=>s+(o.total||0),0))}</div><div className="text-[10px] opacity-70 mt-2">{orders.filter(o=>o.montador_id==currentUser.id && o.status==="finalizado").length} serviços</div></div>
+                <div className="bg-gradient-to-br from-emerald-600 to-emerald-500 text-white p-5 rounded-[1.7rem] shadow-lg shadow-emerald-500/20"><div className="text-[10px] font-black tracking-widest opacity-80">SEU GANHO 90% + BONUS</div><div className="text-[22px] font-black mt-1">{formatBRL(orders.filter(o=>o.montador_id==currentUser.id && o.status==="finalizado").reduce((s,o)=>s+(o.ganho_montador||o.total*0.9),0))}</div><div className="text-[10px] opacity-80 mt-2">PIX direto • 6º = 100%</div></div>
+                <div className="bg-gradient-to-br from-[#FF7A00] to-[#ff9500] text-white p-5 rounded-[1.7rem] shadow-lg shadow-orange-500/20"><div className="text-[10px] font-black tracking-widest opacity-80">FINALIZADOS</div><div className="text-[22px] font-black mt-1">{orders.filter(o=>o.montador_id==currentUser.id && o.status==="finalizado").length}</div><div className="text-[10px] opacity-80 mt-2">Próximo bonus em {6 - (orders.filter(o=>o.montador_id==currentUser.id && o.status==="finalizado").length % 6)} serviços</div></div>
+                <div className="bg-slate-900 text-white p-5 rounded-[1.7rem] shadow-lg"><div className="text-[10px] font-black tracking-widest opacity-70">AVALIAÇÃO PREMIUM</div><div className="text-[22px] font-black mt-1">⭐ {Number(currentUser.avaliacao||5).toFixed(1)}</div><div className="text-[10px] opacity-70 mt-2">Verificado ✅</div></div>
+              </div>
+              <div className="bg-white rounded-[1.9rem] p-6 border shadow-sm">
+                <div className="font-black text-[16px]">Histórico de ganhos • Bonus a cada 6 serviços = 100%</div>
+                <div className="mt-4 space-y-2 max-h-[400px] overflow-auto">{orders.filter(o=>o.montador_id==currentUser.id && o.status==="finalizado").map(p=><div key={p.id} className="flex justify-between items-center p-3 rounded-2xl bg-slate-50 border"><span className="font-bold text-sm">#{p.id} • {p.cidade} • {new Date(p.finalizadoAt||p.finalizado_at||Date.now()).toLocaleDateString("pt-BR")}</span><span className={`font-black text-sm ${p.bonus_montador ? "text-[#FF7A00]" : "text-emerald-600"}`}>{formatBRL(p.ganho_montador||p.total*0.9)} {p.bonus_montador?"🎉 BONUS 100%":""}</span></div>)}</div>
               </div>
             </div>
           )}
+
           {montadorTab==="perfil" && (
-            <div className="space-y-4 max-w-xl">
-              <div className="bg-white rounded-[1.7rem] p-6 border shadow-sm">
-                <div className="flex items-center gap-4"><div className="w-16 h-16 rounded-full bg-slate-100 overflow-hidden border-2 border-[#0A2A6B]">{currentUser.foto ? <img src={currentUser.foto} className="w-full h-full object-cover"/> : <span className="flex items-center justify-center w-full h-full font-black">{currentUser.nome?.[0]}</span>}</div><div><div className="font-black">{currentUser.nome}</div><div className="text-xs text-slate-500">{currentUser.telefone}</div><div className="text-xs">PIX {currentUser.pix}</div></div></div>
+            <div className="space-y-4 max-w-2xl">
+              <div className="bg-white rounded-[2rem] p-7 border shadow-sm">
+                <div className="flex items-center gap-5"><div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#0A2A6B] to-[#FF7A00] p-[3px] shadow-lg"><div className="w-full h-full rounded-full bg-white overflow-hidden flex items-center justify-center">{currentUser.foto ? <img src={currentUser.foto} className="w-full h-full object-cover"/> : <span className="font-black text-2xl">{currentUser.nome?.[0]}</span>}</div></div><div className="flex-1"><div className="font-black text-[20px] tracking-tight flex items-center gap-2">{currentUser.nome} <span className="px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-black">VERIFICADO ✅</span></div><div className="text-[13px] text-slate-600 mt-1 font-medium">{currentUser.telefone} • {currentUser.email}</div><div className="text-[12px] mt-1"><span className="px-2.5 py-1 rounded-full bg-[#0A2A6B] text-white text-[10px] font-black">PIX {currentUser.pix}</span> <span className="ml-2 text-[11px] text-slate-500">CPF {currentUser.cpf}</span></div></div></div>
               </div>
-              <div className="bg-white rounded-[1.7rem] p-6 border shadow-sm">
-                <div className="font-bold">Cidades que atende (máx 3)</div>
-                <div className="flex flex-wrap gap-2 mt-3">{(currentUser.cidades||[]).map(c=><span key={c} className="bg-[#0A2A6B] text-white text-xs px-3 py-1.5 rounded-full font-bold flex items-center gap-2">{c} <button onClick={()=>removerCidade(c)} className="w-4 h-4 rounded-full bg-white/20">x</button></span>)}</div>
-                <div className="flex gap-2 mt-4"><input value={novaCidade} onChange={e=>setNovaCidade(e.target.value)} placeholder="Nova cidade" className="flex-1 h-12 bg-slate-100 rounded-full px-5 outline-none"/><button onClick={adicionarCidade} className="h-12 px-6 rounded-full bg-[#FF7A00] text-white font-bold">Add</button></div>
+              <div className="bg-white rounded-[2rem] p-7 border shadow-sm">
+                <div className="font-black text-[15px] tracking-tight">Cidades que atende • Máx 3 • Filtro inteligente</div>
+                <div className="text-[11px] text-slate-500 mt-1">Você só recebe pedidos das cidades cadastradas • Realtime 2s com som e vibração</div>
+                <div className="flex flex-wrap gap-2 mt-4">{(currentUser.cidades||[]).map(c=><span key={c} className="bg-gradient-to-r from-[#0A2A6B] to-[#1e40af] text-white text-[12px] px-4 py-2 rounded-full font-black flex items-center gap-2 shadow">{c} <button onClick={()=>removerCidade(c)} className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30">x</button></span>)}{(currentUser.cidades||[]).length===0 && <span className="text-[12px] text-slate-400 font-medium">Nenhuma cidade cadastrada • Adicione para receber pedidos</span>}</div>
+                <div className="flex gap-2 mt-5"><input value={novaCidade} onChange={e=>setNovaCidade(e.target.value)} onKeyDown={e=>e.key==="Enter"&&adicionarCidade()} placeholder="Nova cidade SP ex: Presidente Prudente" className="flex-1 h-12 bg-slate-100 rounded-full px-5 text-[14px] outline-none focus:bg-white focus:ring-2 focus:ring-[#0A2A6B]/20"/><button onClick={adicionarCidade} className="h-12 px-7 rounded-full bg-[#FF7A00] text-white font-black text-[13px] shadow active:scale-95 transition">ADD CIDADE +</button></div>
+                <div className="mt-3 text-[10px] text-slate-400 font-medium">💡 Dica: cadastre 3 cidades próximas para mais pedidos • Todo SP</div>
               </div>
-              <button onClick={excluirMeuCadastro} className="w-full h-12 rounded-full bg-red-50 border border-red-200 text-red-600 font-bold">Excluir cadastro</button>
+              <div className="bg-gradient-to-br from-red-50 to-orange-50 border-2 border-red-200 rounded-[2rem] p-6">
+                <div className="font-black text-red-800 flex items-center gap-2"><span className="w-7 h-7 rounded-full bg-red-500 text-white flex items-center justify-center">!</span>Zona de perigo • LGPD</div><div className="text-[12px] text-red-700 mt-2 leading-relaxed">Ao excluir, histórico de ganhos e avaliações serão apagados permanentemente.</div>
+                <button onClick={excluirMeuCadastro} className="mt-4 w-full h-12 rounded-full bg-red-600 text-white font-black text-[13px] tracking-widest shadow">EXCLUIR CADASTRO PERMANENTE</button>
+              </div>
             </div>
           )}
         </div>
       )}
 
       {view==="admin" && (
+
+            {view==="admin" && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+          <div className="flex items-center gap-3 mb-6 bg-white rounded-[1.7rem] p-5 border shadow-sm">
+            <img src="/logo.png" className="w-10 h-10 object-contain"/>
+            <div><div className="font-black text-[18px] tracking-tight">Painel ADM • Contato Certo SP Premium</div><div className="text-[11px] text-slate-500 font-bold tracking-widest">REALTIME 2S • WATCHDOG 5S • SOM E VIBRAÇÃO • TODO SP • {orders.length} PEDIDOS • {users.length} USUÁRIOS</div></div>
+            <div className="ml-auto flex flex-wrap gap-2">
+              {["pedidos","montadores","clientes","cupons","suporte"].map(tab=>(
+                <button key={tab} onClick={()=>setAdminTab(tab)} className={`h-11 px-5 rounded-full text-[11px] font-black tracking-widest border active:scale-95 transition ${adminTab===tab ? "bg-[#0A2A6B] text-white border-[#0A2A6B] shadow-lg" : "bg-white border-slate-200 text-slate-600"}`}>{tab.toUpperCase()}</button>
+              ))}
+            </div>
+          </div>{view==="admin" && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
           <div className="flex flex-wrap gap-2 mb-6">
             {["pedidos","montadores","clientes","cupons","suporte"].map(tab=>(
@@ -600,7 +720,7 @@ export default function App() {
           </div>
           {adminTab==="pedidos" && (
             <div className="space-y-3">
-              <h3 className="font-black">Todos Pedidos • {orders.length}</h3>
+              <div className="bg-gradient-to-r from-[#0A2A6B] to-[#1e40af] rounded-[1.7rem] p-5 text-white flex justify-between items-center"><div><h3 className="font-black text-[18px]">Todos Pedidos Premium • {orders.length}</h3><div className="text-[11px] opacity-80 mt-1">Realtime 2s • Som e vibração para novos • Confirme pagamentos • PIX {PIX_KEY}</div></div><div className="hidden sm:flex items-center gap-2"><span className="px-3 py-1.5 rounded-full bg-white/15 border border-white/20 text-[10px] font-black">🟢 AO VIVO</span><span className="px-3 py-1.5 rounded-full bg-[#FF7A00] text-white text-[10px] font-black">{orders.filter(o=>o.status==="aguardando_confirmacao_adm").length} PARA CONFIRMAR</span></div></div>
               {orders.map(p=>(
                 <div key={p.id} className="bg-white rounded-[1.7rem] p-5 border shadow-sm">
                   <div className="flex justify-between"><span className="font-black">#{p.id} • {p.cidade} • {formatBRL(p.total)}</span><span className={`text-xs px-3 py-1 rounded-full font-bold ${p.status==="finalizado"?"bg-green-100 text-green-700":"bg-yellow-100 text-yellow-700"}`}>{p.status?.toUpperCase()}</span></div>
