@@ -305,44 +305,26 @@ export default function App() {
           <section className="relative overflow-hidden bg-gradient-to-br from-[#0A2A6B] via-[#112a7d] to-[#1e3a8a] text-white">
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(255,122,0,0.22),_transparent_55%)]"></div>
             <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-16">
-              <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-8 items-start">
+              <div className="max-w-3xl">
                 <div>
-                  <div className="inline-flex px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-[10px] font-bold tracking-widest">🧠 CATÁLOGO INTELIGENTE • 330 SERVIÇOS • REALTIME 2S • TODO SP</div>
-                  <h1 className="mt-4 text-[36px] sm:text-[56px] font-black leading-[0.9] tracking-tight">MONTADOR<br/><span className="text-[#FF7A00]">VERIFICADO</span><br/>EM 30 MIN</h1>
-                  <p className="mt-4 text-white/70 text-[14px] sm:text-[16px] leading-relaxed max-w-xl">Foto obrigatória galeria sem câmera 300x300 ~30KB • Supabase realtime 2s • Watchdog 5s • Pagamento 10% + 90% PIX • Inspirado no seu estoque real</p>
-                  <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-[420px]">
-                    <button onClick={()=>setShowOrderFlow(true)} className="h-[54px] px-6 rounded-full bg-white text-[#0A2A6B] font-black text-[14px] shadow-xl active:scale-[0.98] transition">SOLICITAR MONTADOR →</button>
-                    <button onClick={()=>{setAuthMode("montador"); setIsLogin(false); setShowAuth(true);}} className="h-[54px] px-6 rounded-full bg-[#FF7A00] text-white font-black text-[14px] shadow-xl">SOU MONTADOR • 90% PIX</button>
+                  <div className="inline-flex px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-[10px] font-bold tracking-widest">🧠 CATÁLOGO INTELIGENTE PREMIUM • 330 SERVIÇOS • REALTIME 2S • TODO SP</div>
+                  <h1 className="mt-4 text-[38px] sm:text-[60px] font-black leading-[0.85] tracking-tight">MONTADOR<br/><span className="text-[#FF7A00]">VERIFICADO</span><br/>EM 30 MIN</h1>
+                  <p className="mt-5 text-white/70 text-[15px] sm:text-[17px] leading-relaxed max-w-xl">Foto obrigatória galeria sem câmera 300x300 ~30KB • Supabase realtime 2s • Watchdog 5s • Pagamento 10% + 90% PIX • Montadores verificados em todo SP</p>
+                  <div className="mt-8 flex flex-col sm:flex-row gap-3 max-w-[440px]">
+                    <button onClick={()=>{ const el=document.getElementById('catalogo-premium'); el?.scrollIntoView({behavior:'smooth'}); }} className="h-[56px] px-8 rounded-full bg-white text-[#0A2A6B] font-black text-[14px] shadow-xl active:scale-[0.98] transition flex items-center justify-center gap-2">VER CATÁLOGO PREMIUM <span>↓</span></button>
+                    <button onClick={()=>{setAuthMode("montador"); setIsLogin(false); setShowAuth(true);}} className="h-[56px] px-8 rounded-full bg-[#FF7A00] text-white font-black text-[14px] shadow-xl active:scale-[0.98] transition">SOU MONTADOR • 90% PIX</button>
                   </div>
-                  <div className="mt-8 grid grid-cols-3 gap-3 max-w-[420px]">
-                    <div className="bg-white/10 backdrop-blur border border-white/10 rounded-2xl p-4"><div className="text-xl font-black">{users.filter(u=>u.role==="montador").length || 12}</div><div className="text-[9px] font-bold tracking-widest opacity-60">MONTADORES</div></div>
-                    <div className="bg-white/10 backdrop-blur border border-white/10 rounded-2xl p-4"><div className="text-xl font-black">{orders.length || 24}</div><div className="text-[9px] font-bold tracking-widest opacity-60">AO VIVO</div></div>
-                    <div className="bg-[#FF7A00] rounded-2xl p-4 shadow"><div className="text-xl font-black text-white">4.9</div><div className="text-[9px] font-bold tracking-widest text-white/80">PREMIUM</div></div>
-                  </div>
-                </div>
-                <div className="relative">
-                  <div className="bg-white rounded-[2.2rem] p-5 sm:p-6 shadow-[0_24px_80px_-16px_rgba(0,0,0,0.4)] border">
-                    <div className="flex justify-between items-center">
-                      <div className="font-black text-[16px] text-[#0A2A6B]">Catálogo Inteligente</div>
-                      <span className="text-[10px] px-2 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold">{isLive ? "🟢 AO VIVO" : "🔴 OFF"}</span>
-                    </div>
-                    <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="O que precisa montar?" className="mt-4 w-full h-[48px] bg-slate-100 rounded-full px-5 text-[15px] outline-none focus:bg-white focus:ring-2 focus:ring-[#0A2A6B]/20"/>
-                    <div className="mt-4 bg-slate-50 rounded-[1.5rem] p-2 space-y-2 max-h-[320px] overflow-auto">
-                      {filteredCatalog.slice(0,6).map(item=>(
-                        <div key={item.id} className="flex justify-between items-center p-3 rounded-2xl bg-white border hover:shadow-md transition">
-                          <div className="flex items-center gap-3"><div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0A2A6B]/5 to-[#FF7A00]/5 border flex items-center justify-center">{categoriaIcons[item.categoria]||"📦"}</div><div><div className="text-[13px] font-bold">{item.nome}</div><div className="text-[12px] text-[#FF7A00] font-black">{formatBRL(item.preco)}</div></div></div>
-                          <button onClick={()=>addToCart(item)} className="w-9 h-9 rounded-full bg-[#0A2A6B] text-white font-black">+</button>
-                        </div>
-                      ))}
-                    </div>
-                    {cart.length>0 && <div className="mt-4 p-4 rounded-2xl bg-[#0A2A6B] text-white flex justify-between font-black"><span>{cart.length} itens</span><span>{formatBRL(total)}</span></div>}
+                  <div className="mt-10 grid grid-cols-3 gap-3 max-w-[440px]">
+                    <div className="bg-white/10 backdrop-blur border border-white/10 rounded-[1.5rem] p-4"><div className="text-2xl font-black">{users.filter(u=>u.role==="montador").length || 12}</div><div className="text-[10px] font-bold tracking-widest opacity-60 mt-1">MONTADORES VERIFICADOS</div></div>
+                    <div className="bg-white/10 backdrop-blur border border-white/10 rounded-[1.5rem] p-4"><div className="text-2xl font-black">{orders.length || 24}</div><div className="text-[10px] font-bold tracking-widest opacity-60 mt-1">PEDIDOS AO VIVO 🟢</div></div>
+                    <div className="bg-[#FF7A00] rounded-[1.5rem] p-4 shadow-[0_12px_24px_-8px_rgba(255,122,0,0.5)]"><div className="text-2xl font-black text-white">4.9 ⭐</div><div className="text-[10px] font-bold tracking-widest text-white/80 mt-1">PREMIUM AVALIADO</div></div>
                   </div>
                 </div>
               </div>
             </div>
           </section>
 
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
+          <div id="catalogo-premium" className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
             <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#0A2A6B] via-[#102a7d] to-[#1e3a8a] p-[1px] shadow-[0_20px_60px_-20px_rgba(10,42,107,0.4)]">
               <div className="bg-white rounded-[1.9rem] overflow-hidden">
                 <div className="bg-gradient-to-r from-slate-50 to-white border-b border-slate-100 p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
