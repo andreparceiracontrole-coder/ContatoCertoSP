@@ -64,6 +64,11 @@ export default function App() {
   const [isLogin, setIsLogin] = useState(false);
   const [search, setSearch] = useState("");
   const [catFilter, setCatFilter] = useState("TODAS");
+  const [sortBy, setSortBy] = useState("popular");
+  const [priceFilter, setPriceFilter] = useState("todos");
+  const [viewMode, setViewMode] = useState("grid");
+  const [showCount, setShowCount] = useState(24);
+  const [favoritos, setFavoritos] = useState(()=> JSON.parse(localStorage.getItem("ccs_fav")||"[]"));
   const [cart, setCart] = useState([]);
   const [orderForm, setOrderForm] = useState({ endereco:"", bairro:"", cidade:"", data:"", horario:"" });
   const [comprovante, setComprovante] = useState("");
@@ -149,14 +154,50 @@ export default function App() {
   useEffect(()=>{ localStorage.setItem("ccs_current", JSON.stringify(currentUser)); },[currentUser]);
   useEffect(()=>{ supportEndRef.current?.scrollIntoView({behavior:"smooth"}); },[supportMessages]);
 
+  const categoriaIcons = {
+    "GUARDA-ROUPA": "👗",
+    "ARMARIO DE COZINHA": "🍳",
+    "RACK": "📺",
+    "PAINEL": "🖼️",
+    "ESTANTE": "📚",
+    "COMODA": "🗄️",
+    "CAMA": "🛏️",
+    "MESA": "🪑",
+    "CADEIRA": "💺",
+    "ESCRIVANINHA": "💻",
+    "BALCAO": "🍷",
+    "MOVEIS PARA ESCRITORIO": "🏢",
+    "MANUTENCAO DE MOVEIS": "🔧"
+  };
+
   const filteredCatalog = useMemo(()=>{
-    return CATALOGO.filter(item=>{
+    let list = CATALOGO.filter(item=>{
       const matchCat = catFilter==="TODAS" || item.categoria===catFilter;
       const nSearch = normalize(search);
-      if(!nSearch) return matchCat;
-      return matchCat && normalize(item.nome).includes(nSearch);
+      const matchSearch = !nSearch || normalize(item.nome).includes(nSearch) || normalize(item.categoria).includes(nSearch);
+      let matchPrice = true;
+      if(priceFilter==="ate100") matchPrice = item.preco <= 100;
+      else if(priceFilter==="100a200") matchPrice = item.preco > 100 && item.preco <= 200;
+      else if(priceFilter==="200a400") matchPrice = item.preco > 200 && item.preco <= 400;
+      else if(priceFilter==="acima400") matchPrice = item.preco > 400;
+      return matchCat && matchSearch && matchPrice;
     });
-  },[search,catFilter]);
+    if(sortBy==="menor") list = [...list].sort((a,b)=>a.preco-b.preco);
+    if(sortBy==="maior") list = [...list].sort((a,b)=>b.preco-a.preco);
+    if(sortBy==="nome") list = [...list].sort((a,b)=>a.nome.localeCompare(b.nome));
+    if(sortBy==="popular") list = [...list].sort((a,b)=> (a.id % 7) - (b.id % 7)); // simulando popularidade
+    return list;
+  },[search,catFilter,sortBy,priceFilter]);
+
+  const categoriaCounts = useMemo(()=>{
+    const counts = { TODAS: CATALOGO.length };
+    CATEGORIAS.forEach(cat=>{ counts[cat] = CATALOGO.filter(i=>i.categoria===cat).length; });
+    return counts;
+  },[]);
+
+  useEffect(()=>{ localStorage.setItem("ccs_fav", JSON.stringify(favoritos)); },[favoritos]);
+  const toggleFav = (id)=> setFavoritos(prev=> prev.includes(id) ? prev.filter(x=>x!==id) : [...prev, id]);
+
 
   const handleRegister = async (formData)=>{
     if(users.some(u=>u.usuario===formData.usuario)) return notify("Usuario ja existe","error",1);
@@ -286,41 +327,173 @@ export default function App() {
                   </div>
                 </div>
                 <div className="relative">
-                  <div className="bg-white rounded-[2rem] p-5 sm:p-6 shadow-2xl border">
-                    <div className="flex justify-between items-center"><div className="font-black text-[#0A2A6B]">Catálogo Premium</div><div className="text-[10px] px-2 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold">{isLive ? "🟢 AO VIVO" : "🔴 OFF"}</div></div>
-                    <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar serviço..." className="mt-4 w-full h-12 bg-slate-100 rounded-full px-5 text-[15px] outline-none focus:bg-white focus:ring-2 focus:ring-[#0A2A6B]/20"/>
-                    <div className="mt-3 flex gap-2 overflow-x-auto scrollbar-none pb-1">
-                      {["TODAS", ...CATEGORIAS.slice(0,5)].map(cat=>(
-                        <button key={cat} onClick={()=>setCatFilter(cat)} className={`whitespace-nowrap h-8 px-3 rounded-full text-[11px] font-bold border ${catFilter===cat ? "bg-[#0A2A6B] text-white border-[#0A2A6B]" : "bg-white border-slate-200"}`}>{cat}</button>
+                  <div className="bg-white rounded-[2.2rem] p-5 sm:p-6 shadow-[0_24px_80px_-16px_rgba(0,0,0,0.4)] border border-white/50 overflow-hidden">
+                    <div className="flex justify-between items-center">
+                      <div className="font-black text-[16px] tracking-tight text-[#0A2A6B] flex items-center gap-2">Catálogo Premium <span className="text-[11px] px-2.5 py-1 rounded-full bg-[#0A2A6B] text-white">{CATALOGO.length}</span></div>
+                      <div className="flex items-center gap-2"><span className={`w-2 h-2 rounded-full ${isLive ? "bg-emerald-500 animate-pulse" : "bg-red-500"}`}></span><span className="text-[10px] font-black tracking-widest text-slate-500">{isLive ? "AO VIVO" : "OFF"}</span></div>
+                    </div>
+                    <div className="mt-4 relative">
+                      <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="O que precisa montar?" className="w-full h-[48px] bg-slate-100 rounded-full pl-5 pr-12 text-[15px] font-medium outline-none focus:bg-white focus:ring-2 focus:ring-[#0A2A6B]/20 border border-transparent transition"/>
+                      <div className="absolute right-1 top-1 w-10 h-10 rounded-full bg-[#0A2A6B] text-white flex items-center justify-center">⌕</div>
+                    </div>
+                    <div className="mt-4 flex gap-2 overflow-x-auto scrollbar-none pb-1 -mx-1 px-1 snap-x">
+                      {["TODAS", ...CATEGORIAS.slice(0,6)].map(cat=>(
+                        <button key={cat} onClick={()=>setCatFilter(cat)} className={`snap-start whitespace-nowrap h-9 px-4 rounded-full text-[11px] font-bold border flex items-center gap-1.5 active:scale-95 transition ${catFilter===cat ? "bg-[#0A2A6B] text-white border-[#0A2A6B] shadow-md" : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-white"}`}><span>{categoriaIcons[cat]||"📦"}</span>{cat.slice(0,12)}{cat.length>12?"..":""} <span className={`text-[9px] px-1.5 py-0.5 rounded-full ${catFilter===cat ? "bg-white/20" : "bg-slate-200"}`}>{categoriaCounts[cat]||0}</span></button>
                       ))}
                     </div>
-                    <div className="mt-4 space-y-2 max-h-[300px] overflow-auto">
-                      {filteredCatalog.slice(0,6).map(item=>(
-                        <div key={item.id} className="flex justify-between items-center p-3 rounded-2xl border hover:bg-slate-50">
-                          <div><div className="text-sm font-bold">{item.nome}</div><div className="text-xs text-slate-500">{formatBRL(item.preco)}</div></div>
-                          <button onClick={()=>addToCart(item)} className="w-8 h-8 rounded-full bg-[#FF7A00] text-white font-black">+</button>
+                    <div className="mt-4 bg-slate-50 rounded-[1.5rem] p-2 space-y-2 max-h-[320px] overflow-auto scrollbar-none">
+                      {filteredCatalog.slice(0,7).map(item=>(
+                        <div key={item.id} className="group flex items-center gap-3 p-3 rounded-2xl bg-white border border-slate-100 hover:border-[#0A2A6B]/15 hover:shadow-md active:scale-[0.99] transition-all">
+                          <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#0A2A6B]/5 to-[#FF7A00]/5 border border-[#0A2A6B]/10 flex items-center justify-center text-[16px]">{categoriaIcons[item.categoria]||"📦"}</div>
+                          <div className="flex-1 min-w-0"><div className="text-[13px] font-bold leading-tight truncate">{item.nome}</div><div className="flex items-center gap-2 mt-0.5"><span className="text-[12px] font-black text-[#FF7A00]">{formatBRL(item.preco)}</span><span className="text-[10px] text-slate-400">• 30min</span><span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-600 font-bold">✓ Verificado</span></div></div>
+                          <button onClick={()=>addToCart(item)} className="w-9 h-9 rounded-full bg-[#0A2A6B] text-white flex items-center justify-center font-black text-[16px] group-active:scale-90 transition">+</button>
                         </div>
                       ))}
                     </div>
-                    {cart.length>0 && <div className="mt-4 p-4 rounded-2xl bg-[#0A2A6B] text-white flex justify-between items-center"><span className="text-sm font-bold">{cart.length} itens</span><span className="font-black">{formatBRL(total)}</span></div>}
+                    {cart.length>0 && (
+                      <div className="mt-3 p-3">
+                        <div className="rounded-[1.5rem] bg-gradient-to-br from-[#0A2A6B] to-[#1e40af] p-4 text-white shadow-lg">
+                          <div className="flex justify-between items-center"><span className="text-[13px] font-bold opacity-80">{cart.reduce((s,i)=>s+i.qtd,0)} itens • Frete grátis SP</span><span className="text-[18px] font-black">{formatBRL(total)}</span></div>
+                          <button onClick={()=>{setOrderStep(1); setShowOrderFlow(true);}} className="mt-3 w-full h-11 rounded-full bg-white text-[#0A2A6B] font-black text-[13px] active:scale-[0.98] transition">CONTINUAR • {formatBRL(total)} →</button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
             </div>
           </section>
 
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-            <h2 className="text-xl font-black tracking-tight">SERVIÇOS PREMIUM • {filteredCatalog.length}</h2>
-            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredCatalog.map(item=>(
-                <div key={item.id} className="bg-white rounded-[1.7rem] border p-5 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all">
-                  <div className="text-[10px] font-black tracking-widest text-[#0A2A6B] bg-[#0A2A6B]/5 px-3 py-1 rounded-full inline-block border">{item.categoria}</div>
-                  <div className="mt-3 font-extrabold">{item.nome}</div>
-                  <div className="mt-1 text-sm text-slate-500 line-clamp-2">{item.descricao||"Montagem profissional verificada"}</div>
-                  <div className="mt-4 flex justify-between items-center"><div className="text-xl font-black text-[#FF7A00]">{formatBRL(item.preco)}</div><button onClick={()=>addToCart(item)} className="px-5 py-2 rounded-full bg-[#0A2A6B] text-white text-xs font-black">ADD</button></div>
+          {/* CATÁLOGO PREMIUM OTIMIZADO - MOBILE FIRST */}
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
+            {/* TOOLBAR PREMIUM */}
+            <div className="sticky top-[64px] sm:top-[72px] z-20 -mx-4 sm:mx-0 px-4 sm:px-0 py-4 bg-[#F8FAFF]/90 backdrop-blur-2xl border-b sm:border sm:rounded-[1.5rem] sm:bg-white/90 sm:shadow-sm">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <h2 className="font-black text-[18px] sm:text-[22px] tracking-tight leading-none whitespace-nowrap">SERVIÇOS <span className="text-slate-400">PREMIUM</span></h2>
+                  <div className="flex items-center gap-2">
+                    <span className="px-3 py-1 rounded-full bg-[#0A2A6B] text-white text-[11px] font-black tracking-widest">{filteredCatalog.length} de {CATALOGO.length}</span>
+                    <span className="hidden sm:inline-flex px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-black tracking-widest">🟢 AO VIVO • REALTIME 2S</span>
+                  </div>
                 </div>
-              ))}
+                <div className="flex items-center gap-2 overflow-x-auto scrollbar-none pb-1 lg:pb-0">
+                  <div className="flex items-center gap-1.5 bg-slate-100 rounded-full p-1 shrink-0">
+                    <button onClick={()=>setViewMode("grid")} className={`w-8 h-8 rounded-full flex items-center justify-center text-[14px] transition ${viewMode==="grid" ? "bg-white shadow text-[#0A2A6B]" : "text-slate-400"}`}>◫</button>
+                    <button onClick={()=>setViewMode("list")} className={`w-8 h-8 rounded-full flex items-center justify-center text-[14px] transition ${viewMode==="list" ? "bg-white shadow text-[#0A2A6B]" : "text-slate-400"}`}>☰</button>
+                  </div>
+                  <select value={sortBy} onChange={e=>setSortBy(e.target.value)} className="h-9 px-4 rounded-full bg-slate-100 border-0 text-[12px] font-bold outline-none focus:ring-2 focus:ring-[#0A2A6B]/20 shrink-0">
+                    <option value="popular">🔥 Popular</option>
+                    <option value="menor">💰 Menor preço</option>
+                    <option value="maior">💎 Maior preço</option>
+                    <option value="nome">🔤 A-Z</option>
+                  </select>
+                  <select value={priceFilter} onChange={e=>setPriceFilter(e.target.value)} className="h-9 px-4 rounded-full bg-slate-100 border-0 text-[12px] font-bold outline-none focus:ring-2 focus:ring-[#0A2A6B]/20 shrink-0">
+                    <option value="todos">💵 Todos preços</option>
+                    <option value="ate100">Até R$100</option>
+                    <option value="100a200">R$100 - R$200</option>
+                    <option value="200a400">R$200 - R$400</option>
+                    <option value="acima400">Acima R$400</option>
+                  </select>
+                </div>
+              </div>
+              {/* CATEGORIAS PREMIUM COM CONTADOR */}
+              <div className="mt-4 flex gap-2 overflow-x-auto scrollbar-none pb-1 -mx-1 px-1 snap-x">
+                {["TODAS", ...CATEGORIAS].map(cat=>{
+                  const isActive = catFilter===cat;
+                  return (
+                    <button key={cat} onClick={()=>setCatFilter(cat)} className={`snap-start group whitespace-nowrap h-[40px] px-4 rounded-full text-[12px] font-bold border flex items-center gap-2 active:scale-95 transition-all shrink-0 ${isActive ? "bg-[#0A2A6B] text-white border-[#0A2A6B] shadow-lg shadow-[#0A2A6B]/20" : "bg-white text-slate-600 border-slate-200 hover:border-[#0A2A6B]/30 hover:bg-slate-50"}`}>
+                      <span className="text-[14px]">{categoriaIcons[cat]||"📦"}</span>
+                      <span className="tracking-tight">{cat}</span>
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-black ${isActive ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500 group-hover:bg-[#0A2A6B]/10"}`}>{categoriaCounts[cat]||0}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
+
+            {/* GRID PREMIUM OTIMIZADO */}
+            <div className={`mt-6 grid gap-4 ${viewMode==="grid" ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"}`}>
+              {filteredCatalog.slice(0, showCount).map(item=>{
+                const isFav = favoritos.includes(item.id);
+                const qtdNoCarrinho = cart.find(c=>c.id===item.id)?.qtd || 0;
+                const isPopular = item.id % 5 === 0;
+                const temDesconto = item.id % 7 === 0;
+                return (
+                  <div key={item.id} className={`group relative bg-white rounded-[1.8rem] border border-slate-200/70 shadow-[0_8px_24px_-12px_rgba(0,0,0,0.12)] hover:shadow-[0_20px_60px_-20px_rgba(10,42,107,0.25)] hover:-translate-y-1 active:scale-[0.99] transition-all duration-300 overflow-hidden ${viewMode==="list" ? "flex flex-row items-center" : ""}`}>
+                    {/* IMAGEM / ÍCONE PREMIUM */}
+                    <div className={`${viewMode==="list" ? "w-[88px] h-[88px] m-3 rounded-2xl shrink-0" : "h-[84px]"} bg-gradient-to-br from-[#0A2A6B]/[0.04] via-[#0A2A6B]/[0.02] to-[#FF7A00]/[0.06] relative overflow-hidden flex items-center justify-center border-b sm:border-b-0 ${viewMode==="list" ? "border" : "border-slate-100"}`}>
+                      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(255,122,0,0.08),_transparent_60%)]"></div>
+                      <span className="text-[32px] relative z-10 group-hover:scale-110 transition-transform duration-300">{categoriaIcons[item.categoria]||"📦"}</span>
+                      {isPopular && <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-gradient-to-r from-[#FF7A00] to-[#ff9500] text-white text-[8px] font-black tracking-widest shadow">🔥 POPULAR</span>}
+                      {temDesconto && <span className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-emerald-500 text-white text-[8px] font-black">-15% OFF</span>}
+                      <button onClick={()=>toggleFav(item.id)} className={`absolute ${viewMode==="list" ? "bottom-1 right-1" : "bottom-2 right-2"} w-7 h-7 rounded-full backdrop-blur-md border flex items-center justify-center text-[12px] active:scale-90 transition ${isFav ? "bg-red-500 border-red-500 text-white shadow" : "bg-white/80 border-white/50 text-slate-400 hover:text-red-500"}`}>{isFav ? "♥" : "♡"}</button>
+                    </div>
+
+                    <div className={`p-5 flex-1 min-w-0 ${viewMode==="list" ? "py-4 pr-5" : ""}`}>
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#0A2A6B]/[0.06] border border-[#0A2A6B]/10 shrink-0">
+                          <span className="text-[10px]">{categoriaIcons[item.categoria]||"📦"}</span>
+                          <span className="text-[9px] font-black tracking-widest text-[#0A2A6B]">{item.categoria}</span>
+                        </div>
+                        <span className="text-[10px] font-bold text-slate-400 tracking-widest shrink-0">ID {item.id}</span>
+                      </div>
+
+                      <div className="mt-3 font-extrabold text-[15px] sm:text-[16px] leading-[1.2] tracking-tight line-clamp-2 min-h-[38px]">{item.nome}</div>
+                      
+                      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-50 border border-emerald-100 text-[10px] font-bold text-emerald-700"><span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse"></span>Verificado</span>
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-slate-50 border border-slate-200 text-[10px] font-bold text-slate-600">⏱️ 30-60min</span>
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-amber-50 border border-amber-100 text-[10px] font-bold text-amber-700">⭐ 4.9 • 12 meses garantia</span>
+                      </div>
+
+                      <div className="mt-3 text-[12px] leading-[1.5] text-slate-500 line-clamp-2 min-h-[36px]">Montagem profissional com foto obrigatória galeria, ferramentas inclusas, limpeza pós-montagem, teste completo.</div>
+
+                      <div className="mt-4 flex items-end justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="text-[10px] font-black tracking-widest text-slate-400">A PARTIR DE</div>
+                          <div className="flex items-baseline gap-2">
+                            <div className="text-[22px] font-black tracking-tight text-[#FF7A00] leading-none">{formatBRL(item.preco)}</div>
+                            {temDesconto && <div className="text-[11px] font-bold text-slate-400 line-through">{formatBRL(item.preco*1.15)}</div>}
+                          </div>
+                          <div className="text-[10px] font-bold text-slate-500 mt-1">💳 12x de {formatBRL(item.preco/12)} • Pix 10% OFF • 90% montador</div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {qtdNoCarrinho>0 ? (
+                            <div className="flex items-center gap-1 bg-slate-100 rounded-full p-1 border">
+                              <button onClick={()=>{ const c=cart.find(x=>x.id===item.id); if(c && c.qtd>1) setCart(prev=>prev.map(x=>x.id===item.id?{...x,qtd:x.qtd-1}:x)); else setCart(prev=>prev.filter(x=>x.id!==item.id)); }} className="w-8 h-8 rounded-full bg-white shadow flex items-center justify-center font-black active:scale-90">-</button>
+                              <span className="w-6 text-center text-sm font-black">{qtdNoCarrinho}</span>
+                              <button onClick={()=>addToCart(item)} className="w-8 h-8 rounded-full bg-[#0A2A6B] text-white flex items-center justify-center font-black active:scale-90">+</button>
+                            </div>
+                          ) : (
+                            <button onClick={()=>addToCart(item)} className="h-11 px-5 rounded-full bg-[#0A2A6B] text-white text-[11px] font-black tracking-widest shadow-lg shadow-[#0A2A6B]/15 active:scale-95 hover:bg-black transition-all flex items-center gap-1.5">ADD <span className="text-[14px]">+</span></button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#0A2A6B] via-[#1e40af] to-[#FF7A00] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* LOAD MORE PREMIUM */}
+            {showCount < filteredCatalog.length && (
+              <div className="mt-8 flex flex-col items-center gap-3">
+                <div className="text-[11px] font-bold tracking-widest text-slate-400">Mostrando {Math.min(showCount, filteredCatalog.length)} de {filteredCatalog.length} serviços</div>
+                <button onClick={()=>setShowCount(prev=>prev+24)} className="h-12 px-8 rounded-full bg-white border border-slate-200 font-black text-[13px] tracking-widest shadow-sm hover:shadow-md hover:border-[#0A2A6B]/20 active:scale-[0.98] transition-all">CARREGAR MAIS +24 • {filteredCatalog.length - showCount} RESTANTES</button>
+                <div className="w-full max-w-xs h-1 bg-slate-100 rounded-full overflow-hidden"><div className="h-full bg-gradient-to-r from-[#0A2A6B] to-[#FF7A00] transition-all duration-500" style={{width: `${(Math.min(showCount, filteredCatalog.length)/filteredCatalog.length)*100}%`}}></div></div>
+              </div>
+            )}
+
+            {filteredCatalog.length===0 && (
+              <div className="mt-8 bg-white rounded-[2rem] border-2 border-dashed border-slate-200 p-10 text-center">
+                <div className="text-[40px]">🔍</div>
+                <div className="font-black text-[16px] mt-3">Nenhum serviço encontrado</div>
+                <div className="text-[13px] text-slate-500 mt-1 max-w-sm mx-auto">Tente buscar por "guarda-roupa", "cozinha" ou limpe os filtros de preço e categoria</div>
+                <button onClick={()=>{setSearch(""); setCatFilter("TODAS"); setPriceFilter("todos");}} className="mt-4 h-11 px-6 rounded-full bg-[#0A2A6B] text-white font-bold text-sm">Limpar filtros • Ver {CATALOGO.length} serviços</button>
+              </div>
+            )}
           </div>
         </>
       )}
