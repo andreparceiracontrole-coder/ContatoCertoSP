@@ -364,139 +364,244 @@ export default function App() {
             </div>
           </section>
 
-          {/* CATÁLOGO PREMIUM OTIMIZADO - MOBILE FIRST */}
+
+          {/* CATÁLOGO INTELIGENTE ULTRA PREMIUM - MANTENDO TODAS FUNÇÕES */}
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
-            {/* TOOLBAR PREMIUM */}
-            <div className="sticky top-[64px] sm:top-[72px] z-20 -mx-4 sm:mx-0 px-4 sm:px-0 py-4 bg-[#F8FAFF]/90 backdrop-blur-2xl border-b sm:border sm:rounded-[1.5rem] sm:bg-white/90 sm:shadow-sm">
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                  <h2 className="font-black text-[18px] sm:text-[22px] tracking-tight leading-none whitespace-nowrap">SERVIÇOS <span className="text-slate-400">PREMIUM</span></h2>
+            {/* HEADER INTELIGENTE COM BUSCA IA */}
+            <div className="relative overflow-hidden rounded-[2rem] sm:rounded-[2.5rem] bg-gradient-to-br from-[#0A2A6B] via-[#102a7d] to-[#1e3a8a] p-[1px] shadow-[0_20px_60px_-20px_rgba(10,42,107,0.4)]">
+              <div className="bg-white rounded-[1.9rem] sm:rounded-[2.4rem] overflow-hidden">
+                {/* Top bar inteligente */}
+                <div className="bg-gradient-to-r from-slate-50 to-white border-b border-slate-100 p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#0A2A6B] to-[#FF7A00] flex items-center justify-center shadow-lg shadow-[#0A2A6B]/20 shrink-0">
+                      <span className="text-white text-[20px]">🧠</span>
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h2 className="font-black text-[18px] sm:text-[22px] tracking-tight leading-none">CATÁLOGO <span className="text-[#FF7A00]">INTELIGENTE</span></h2>
+                        <span className="px-2.5 py-1 rounded-full bg-[#0A2A6B] text-white text-[10px] font-black tracking-widest">330 SERVIÇOS</span>
+                        <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-black">🟢 AO VIVO • REALTIME 2S</span>
+                      </div>
+                      <div className="flex items-center gap-2 mt-1.5 text-[11px] text-slate-500 font-medium">
+                        <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>{filteredCatalog.length} encontrados • {cart.reduce((s,i)=>s+i.qtd,0)} no carrinho</span>
+                        <span className="hidden sm:inline">• Foto galeria 300x300 • Touch 44px</span>
+                      </div>
+                    </div>
+                  </div>
                   <div className="flex items-center gap-2">
-                    <span className="px-3 py-1 rounded-full bg-[#0A2A6B] text-white text-[11px] font-black tracking-widest">{filteredCatalog.length} de {CATALOGO.length}</span>
-                    <span className="hidden sm:inline-flex px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-black tracking-widest">🟢 AO VIVO • REALTIME 2S</span>
+                    <div className="flex items-center gap-1.5 bg-slate-100 rounded-full p-1">
+                      <button onClick={()=>setViewMode("grid")} className={`w-9 h-9 rounded-full flex items-center justify-center text-[14px] transition-all ${viewMode==="grid" ? "bg-white shadow text-[#0A2A6B] shadow-sm" : "text-slate-400 hover:text-slate-600"}`}>◫</button>
+                      <button onClick={()=>setViewMode("list")} className={`w-9 h-9 rounded-full flex items-center justify-center text-[14px] transition-all ${viewMode==="list" ? "bg-white shadow text-[#0A2A6B]" : "text-slate-400"}`}>☰</button>
+                    </div>
+                    <select value={sortBy} onChange={e=>setSortBy(e.target.value)} className="h-10 px-4 rounded-full bg-slate-900 text-white border-0 text-[12px] font-bold outline-none focus:ring-2 focus:ring-[#0A2A6B]/30 cursor-pointer">
+                      <option value="popular">🔥 Mais pedidos</option>
+                      <option value="menor">💰 Menor preço</option>
+                      <option value="maior">💎 Maior preço</option>
+                      <option value="nome">🔤 A-Z</option>
+                    </select>
+                    <select value={priceFilter} onChange={e=>setPriceFilter(e.target.value)} className="h-10 px-4 rounded-full bg-white border border-slate-200 text-[12px] font-bold outline-none focus:ring-2 focus:ring-[#0A2A6B]/20 cursor-pointer">
+                      <option value="todos">💵 Todos</option>
+                      <option value="ate100">Até R$100</option>
+                      <option value="100a200">R$100-200</option>
+                      <option value="200a400">R$200-400</option>
+                      <option value="acima400">R$400+</option>
+                    </select>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 overflow-x-auto scrollbar-none pb-1 lg:pb-0">
-                  <div className="flex items-center gap-1.5 bg-slate-100 rounded-full p-1 shrink-0">
-                    <button onClick={()=>setViewMode("grid")} className={`w-8 h-8 rounded-full flex items-center justify-center text-[14px] transition ${viewMode==="grid" ? "bg-white shadow text-[#0A2A6B]" : "text-slate-400"}`}>◫</button>
-                    <button onClick={()=>setViewMode("list")} className={`w-8 h-8 rounded-full flex items-center justify-center text-[14px] transition ${viewMode==="list" ? "bg-white shadow text-[#0A2A6B]" : "text-slate-400"}`}>☰</button>
+
+                {/* BUSCA INTELIGENTE + CATEGORIAS */}
+                <div className="p-4 sm:p-5 space-y-4">
+                  {/* Busca com sugestões inteligentes */}
+                  <div className="relative max-w-2xl">
+                    <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar: guarda-roupa, mesa, estante, cômoda, rack... (como no seu estoque da foto)" className="w-full h-[56px] bg-slate-100 rounded-full pl-6 pr-[140px] text-[15px] font-medium outline-none focus:bg-white focus:ring-2 focus:ring-[#0A2A6B]/20 border-2 border-transparent focus:border-[#0A2A6B]/10 transition-all"/>
+                    <div className="absolute right-1.5 top-1.5 flex items-center gap-1.5">
+                      {search && <button onClick={()=>setSearch("")} className="w-10 h-10 rounded-full bg-slate-200 hover:bg-slate-300 flex items-center justify-center text-slate-500 transition">✕</button>}
+                      <div className="w-11 h-11 rounded-full bg-[#0A2A6B] text-white flex items-center justify-center shadow-lg">⌕</div>
+                    </div>
+                    {search && (
+                      <div className="absolute top-full mt-2 w-full bg-white rounded-2xl border shadow-xl p-2 z-10">
+                        <div className="text-[10px] font-black tracking-widest text-slate-400 px-3 py-1">SUGESTÕES INTELIGENTES</div>
+                        {CATEGORIAS.filter(c=> normalize(c).includes(normalize(search))).slice(0,3).map(c=>(
+                          <button key={c} onClick={()=>{setCatFilter(c); setSearch("");}} className="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-50 flex items-center gap-2 text-sm font-bold"><span>{categoriaIcons[c]||"📦"}</span>{c} <span className="ml-auto text-xs text-slate-400">{categoriaCounts[c]} itens</span></button>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  <select value={sortBy} onChange={e=>setSortBy(e.target.value)} className="h-9 px-4 rounded-full bg-slate-100 border-0 text-[12px] font-bold outline-none focus:ring-2 focus:ring-[#0A2A6B]/20 shrink-0">
-                    <option value="popular">🔥 Popular</option>
-                    <option value="menor">💰 Menor preço</option>
-                    <option value="maior">💎 Maior preço</option>
-                    <option value="nome">🔤 A-Z</option>
-                  </select>
-                  <select value={priceFilter} onChange={e=>setPriceFilter(e.target.value)} className="h-9 px-4 rounded-full bg-slate-100 border-0 text-[12px] font-bold outline-none focus:ring-2 focus:ring-[#0A2A6B]/20 shrink-0">
-                    <option value="todos">💵 Todos preços</option>
-                    <option value="ate100">Até R$100</option>
-                    <option value="100a200">R$100 - R$200</option>
-                    <option value="200a400">R$200 - R$400</option>
-                    <option value="acima400">Acima R$400</option>
-                  </select>
+
+                  {/* CATEGORIAS PREMIUM COM VISUAL INTELIGENTE */}
+                  <div className="flex gap-2.5 overflow-x-auto scrollbar-none pb-2 -mx-1 px-1 snap-x">
+                    {["TODAS", ...CATEGORIAS].map(cat=>{
+                      const isActive = catFilter===cat;
+                      const isPopular = ["GUARDA-ROUPA","MESA","ESTANTE","RACK"].includes(cat);
+                      return (
+                        <button key={cat} onClick={()=>setCatFilter(cat)} className={`snap-start group relative whitespace-nowrap h-[48px] px-5 rounded-full text-[12px] font-black border flex items-center gap-2.5 active:scale-95 transition-all shrink-0 ${isActive ? "bg-[#0A2A6B] text-white border-[#0A2A6B] shadow-[0_8px_20px_-8px_rgba(10,42,107,0.5)]" : "bg-white text-slate-700 border-slate-200 hover:border-[#0A2A6B]/20 hover:shadow-md"}`}>
+                          <span className={`w-7 h-7 rounded-full flex items-center justify-center text-[14px] ${isActive ? "bg-white/20" : "bg-slate-100 group-hover:bg-[#0A2A6B]/10"} transition`}>{categoriaIcons[cat]||"📦"}</span>
+                          <span className="tracking-tight">{cat}</span>
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-black ${isActive ? "bg-white text-[#0A2A6B]" : "bg-slate-100 text-slate-600"}`}>{categoriaCounts[cat]||0}</span>
+                          {isPopular && !isActive && <span className="absolute -top-1.5 -right-1.5 w-2.5 h-2.5 bg-[#FF7A00] rounded-full border-2 border-white animate-pulse"></span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* FILTROS INTELIGENTES ATIVOS */}
+                  {(catFilter!=="TODAS" || priceFilter!=="todos" || search) && (
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-[10px] font-black tracking-widest text-slate-400">FILTROS:</span>
+                      {catFilter!=="TODAS" && <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#0A2A6B] text-white text-[11px] font-bold">{categoriaIcons[catFilter]} {catFilter} <button onClick={()=>setCatFilter("TODAS")} className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center">✕</button></span>}
+                      {priceFilter!=="todos" && <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#FF7A00] text-white text-[11px] font-bold">💰 {priceFilter} <button onClick={()=>setPriceFilter("todos")} className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center">✕</button></span>}
+                      {search && <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-900 text-white text-[11px] font-bold">🔍 "{search}" <button onClick={()=>setSearch("")} className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center">✕</button></span>}
+                      <button onClick={()=>{setCatFilter("TODAS"); setPriceFilter("todos"); setSearch("");}} className="px-3 py-1.5 rounded-full bg-slate-100 border text-[11px] font-bold hover:bg-white transition">Limpar tudo</button>
+                    </div>
+                  )}
                 </div>
-              </div>
-              {/* CATEGORIAS PREMIUM COM CONTADOR */}
-              <div className="mt-4 flex gap-2 overflow-x-auto scrollbar-none pb-1 -mx-1 px-1 snap-x">
-                {["TODAS", ...CATEGORIAS].map(cat=>{
-                  const isActive = catFilter===cat;
-                  return (
-                    <button key={cat} onClick={()=>setCatFilter(cat)} className={`snap-start group whitespace-nowrap h-[40px] px-4 rounded-full text-[12px] font-bold border flex items-center gap-2 active:scale-95 transition-all shrink-0 ${isActive ? "bg-[#0A2A6B] text-white border-[#0A2A6B] shadow-lg shadow-[#0A2A6B]/20" : "bg-white text-slate-600 border-slate-200 hover:border-[#0A2A6B]/30 hover:bg-slate-50"}`}>
-                      <span className="text-[14px]">{categoriaIcons[cat]||"📦"}</span>
-                      <span className="tracking-tight">{cat}</span>
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-black ${isActive ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500 group-hover:bg-[#0A2A6B]/10"}`}>{categoriaCounts[cat]||0}</span>
-                    </button>
-                  );
-                })}
               </div>
             </div>
 
-            {/* GRID PREMIUM OTIMIZADO */}
-            <div className={`mt-6 grid gap-4 ${viewMode==="grid" ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"}`}>
+            {/* GRID INTELIGENTE ULTRA PREMIUM */}
+            <div className={`mt-6 grid gap-4 sm:gap-5 ${viewMode==="grid" ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"}`}>
               {filteredCatalog.slice(0, showCount).map(item=>{
                 const isFav = favoritos.includes(item.id);
                 const qtdNoCarrinho = cart.find(c=>c.id===item.id)?.qtd || 0;
-                const isPopular = item.id % 5 === 0;
-                const temDesconto = item.id % 7 === 0;
+                const isPopular = item.id % 3 === 0;
+                const isNovo = item.id > 300;
+                const temDesconto = item.id % 6 === 0;
+                const descontoValor = temDesconto ? Math.round(item.preco * 0.15) : 0;
                 return (
-                  <div key={item.id} className={`group relative bg-white rounded-[1.8rem] border border-slate-200/70 shadow-[0_8px_24px_-12px_rgba(0,0,0,0.12)] hover:shadow-[0_20px_60px_-20px_rgba(10,42,107,0.25)] hover:-translate-y-1 active:scale-[0.99] transition-all duration-300 overflow-hidden ${viewMode==="list" ? "flex flex-row items-center" : ""}`}>
-                    {/* IMAGEM / ÍCONE PREMIUM */}
-                    <div className={`${viewMode==="list" ? "w-[88px] h-[88px] m-3 rounded-2xl shrink-0" : "h-[84px]"} bg-gradient-to-br from-[#0A2A6B]/[0.04] via-[#0A2A6B]/[0.02] to-[#FF7A00]/[0.06] relative overflow-hidden flex items-center justify-center border-b sm:border-b-0 ${viewMode==="list" ? "border" : "border-slate-100"}`}>
-                      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(255,122,0,0.08),_transparent_60%)]"></div>
-                      <span className="text-[32px] relative z-10 group-hover:scale-110 transition-transform duration-300">{categoriaIcons[item.categoria]||"📦"}</span>
-                      {isPopular && <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-gradient-to-r from-[#FF7A00] to-[#ff9500] text-white text-[8px] font-black tracking-widest shadow">🔥 POPULAR</span>}
-                      {temDesconto && <span className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-emerald-500 text-white text-[8px] font-black">-15% OFF</span>}
-                      <button onClick={()=>toggleFav(item.id)} className={`absolute ${viewMode==="list" ? "bottom-1 right-1" : "bottom-2 right-2"} w-7 h-7 rounded-full backdrop-blur-md border flex items-center justify-center text-[12px] active:scale-90 transition ${isFav ? "bg-red-500 border-red-500 text-white shadow" : "bg-white/80 border-white/50 text-slate-400 hover:text-red-500"}`}>{isFav ? "♥" : "♡"}</button>
-                    </div>
-
-                    <div className={`p-5 flex-1 min-w-0 ${viewMode==="list" ? "py-4 pr-5" : ""}`}>
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#0A2A6B]/[0.06] border border-[#0A2A6B]/10 shrink-0">
-                          <span className="text-[10px]">{categoriaIcons[item.categoria]||"📦"}</span>
-                          <span className="text-[9px] font-black tracking-widest text-[#0A2A6B]">{item.categoria}</span>
-                        </div>
-                        <span className="text-[10px] font-bold text-slate-400 tracking-widest shrink-0">ID {item.id}</span>
-                      </div>
-
-                      <div className="mt-3 font-extrabold text-[15px] sm:text-[16px] leading-[1.2] tracking-tight line-clamp-2 min-h-[38px]">{item.nome}</div>
+                  <div key={item.id} className={`group relative bg-white rounded-[1.9rem] border border-slate-200/60 shadow-[0_8px_30px_-16px_rgba(0,0,0,0.15)] hover:shadow-[0_24px_70px_-20px_rgba(10,42,107,0.3)] hover:-translate-y-1.5 active:scale-[0.99] transition-all duration-500 overflow-hidden flex ${viewMode==="list" ? "flex-row items-stretch" : "flex-col"}`}>
+                    {/* IMAGEM PREMIUM INTELIGENTE */}
+                    <div className={`${viewMode==="list" ? "w-[112px] sm:w-[140px] shrink-0" : "h-[120px]"} relative overflow-hidden bg-gradient-to-br from-[#0A2A6B]/[0.03] via-white to-[#FF7A00]/[0.08] flex items-center justify-center`}>
+                      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(255,122,0,0.12),_transparent_50%)]"></div>
+                      <div className="absolute inset-0 opacity-[0.03]" style={{backgroundImage: `repeating-linear-gradient(45deg, #0A2A6B 0, #0A2A6B 1px, transparent 0, transparent 50%)`}}></div>
                       
-                      <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-50 border border-emerald-100 text-[10px] font-bold text-emerald-700"><span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse"></span>Verificado</span>
-                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-slate-50 border border-slate-200 text-[10px] font-bold text-slate-600">⏱️ 30-60min</span>
-                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-amber-50 border border-amber-100 text-[10px] font-bold text-amber-700">⭐ 4.9 • 12 meses garantia</span>
+                      {/* Ícone com efeito 3D */}
+                      <div className="relative z-10">
+                        <div className="absolute inset-0 blur-xl bg-gradient-to-br from-[#0A2A6B]/20 to-[#FF7A00]/20 rounded-full scale-150 group-hover:scale-[1.8] transition-transform duration-700"></div>
+                        <div className="relative w-[64px] h-[64px] rounded-[1.3rem] bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 shadow-[0_8px_20px_-8px_rgba(0,0,0,0.15)] flex items-center justify-center text-[30px] group-hover:scale-110 group-hover:rotate-[-3deg] transition-all duration-500">
+                          {categoriaIcons[item.categoria]||"📦"}
+                        </div>
                       </div>
 
-                      <div className="mt-3 text-[12px] leading-[1.5] text-slate-500 line-clamp-2 min-h-[36px]">Montagem profissional com foto obrigatória galeria, ferramentas inclusas, limpeza pós-montagem, teste completo.</div>
+                      {/* Badges inteligentes */}
+                      <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-20">
+                        {isPopular && <span className="px-2.5 py-1 rounded-full bg-gradient-to-r from-[#FF7A00] to-[#ff9500] text-white text-[8px] font-black tracking-widest shadow-lg shadow-[#FF7A00]/20 flex items-center gap-1">🔥 MAIS PEDIDO</span>}
+                        {isNovo && <span className="px-2.5 py-1 rounded-full bg-emerald-500 text-white text-[8px] font-black tracking-widest shadow">✨ NOVO</span>}
+                      </div>
+                      <div className="absolute top-3 right-3 flex flex-col gap-1.5 z-20 items-end">
+                        {temDesconto && <span className="px-2.5 py-1 rounded-full bg-slate-900 text-white text-[9px] font-black shadow">-{formatBRL(descontoValor)} OFF</span>}
+                        <button onClick={()=>toggleFav(item.id)} className={`w-8 h-8 rounded-full backdrop-blur-xl border shadow-sm flex items-center justify-center text-[14px] active:scale-90 transition-all ${isFav ? "bg-red-500 border-red-500 text-white shadow-red-500/20 shadow-lg" : "bg-white/90 border-white text-slate-400 hover:text-red-500 hover:bg-white"}`}>{isFav ? "♥" : "♡"}</button>
+                      </div>
 
-                      <div className="mt-4 flex items-end justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="text-[10px] font-black tracking-widest text-slate-400">A PARTIR DE</div>
-                          <div className="flex items-baseline gap-2">
-                            <div className="text-[22px] font-black tracking-tight text-[#FF7A00] leading-none">{formatBRL(item.preco)}</div>
-                            {temDesconto && <div className="text-[11px] font-bold text-slate-400 line-through">{formatBRL(item.preco*1.15)}</div>}
-                          </div>
-                          <div className="text-[10px] font-bold text-slate-500 mt-1">💳 12x de {formatBRL(item.preco/12)} • Pix 10% OFF • 90% montador</div>
+                      {/* ID discreto */}
+                      <div className="absolute bottom-2 left-3 px-2 py-0.5 rounded-full bg-white/80 backdrop-blur border border-slate-200/50 text-[8px] font-black tracking-widest text-slate-500">ID {item.id} • 30-60min • Garantia</div>
+                    </div>
+
+                    {/* CONTEÚDO PREMIUM */}
+                    <div className="p-5 flex-1 flex flex-col min-w-0">
+                      <div className="flex items-start justify-between gap-2 mb-3">
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0A2A6B]/[0.06] border border-[#0A2A6B]/10">
+                          <span className="text-[11px]">{categoriaIcons[item.categoria]||"📦"}</span>
+                          <span className="text-[9px] font-black tracking-[0.15em] text-[#0A2A6B]">{item.categoria}</span>
                         </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          {qtdNoCarrinho>0 ? (
-                            <div className="flex items-center gap-1 bg-slate-100 rounded-full p-1 border">
-                              <button onClick={()=>{ const c=cart.find(x=>x.id===item.id); if(c && c.qtd>1) setCart(prev=>prev.map(x=>x.id===item.id?{...x,qtd:x.qtd-1}:x)); else setCart(prev=>prev.filter(x=>x.id!==item.id)); }} className="w-8 h-8 rounded-full bg-white shadow flex items-center justify-center font-black active:scale-90">-</button>
-                              <span className="w-6 text-center text-sm font-black">{qtdNoCarrinho}</span>
-                              <button onClick={()=>addToCart(item)} className="w-8 h-8 rounded-full bg-[#0A2A6B] text-white flex items-center justify-center font-black active:scale-90">+</button>
+                        <div className="flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                          <span className="text-[9px] font-black tracking-widest text-emerald-600">VERIFICADO</span>
+                        </div>
+                      </div>
+
+                      <h3 className="font-black text-[16px] sm:text-[17px] leading-[1.15] tracking-tight line-clamp-2 min-h-[40px] group-hover:text-[#0A2A6B] transition-colors">{item.nome}</h3>
+                      
+                      <div className="mt-3 flex flex-wrap gap-1.5">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-100 text-[10px] font-bold text-emerald-700">✓ Montador verificado</span>
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-50 border border-blue-100 text-[10px] font-bold text-blue-700">⏱️ 30min chegada</span>
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-100 text-[10px] font-bold text-amber-700">🛡️ 12 meses garantia</span>
+                      </div>
+
+                      <div className="mt-3 text-[12px] leading-[1.5] text-slate-500 line-clamp-2 min-h-[36px]">Montagem profissional com ferramentas inclusas, limpeza pós-montagem e teste completo. Foto obrigatória galeria 300x300. Como seu estoque real MESA, GUARDA-ROUPA, ESTANTE.</div>
+
+                      {/* Preço inteligente */}
+                      <div className="mt-auto pt-4">
+                        <div className="flex items-end justify-between gap-3">
+                          <div className="min-w-0 flex-1">
+                            <div className="text-[10px] font-black tracking-[0.2em] text-slate-400">A PARTIR DE</div>
+                            <div className="flex items-baseline gap-2 flex-wrap">
+                              <div className="text-[24px] font-black tracking-tight text-[#FF7A00] leading-none">{formatBRL(item.preco)}</div>
+                              {temDesconto && <div className="text-[12px] font-bold text-slate-400 line-through">{formatBRL(item.preco + descontoValor)}</div>}
+                              {temDesconto && <span className="px-2 py-0.5 rounded-full bg-emerald-500 text-white text-[9px] font-black">ECONOMIA {formatBRL(descontoValor)}</span>}
                             </div>
-                          ) : (
-                            <button onClick={()=>addToCart(item)} className="h-11 px-5 rounded-full bg-[#0A2A6B] text-white text-[11px] font-black tracking-widest shadow-lg shadow-[#0A2A6B]/15 active:scale-95 hover:bg-black transition-all flex items-center gap-1.5">ADD <span className="text-[14px]">+</span></button>
-                          )}
+                            <div className="text-[11px] font-medium text-slate-500 mt-1.5 leading-tight">
+                              <span className="font-bold text-slate-700">💳 12x de {formatBRL(item.preco/12)} sem juros</span> • <span className="text-emerald-600 font-bold">Pix 10% OFF</span><br/>
+                              <span className="text-[10px]">90% vai para montador verificado • 10% plataforma</span>
+                            </div>
+                          </div>
+                          <div className="shrink-0">
+                            {qtdNoCarrinho>0 ? (
+                              <div className="flex flex-col items-center gap-2">
+                                <div className="flex items-center gap-1 bg-slate-900 text-white rounded-full p-1 shadow-lg">
+                                  <button onClick={()=>{ const c=cart.find(x=>x.id===item.id); if(c && c.qtd>1) setCart(prev=>prev.map(x=>x.id===item.id?{...x,qtd:x.qtd-1}:x)); else setCart(prev=>prev.filter(x=>x.id!==item.id)); }} className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center font-black text-[16px] active:scale-90 transition">-</button>
+                                  <span className="w-8 text-center text-[14px] font-black">{qtdNoCarrinho}</span>
+                                  <button onClick={()=>addToCart(item)} className="w-9 h-9 rounded-full bg-[#FF7A00] text-white flex items-center justify-center font-black text-[16px] active:scale-90 transition shadow">+</button>
+                                </div>
+                                <span className="text-[10px] font-black text-emerald-600">{formatBRL(item.preco*qtdNoCarrinho)} • {qtdNoCarrinho} itens</span>
+                              </div>
+                            ) : (
+                              <button onClick={()=>addToCart(item)} className="group/btn relative h-[48px] px-6 rounded-full bg-[#0A2A6B] text-white text-[12px] font-black tracking-widest shadow-[0_10px_24px_-8px_rgba(10,42,107,0.4)] active:scale-95 hover:bg-black transition-all flex items-center gap-2 overflow-hidden">
+                                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-700"></span>
+                                <span className="relative">ADD</span>
+                                <span className="relative w-6 h-6 rounded-full bg-white/15 flex items-center justify-center text-[14px]">+</span>
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
 
-                    <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#0A2A6B] via-[#1e40af] to-[#FF7A00] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    {/* Borda premium hover */}
+                    <div className="absolute inset-0 rounded-[1.9rem] border-2 border-transparent group-hover:border-[#0A2A6B]/10 pointer-events-none transition-colors"></div>
+                    <div className="absolute bottom-0 left-6 right-6 h-[3px] bg-gradient-to-r from-[#0A2A6B] via-[#1e40af] to-[#FF7A00] opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-full"></div>
                   </div>
                 );
               })}
             </div>
 
-            {/* LOAD MORE PREMIUM */}
-            {showCount < filteredCatalog.length && (
-              <div className="mt-8 flex flex-col items-center gap-3">
-                <div className="text-[11px] font-bold tracking-widest text-slate-400">Mostrando {Math.min(showCount, filteredCatalog.length)} de {filteredCatalog.length} serviços</div>
-                <button onClick={()=>setShowCount(prev=>prev+24)} className="h-12 px-8 rounded-full bg-white border border-slate-200 font-black text-[13px] tracking-widest shadow-sm hover:shadow-md hover:border-[#0A2A6B]/20 active:scale-[0.98] transition-all">CARREGAR MAIS +24 • {filteredCatalog.length - showCount} RESTANTES</button>
-                <div className="w-full max-w-xs h-1 bg-slate-100 rounded-full overflow-hidden"><div className="h-full bg-gradient-to-r from-[#0A2A6B] to-[#FF7A00] transition-all duration-500" style={{width: `${(Math.min(showCount, filteredCatalog.length)/filteredCatalog.length)*100}%`}}></div></div>
+            {/* LOAD MORE INTELIGENTE */}
+            {showCount < filteredCatalog.length ? (
+              <div className="mt-10 flex flex-col items-center gap-4">
+                <div className="bg-white rounded-full border shadow-sm px-5 py-2.5 flex items-center gap-3">
+                  <div className="text-[11px] font-bold tracking-widest text-slate-500">Mostrando <span className="text-[#0A2A6B] font-black">{Math.min(showCount, filteredCatalog.length)}</span> de <span className="text-[#0A2A6B] font-black">{filteredCatalog.length}</span> • {CATALOGO.length} total</div>
+                  <div className="w-px h-4 bg-slate-200"></div>
+                  <div className="text-[11px] font-bold text-emerald-600">🟢 {users.filter(u=>u.role==="montador").length || 12} montadores online</div>
+                </div>
+                <button onClick={()=>setShowCount(prev=>prev+24)} className="group h-14 px-10 rounded-full bg-slate-900 text-white font-black text-[13px] tracking-widest shadow-xl hover:bg-black active:scale-[0.98] transition-all flex items-center gap-3">
+                  <span>CARREGAR MAIS +24 SERVIÇOS</span>
+                  <span className="w-7 h-7 rounded-full bg-white/15 flex items-center justify-center group-hover:translate-y-0.5 transition">↓</span>
+                </button>
+                <div className="w-full max-w-md h-1.5 bg-slate-100 rounded-full overflow-hidden p-1">
+                  <div className="h-full bg-gradient-to-r from-[#0A2A6B] to-[#FF7A00] rounded-full transition-all duration-700" style={{width: `${(Math.min(showCount, filteredCatalog.length)/filteredCatalog.length)*100}%`}}></div>
+                </div>
+                <div className="text-[10px] font-bold tracking-widest text-slate-400">{Math.round((Math.min(showCount, filteredCatalog.length)/filteredCatalog.length)*100)}% carregado • {filteredCatalog.length - showCount} restantes</div>
               </div>
-            )}
+            ) : filteredCatalog.length>0 ? (
+              <div className="mt-10 text-center">
+                <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[12px] font-black">✅ Todos os {filteredCatalog.length} serviços carregados • Catálogo completo</div>
+              </div>
+            ) : null}
 
             {filteredCatalog.length===0 && (
-              <div className="mt-8 bg-white rounded-[2rem] border-2 border-dashed border-slate-200 p-10 text-center">
-                <div className="text-[40px]">🔍</div>
-                <div className="font-black text-[16px] mt-3">Nenhum serviço encontrado</div>
-                <div className="text-[13px] text-slate-500 mt-1 max-w-sm mx-auto">Tente buscar por "guarda-roupa", "cozinha" ou limpe os filtros de preço e categoria</div>
-                <button onClick={()=>{setSearch(""); setCatFilter("TODAS"); setPriceFilter("todos");}} className="mt-4 h-11 px-6 rounded-full bg-[#0A2A6B] text-white font-bold text-sm">Limpar filtros • Ver {CATALOGO.length} serviços</button>
+              <div className="mt-8 bg-white rounded-[2rem] border-2 border-dashed border-slate-200 p-8 sm:p-12 text-center shadow-sm">
+                <div className="w-20 h-20 mx-auto rounded-full bg-slate-50 border flex items-center justify-center text-[32px]">🔍</div>
+                <div className="font-black text-[18px] mt-4 tracking-tight">Nenhum serviço encontrado</div>
+                <div className="text-[14px] text-slate-500 mt-2 max-w-md mx-auto leading-relaxed">Tente buscar por <span className="font-bold text-[#0A2A6B]">"guarda-roupa"</span>, <span className="font-bold">"mesa"</span>, <span className="font-bold">"estante"</span> como no seu estoque real da foto, ou limpe os filtros</div>
+                <div className="mt-6 flex flex-wrap justify-center gap-2">
+                  {["GUARDA-ROUPA","MESA","ESTANTE","RACK"].map(cat=>(
+                    <button key={cat} onClick={()=>{setCatFilter(cat); setSearch("");}} className="px-4 py-2 rounded-full bg-slate-100 hover:bg-[#0A2A6B] hover:text-white border font-bold text-xs transition">{categoriaIcons[cat]} {cat}</button>
+                  ))}
+                </div>
+                <button onClick={()=>{setSearch(""); setCatFilter("TODAS"); setPriceFilter("todos");}} className="mt-6 h-12 px-8 rounded-full bg-[#0A2A6B] text-white font-black text-sm shadow-lg hover:bg-black transition">Limpar tudo • Ver {CATALOGO.length} serviços premium</button>
               </div>
             )}
           </div>
-        </>
-      )}
+
 
       {/* PAINEL CLIENTE PREMIUM */}
       {view==="cliente" && currentUser && (
