@@ -267,7 +267,7 @@ export default function App() {
             <div className="min-w-0">
               <div className="font-black text-[14px] sm:text-[16px] tracking-tight text-[#0A2A6B] leading-none">CONTATO CERTO SP</div>
               <div className="flex items-center gap-1.5 mt-1">
-                <span className="text-[9px] font-black tracking-widest text-[#FF7A00]">PREMIUM INTELIGENTE</span>
+                <span className="text-[9px] font-black tracking-widest text-[#FF7A00]">SERVIÇO PREMIUM</span>
                 <span className={`px-2 py-0.5 rounded-full text-[8px] font-black border ${isLive ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-red-50 border-red-200 text-red-700"}`}>{isLive ? "🟢 AO VIVO" : "🔴 OFF"}</span>
               </div>
             </div>
@@ -307,17 +307,17 @@ export default function App() {
             <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-16">
               <div className="max-w-3xl">
                 <div>
-                  <div className="inline-flex px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-[10px] font-bold tracking-widest">🧠 CATÁLOGO INTELIGENTE PREMIUM • 330 SERVIÇOS • REALTIME 2S • TODO SP</div>
+                  <div className="inline-flex px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-[10px] font-bold tracking-widest">✅ SERVIÇO PREMIUM • 330 TIPOS DE MÓVEIS • ATENDEMOS TODO SP</div>
                   <h1 className="mt-4 text-[38px] sm:text-[60px] font-black leading-[0.85] tracking-tight">MONTADOR<br/><span className="text-[#FF7A00]">VERIFICADO</span><br/>EM 30 MIN</h1>
-                  <p className="mt-5 text-white/70 text-[15px] sm:text-[17px] leading-relaxed max-w-xl">Foto obrigatória galeria sem câmera 300x300 ~30KB • Supabase realtime 2s • Watchdog 5s • Pagamento 10% + 90% PIX • Montadores verificados em todo SP</p>
+                  <p className="mt-5 text-white/70 text-[15px] sm:text-[17px] leading-relaxed max-w-xl">Montadores verificados perto de você • Chegada rápida em 30 minutos • Pagamento seguro e garantido • Atendimento em todo estado de São Paulo</p>
                   <div className="mt-8 flex flex-col sm:flex-row gap-3 max-w-[440px]">
                     <button onClick={()=>{ const el=document.getElementById('catalogo-premium'); el?.scrollIntoView({behavior:'smooth'}); }} className="h-[56px] px-8 rounded-full bg-white text-[#0A2A6B] font-black text-[14px] shadow-xl active:scale-[0.98] transition flex items-center justify-center gap-2">VER CATÁLOGO PREMIUM <span>↓</span></button>
                     <button onClick={()=>{setAuthMode("montador"); setIsLogin(false); setShowAuth(true);}} className="h-[56px] px-8 rounded-full bg-[#FF7A00] text-white font-black text-[14px] shadow-xl active:scale-[0.98] transition">SOU MONTADOR • 90% PIX</button>
                   </div>
                   <div className="mt-10 grid grid-cols-3 gap-3 max-w-[440px]">
                     <div className="bg-white/10 backdrop-blur border border-white/10 rounded-[1.5rem] p-4"><div className="text-2xl font-black">{users.filter(u=>u.role==="montador").length || 12}</div><div className="text-[10px] font-bold tracking-widest opacity-60 mt-1">MONTADORES VERIFICADOS</div></div>
-                    <div className="bg-white/10 backdrop-blur border border-white/10 rounded-[1.5rem] p-4"><div className="text-2xl font-black">{orders.length || 24}</div><div className="text-[10px] font-bold tracking-widest opacity-60 mt-1">PEDIDOS AO VIVO 🟢</div></div>
-                    <div className="bg-[#FF7A00] rounded-[1.5rem] p-4 shadow-[0_12px_24px_-8px_rgba(255,122,0,0.5)]"><div className="text-2xl font-black text-white">4.9 ⭐</div><div className="text-[10px] font-bold tracking-widest text-white/80 mt-1">PREMIUM AVALIADO</div></div>
+                    <div className="bg-white/10 backdrop-blur border border-white/10 rounded-[1.5rem] p-4"><div className="text-2xl font-black">{orders.length || 24}</div><div className="text-[10px] font-bold tracking-widest opacity-60 mt-1">PEDIDOS ATIVOS</div></div>
+                    <div className="bg-[#FF7A00] rounded-[1.5rem] p-4 shadow-[0_12px_24px_-8px_rgba(255,122,0,0.5)]"><div className="text-2xl font-black text-white">4.9 ⭐</div><div className="text-[10px] font-bold tracking-widest text-white/80 mt-1">BEM AVALIADO</div></div>
                   </div>
                 </div>
               </div>
@@ -331,8 +331,8 @@ export default function App() {
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#0A2A6B] to-[#FF7A00] flex items-center justify-center shadow">🧠</div>
                     <div>
-                      <div className="flex items-center gap-2"><h2 className="font-black text-[18px] sm:text-[22px] tracking-tight">CATÁLOGO <span className="text-[#FF7A00]">INTELIGENTE</span></h2><span className="px-2.5 py-1 rounded-full bg-[#0A2A6B] text-white text-[10px] font-black">{CATALOGO.length}</span></div>
-                      <div className="text-[11px] text-slate-500 mt-1">{filteredCatalog.length} encontrados • {cart.reduce((s,i)=>s+i.qtd,0)} no carrinho • 🟢 {isLive ? "Ao vivo" : "Offline"}</div>
+                      <div className="flex items-center gap-2"><h2 className="font-black text-[18px] sm:text-[22px] tracking-tight">CATÁLOGO <span className="text-[#FF7A00]">COMPLETO</span></h2><span className="px-2.5 py-1 rounded-full bg-[#0A2A6B] text-white text-[10px] font-black">{CATALOGO.length}</span></div>
+                      <div className="text-[11px] text-slate-500 mt-1">{filteredCatalog.length} serviços encontrados • {cart.reduce((s,i)=>s+i.qtd,0)} no carrinho • 🟢 Montadores online</div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
@@ -358,7 +358,7 @@ export default function App() {
 
                 <div className="p-5 space-y-4">
                   <div className="relative max-w-2xl">
-                    <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar: guarda-roupa, mesa, estante, cômoda... (seu estoque real)" className="w-full h-[56px] bg-slate-100 rounded-full pl-6 pr-[120px] text-[15px] font-medium outline-none focus:bg-white focus:ring-2 focus:ring-[#0A2A6B]/20 border-2 border-transparent"/>
+                    <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar: guarda-roupa, mesa, estante, cômoda, cama, rack..." className="w-full h-[56px] bg-slate-100 rounded-full pl-6 pr-[120px] text-[15px] font-medium outline-none focus:bg-white focus:ring-2 focus:ring-[#0A2A6B]/20 border-2 border-transparent"/>
                     <div className="absolute right-1.5 top-1.5 flex gap-1">
                       {search && <button onClick={()=>setSearch("")} className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center">✕</button>}
                       <div className="w-11 h-11 rounded-full bg-[#0A2A6B] text-white flex items-center justify-center">⌕</div>
@@ -491,7 +491,7 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
           <div className="flex items-center gap-3 mb-6">
             <img src="/logo.png" className="w-10 h-10 object-contain"/>
-            <div><div className="font-black text-[18px] tracking-tight">Painel Cliente Premium</div><div className="text-[11px] text-slate-500 font-bold tracking-widest">CONTATO CERTO SP • AO VIVO 🟢</div></div>
+            <div><div className="font-black text-[18px] tracking-tight">Painel Cliente Premium</div><div className="text-[11px] text-slate-500 font-bold tracking-widest">CONTATO CERTO SP • ONLINE 🟢</div></div>
             <div className="ml-auto flex gap-2">
               {["pedidos","suporte","perfil"].map(tab=>(
                 <button key={tab} onClick={()=>setClienteTab(tab)} className={`h-11 px-5 rounded-full text-[12px] font-black tracking-widest border active:scale-95 transition ${clienteTab===tab ? "bg-[#0A2A6B] text-white border-[#0A2A6B] shadow-lg" : "bg-white border-slate-200 text-slate-600 hover:border-[#0A2A6B]/20"}`}>{tab.toUpperCase()}</button>
@@ -502,7 +502,7 @@ export default function App() {
           {clienteTab==="pedidos" && (
             <div className="space-y-5">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-white rounded-[1.7rem] p-5 border shadow-sm">
-                <div><h3 className="font-black text-[18px] tracking-tight">Meus Pedidos Premium</h3><div className="text-[12px] text-slate-500 mt-1 font-medium">{orders.filter(o=>o.cliente_id==currentUser.id).length} pedidos • Realtime 2s • Foto galeria 300x300</div></div>
+                <div><h3 className="font-black text-[18px] tracking-tight">Meus Pedidos Premium</h3><div className="text-[12px] text-slate-500 mt-1 font-medium">{orders.filter(o=>o.cliente_id==currentUser.id).length} pedidos • Montagem rápida e garantida</div></div>
                 <button onClick={()=>setShowOrderFlow(true)} className="h-12 px-6 rounded-full bg-gradient-to-r from-[#FF7A00] to-[#ff9500] text-white text-[13px] font-black tracking-widest shadow-lg">+ NOVO PEDIDO • CATÁLOGO</button>
               </div>
 
@@ -547,10 +547,10 @@ export default function App() {
                         <div className="flex items-center gap-2"><div className="w-8 h-8 rounded-full bg-yellow-400 flex items-center justify-center">⚠️</div><div className="font-black text-[14px] tracking-tight">Envie comprovante PIX para confirmar • {formatBRL(p.total)}</div></div>
                         <div className="mt-3 grid sm:grid-cols-2 gap-3 text-[11px] font-medium"><div className="bg-white p-3 rounded-xl border"><div className="font-black tracking-widest text-[10px] text-slate-400">CHAVE PIX</div><div className="font-mono font-bold mt-1 break-all">{PIX_KEY}</div></div><div className="bg-white p-3 rounded-xl border"><div className="font-black tracking-widest text-[10px] text-slate-400">VALOR</div><div className="font-black text-[18px] text-[#FF7A00] mt-1">{formatBRL(p.total)}</div></div></div>
                         <div className="mt-4">
-                          <label className="block text-[11px] font-black tracking-widest mb-2">📸 COMPROVANTE • GALERIA SEM CÂMERA • 300x300 ~30KB</label>
+                          <label className="block text-[11px] font-black tracking-widest mb-2">📸 COMPROVANTE • GALERIA SEM CÂMERA • fotos verificadas</label>
                           <input type="file" accept="image/*" onChange={e=>{ const r=new FileReader(); r.onload=()=>setComprovante(r.result); r.readAsDataURL(e.target.files[0]); }} className="w-full text-[12px] bg-white border-2 border-dashed rounded-xl p-3"/>
                           {comprovante && <div className="mt-3 flex items-center gap-3"><img src={comprovante} className="w-16 h-16 rounded-xl object-cover border-2 border-[#0A2A6B]"/><span className="text-[11px] font-black text-emerald-600">✅ Pronto para enviar!</span></div>}
-                          <button onClick={()=>enviarComprovante(p.id, comprovante)} className="w-full mt-3 h-[52px] rounded-full bg-[#0A2A6B] text-white font-black text-[13px] tracking-widest shadow-lg active:scale-[0.98] transition">ENVIAR COMPROVANTE • AO VIVO 🟢</button>
+                          <button onClick={()=>enviarComprovante(p.id, comprovante)} className="w-full mt-3 h-[52px] rounded-full bg-[#0A2A6B] text-white font-black text-[13px] tracking-widest shadow-lg active:scale-[0.98] transition">ENVIAR COMPROVANTE • ONLINE 🟢</button>
                         </div>
                       </div>
                     )}
@@ -571,7 +571,7 @@ export default function App() {
 
           {clienteTab==="suporte" && (
             <div className="bg-white rounded-[2rem] border shadow-[0_12px_40px_-12px_rgba(0,0,0,0.15)] overflow-hidden flex flex-col h-[75vh]">
-              <div className="p-5 border-b bg-gradient-to-r from-slate-50 to-white flex items-center gap-3"><img src="/logo.png" className="w-8 h-8 object-contain"/><div><div className="font-black tracking-tight">Suporte Premium 24h • Ao Vivo 🟢</div><div className="text-[11px] text-slate-500">Contato Certo SP • Resposta em até 5min • Realtime 2s</div></div></div>
+              <div className="p-5 border-b bg-gradient-to-r from-slate-50 to-white flex items-center gap-3"><img src="/logo.png" className="w-8 h-8 object-contain"/><div><div className="font-black tracking-tight">Suporte Premium 24h • Ao Vivo 🟢</div><div className="text-[11px] text-slate-500">Contato Certo SP • Resposta em até 5min • Tempo real</div></div></div>
               <div className="flex-1 overflow-auto p-5 space-y-3 bg-[#F8FAFF]">
                 {supportMessages.filter(m=>m.user_id==currentUser.id).length===0 && <div className="text-center py-10"><div className="text-[40px]">💬</div><div className="font-bold mt-2">Fale com a gente!</div><div className="text-xs text-slate-500 mt-1">Tire dúvidas sobre MESA, GUARDA-ROUPA, ESTANTE</div></div>}
                 {supportMessages.filter(m=>m.user_id==currentUser.id).map(m=>(
@@ -620,8 +620,8 @@ export default function App() {
           {montadorTab==="disponiveis" && (
             <div className="space-y-4">
               <div className="bg-gradient-to-r from-[#0A2A6B] to-[#1e40af] rounded-[1.7rem] p-5 text-white flex flex-wrap justify-between items-center gap-3">
-                <div><h3 className="font-black text-[18px] tracking-tight">Pedidos Disponíveis na sua região</h3><div className="text-[12px] opacity-80 mt-1">Filtrado por {currentUser.cidades?.join(", ")} • {orders.filter(o=>o.status==="aguardando_montador" && (currentUser.cidades||[]).some(c=> (o.cidade||"").toLowerCase().includes(c.toLowerCase()) )).length} disponíveis • Realtime 2s 🟢</div></div>
-                <div className="px-4 py-2 rounded-full bg-white/15 border border-white/20 text-[11px] font-black tracking-widest">🔔 SOM + VIBRAÇÃO ATIVO</div>
+                <div><h3 className="font-black text-[18px] tracking-tight">Pedidos Disponíveis na sua região</h3><div className="text-[12px] opacity-80 mt-1">Filtrado por {currentUser.cidades?.join(", ")} • {orders.filter(o=>o.status==="aguardando_montador" && (currentUser.cidades||[]).some(c=> (o.cidade||"").toLowerCase().includes(c.toLowerCase()) )).length} disponíveis • Tempo real 🟢</div></div>
+                <div className="px-4 py-2 rounded-full bg-white/15 border border-white/20 text-[11px] font-black tracking-widest">🔔 NOVOS PEDIDOS EM TEMPO REAL</div>
               </div>
 
               {orders.filter(o=>o.status==="aguardando_montador").length===0 && <div className="bg-white rounded-[2rem] border-2 border-dashed p-10 text-center"><div className="text-[48px]">🔧</div><div className="font-black mt-3">Nenhum pedido disponível agora</div><div className="text-[12px] text-slate-500 mt-1">Ative o som, novos pedidos chegam com alerta sonoro e vibração</div></div>}
@@ -638,7 +638,7 @@ export default function App() {
                       <div className="text-[10px] font-black tracking-widest text-slate-400">ITENS PARA MONTAR • {p.itens?.length} SERVIÇOS</div>
                       <div className="mt-2 grid sm:grid-cols-2 gap-2">{(p.itens||[]).map((i,idx)=><div key={idx} className="flex items-center gap-2 bg-white p-2.5 rounded-xl border text-[12px]"><span className="w-6 h-6 rounded-full bg-[#0A2A6B]/10 flex items-center justify-center text-[10px]">🔧</span><span className="font-bold truncate">{i.nome}</span><span className="ml-auto font-black text-[#0A2A6B]">x{i.qtd}</span></div>)}</div>
                     </div>
-                    <button onClick={()=>aceitarPedido(p.id)} className="mt-4 w-full h-[52px] rounded-full bg-gradient-to-r from-[#0A2A6B] to-[#1e40af] text-white font-black text-[13px] tracking-widest shadow-lg hover:shadow-xl active:scale-[0.98] transition">🔧 ACEITAR PEDIDO • CLIENTE SERÁ NOTIFICADO 🟢 • 30MIN</button>
+                    <button onClick={()=>aceitarPedido(p.id)} className="mt-4 w-full h-[52px] rounded-full bg-gradient-to-r from-[#0A2A6B] to-[#1e40af] text-white font-black text-[13px] tracking-widest shadow-lg hover:shadow-xl active:scale-[0.98] transition">🔧 ACEITAR PEDIDO • CLIENTE NOTIFICADO • 30 MIN</button>
                   </div>
                 );
               })}
@@ -685,7 +685,7 @@ export default function App() {
               </div>
               <div className="bg-white rounded-[2rem] p-7 border shadow-sm">
                 <div className="font-black text-[15px] tracking-tight">Cidades que atende • Máx 3 • Filtro inteligente</div>
-                <div className="text-[11px] text-slate-500 mt-1">Você só recebe pedidos das cidades cadastradas • Realtime 2s com som e vibração</div>
+                <div className="text-[11px] text-slate-500 mt-1">Você só recebe pedidos das cidades cadastradas • Tempo real com som e vibração</div>
                 <div className="flex flex-wrap gap-2 mt-4">{(currentUser.cidades||[]).map(c=><span key={c} className="bg-gradient-to-r from-[#0A2A6B] to-[#1e40af] text-white text-[12px] px-4 py-2 rounded-full font-black flex items-center gap-2 shadow">{c} <button onClick={()=>removerCidade(c)} className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30">x</button></span>)}{(currentUser.cidades||[]).length===0 && <span className="text-[12px] text-slate-400 font-medium">Nenhuma cidade cadastrada • Adicione para receber pedidos</span>}</div>
                 <div className="flex gap-2 mt-5"><input value={novaCidade} onChange={e=>setNovaCidade(e.target.value)} onKeyDown={e=>e.key==="Enter"&&adicionarCidade()} placeholder="Nova cidade SP ex: Presidente Prudente" className="flex-1 h-12 bg-slate-100 rounded-full px-5 text-[14px] outline-none focus:bg-white focus:ring-2 focus:ring-[#0A2A6B]/20"/><button onClick={adicionarCidade} className="h-12 px-7 rounded-full bg-[#FF7A00] text-white font-black text-[13px] shadow active:scale-95 transition">ADD CIDADE +</button></div>
                 <div className="mt-3 text-[10px] text-slate-400 font-medium">💡 Dica: cadastre 3 cidades próximas para mais pedidos • Todo SP</div>
@@ -720,7 +720,7 @@ export default function App() {
           </div>
           {adminTab==="pedidos" && (
             <div className="space-y-3">
-              <div className="bg-gradient-to-r from-[#0A2A6B] to-[#1e40af] rounded-[1.7rem] p-5 text-white flex justify-between items-center"><div><h3 className="font-black text-[18px]">Todos Pedidos Premium • {orders.length}</h3><div className="text-[11px] opacity-80 mt-1">Realtime 2s • Som e vibração para novos • Confirme pagamentos • PIX {PIX_KEY}</div></div><div className="hidden sm:flex items-center gap-2"><span className="px-3 py-1.5 rounded-full bg-white/15 border border-white/20 text-[10px] font-black">🟢 AO VIVO</span><span className="px-3 py-1.5 rounded-full bg-[#FF7A00] text-white text-[10px] font-black">{orders.filter(o=>o.status==="aguardando_confirmacao_adm").length} PARA CONFIRMAR</span></div></div>
+              <div className="bg-gradient-to-r from-[#0A2A6B] to-[#1e40af] rounded-[1.7rem] p-5 text-white flex justify-between items-center"><div><h3 className="font-black text-[18px]">Todos Pedidos Premium • {orders.length}</h3><div className="text-[11px] opacity-80 mt-1">Tempo real • Som e vibração para novos • Confirme pagamentos • PIX {PIX_KEY}</div></div><div className="hidden sm:flex items-center gap-2"><span className="px-3 py-1.5 rounded-full bg-white/15 border border-white/20 text-[10px] font-black">🟢 AO VIVO</span><span className="px-3 py-1.5 rounded-full bg-[#FF7A00] text-white text-[10px] font-black">{orders.filter(o=>o.status==="aguardando_confirmacao_adm").length} PARA CONFIRMAR</span></div></div>
               {orders.map(p=>(
                 <div key={p.id} className="bg-white rounded-[1.7rem] p-5 border shadow-sm">
                   <div className="flex justify-between"><span className="font-black">#{p.id} • {p.cidade} • {formatBRL(p.total)}</span><span className={`text-xs px-3 py-1 rounded-full font-bold ${p.status==="finalizado"?"bg-green-100 text-green-700":"bg-yellow-100 text-yellow-700"}`}>{p.status?.toUpperCase()}</span></div>
@@ -782,7 +782,7 @@ export default function App() {
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-xl" onClick={()=>setShowOrderFlow(false)}></div>
           <div className="relative w-full sm:max-w-xl bg-white rounded-t-[2rem] sm:rounded-[2rem] shadow-2xl max-h-[92vh] flex flex-col">
-            <div className="p-5 border-b flex justify-between items-center shrink-0"><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-full bg-[#0A2A6B] text-white flex items-center justify-center font-black">{orderStep}</div><div><div className="font-black">Checkout Premium</div><div className="text-xs text-slate-500">{isLive ? "🟢 Ao Vivo" : "🔴 Offline"}</div></div></div><button onClick={()=>setShowOrderFlow(false)} className="w-10 h-10 rounded-full bg-slate-100">✕</button></div>
+            <div className="p-5 border-b flex justify-between items-center shrink-0"><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-full bg-[#0A2A6B] text-white flex items-center justify-center font-black">{orderStep}</div><div><div className="font-black">Checkout Premium</div><div className="text-xs text-slate-500">{isLive ? "🟢 Online agora" : "🔴 Offline"}</div></div></div><button onClick={()=>setShowOrderFlow(false)} className="w-10 h-10 rounded-full bg-slate-100">✕</button></div>
             <div className="p-5 overflow-y-auto flex-1">
               {orderStep===1 && (
                 <div className="space-y-3">
@@ -823,7 +823,7 @@ export default function App() {
               <div className="min-w-0 flex-1">
                 <div className="font-black text-[18px] sm:text-[20px] leading-none tracking-tight">{isLogin?"Bem-vindo de volta 👋":"Criar conta premium"}</div>
                 <div className="text-[11px] opacity-80 mt-1.5 flex flex-wrap items-center gap-2">
-                  <span className="px-2.5 py-1 rounded-full bg-white/15 border border-white/10 text-[10px] font-black tracking-widest">{authMode.toUpperCase()} • AO VIVO 🟢</span>
+                  <span className="px-2.5 py-1 rounded-full bg-white/15 border border-white/10 text-[10px] font-black tracking-widest">{authMode.toUpperCase()} • ONLINE 🟢</span>
                 </div>
               </div>
               <button onClick={()=>setShowAuth(false)} className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center shrink-0 ml-3">✕</button>
@@ -852,7 +852,7 @@ export default function App() {
       {toast && <div className="fixed top-4 left-4 right-4 sm:left-1/2 sm:-translate-x-1/2 sm:max-w-md z-[90]"><div className={`px-4 py-3 rounded-2xl backdrop-blur-xl border shadow-2xl flex items-center gap-3 ${toastType==="success"?"bg-emerald-600 text-white border-emerald-500":toastType==="error"?"bg-red-600 text-white border-red-500":"bg-slate-900 text-white border-slate-700"}`}><div className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center">🔔</div><div className="flex-1 text-[13px] font-semibold">{toast}</div><button onClick={()=>setToast("")} className="w-7 h-7 rounded-full bg-white/10">✕</button></div></div>}
 
       <footer className="mt-8 border-t bg-white pb-[88px] sm:pb-0">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 flex flex-col sm:flex-row justify-between gap-3"><div><div className="font-black">CONTATO CERTO SP • PREMIUM INTELIGENTE</div><div className="text-[11px] text-slate-500 mt-1 leading-relaxed">Realtime Supabase 2s • Watchdog 5s • Foto galeria 300x300 sem câmera • Touch 44px • Safe area<br/>Painéis completos: cliente, montador, admin • Inspirado estoque MESA/GUARDA-ROUPA/ESTANTE • {isLive ? "🟢 Online Ao Vivo" : "🔴 Reconectando"}</div></div><div className="text-xs text-slate-500">contatocerto.prestadores@gmail.com<br/>(18) 99148-8302</div></div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 flex flex-col sm:flex-row justify-between gap-3"><div><div className="font-black">CONTATO CERTO SP • PREMIUM INTELIGENTE</div><div className="text-[11px] text-slate-500 mt-1 leading-relaxed">Realtime Supabase 2s • Suporte 24h • Foto do serviço sem câmera • Fácil de usar • <br/>Painéis completos: cliente, montador, admin • Inspirado estoque MESA/GUARDA-ROUPA/ESTANTE • {isLive ? "🟢 Online Ao Vivo" : "🔴 Reconectando"}</div></div><div className="text-xs text-slate-500">contatocerto.prestadores@gmail.com<br/>(18) 99148-8302</div></div>
       </footer>
     </div>
   );
@@ -885,7 +885,7 @@ function RegisterForm({mode,onSubmit}){
     {mode==="montador" && <>
       <div className="bg-gradient-to-br from-amber-50 to-yellow-50 border-2 border-amber-200 rounded-[1.5rem] p-4">
         <div className="font-black text-[12px] tracking-widest text-amber-900">📸 FOTO PERFIL OBRIGATÓRIA • GALERIA SEM CÂMERA</div>
-        <div className="text-[11px] text-slate-600 mt-1">Abre galeria, não câmera. Compactada 300x300 ~30KB.</div>
+        <div className="text-[11px] text-slate-600 mt-1">Abre galeria, não câmera. Compactada fotos verificadas.</div>
         <div className="mt-3 flex items-center gap-4">
           <div className="w-20 h-20 rounded-full bg-white border-2 border-[#0A2A6B]/10 shadow-inner overflow-hidden shrink-0 flex items-center justify-center">{previewFoto ? <img src={previewFoto} className="w-full h-full object-cover"/> : <span className="text-[10px] font-black text-slate-400 text-center">SEM<br/>FOTO</span>}</div>
           <div className="flex-1 min-w-0">
@@ -911,10 +911,10 @@ function RegisterForm({mode,onSubmit}){
     </div>
     <div className="pt-2 pb-2">
       <button type="button" onClick={()=>{ if(mode==="montador" && !f.foto){ alert("Foto obrigatória! Toque em ESCOLHER DA GALERIA"); return; } onSubmit(f); }} className="w-full h-[56px] rounded-full bg-gradient-to-r from-[#FF7A00] to-[#ff9500] text-white font-black text-[13px] sm:text-[14px] tracking-widest shadow-[0_12px_24px_-8px_rgba(255,122,0,0.4)] active:scale-[0.98] transition flex items-center justify-center gap-2">
-        <span>FINALIZAR CADASTRO PREMIUM</span><span className="text-[18px]">🟢</span>
+        <span>FINALIZAR CADASTRO PREMIUM</span><span className="text-[18px]">✅</span>
       </button>
       {mode==="montador" && !f.foto && <div className="mt-3 p-3 rounded-xl bg-red-50 border-2 border-red-200 text-[11px] font-black text-red-700 text-center animate-pulse">⚠️ FOTO OBRIGATÓRIA PARA CONTINUAR</div>}
-      <div className="mt-3 text-[10px] text-center text-slate-400 font-medium leading-relaxed">Ao clicar você concorda com os termos<br/>Realtime 2s • Galeria sem câmera • Touch 44px</div>
+      <div className="mt-3 text-[10px] text-center text-slate-400 font-medium leading-relaxed">Ao clicar você concorda com os termos<br/>Atendimento rápido e seguro • Todo SP</div>
     </div>
   </div>;
 }
@@ -923,6 +923,6 @@ function LoginForm({onSubmit}){
   return <div className="space-y-3">
     <input placeholder="Seu usuário" value={u} onChange={e=>setU(e.target.value)} className="w-full h-12 bg-slate-100 rounded-2xl px-4 text-[15px] outline-none" autoCapitalize="off"/>
     <input type="password" placeholder="Sua senha" value={s} onChange={e=>setS(e.target.value)} className="w-full h-12 bg-slate-100 rounded-2xl px-4 text-[15px] outline-none"/>
-    <button type="button" onClick={()=>onSubmit(u,s)} className="w-full h-[52px] rounded-full bg-[#0A2A6B] text-white font-black text-[14px] tracking-widest shadow-lg active:scale-[0.98] transition">ENTRAR • PREMIUM MOBILE 🟢</button>
+    <button type="button" onClick={()=>onSubmit(u,s)} className="w-full h-[52px] rounded-full bg-[#0A2A6B] text-white font-black text-[14px] tracking-widest shadow-lg active:scale-[0.98] transition">ENTRAR NA MINHA CONTA</button>
   </div>;
 }
