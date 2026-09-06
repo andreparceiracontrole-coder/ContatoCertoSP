@@ -267,7 +267,7 @@ export default function App() {
             <div className="min-w-0">
               <div className="font-black text-[14px] sm:text-[16px] tracking-tight text-[#0A2A6B] leading-none">CONTATO CERTO SP</div>
               <div className="flex items-center gap-1.5 mt-1">
-                <span className="text-[9px] font-black tracking-widest text-[#FF7A00]">SERVIÇO PREMIUM</span>
+                <span className="text-[9px] font-black tracking-widest text-[#FF7A00]">MONTAGEM PREMIUM</span>
                 <span className={`px-2 py-0.5 rounded-full text-[8px] font-black border ${isLive ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-red-50 border-red-200 text-red-700"}`}>{isLive ? "🟢 AO VIVO" : "🔴 OFF"}</span>
               </div>
             </div>
@@ -307,12 +307,17 @@ export default function App() {
             <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-16">
               <div className="max-w-3xl">
                 <div>
-                  <div className="inline-flex px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-[10px] font-bold tracking-widest">✅ SERVIÇO PREMIUM • 330 TIPOS DE MÓVEIS • ATENDEMOS TODO SP</div>
+                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/15 backdrop-blur border border-white/20 text-[11px] font-black tracking-widest"><span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>⭐ MAIS DE 1.200 CLIENTES SATISFEITOS • NOTA 4.9 • TODO SP</div>
                   <h1 className="mt-4 text-[38px] sm:text-[60px] font-black leading-[0.85] tracking-tight">MONTADOR<br/><span className="text-[#FF7A00]">VERIFICADO</span><br/>EM 30 MIN</h1>
-                  <p className="mt-5 text-white/70 text-[15px] sm:text-[17px] leading-relaxed max-w-xl">Montadores verificados perto de você • Chegada rápida em 30 minutos • Pagamento seguro e garantido • Atendimento em todo estado de São Paulo</p>
+                  <p className="mt-5 text-white text-[17px] sm:text-[19px] leading-relaxed max-w-xl font-medium">Seu móvel <span className="font-black text-white underline decoration-[#FF7A00] decoration-4 underline-offset-4">montado hoje mesmo!</span> 🛋️<br/><span className="text-white/80 text-[15px] sm:text-[16px] mt-3 block">Encontre o montador mais próximo com foto, avaliação e garantia. Guarda-roupa, cama, rack, estante, mesa e 330 serviços - chega em até 30 minutos na sua casa!</span></p>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <span className="px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-[11px] font-bold">✅ Montador com foto e avaliação</span>
+                    <span className="px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-[11px] font-bold">🛡️ Garantia 12 meses</span>
+                    <span className="px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-[11px] font-bold">💳 Pagamento seguro</span>
+                  </div>
                   <div className="mt-8 flex flex-col sm:flex-row gap-3 max-w-[440px]">
-                    <button onClick={()=>{ const el=document.getElementById('catalogo-premium'); el?.scrollIntoView({behavior:'smooth'}); }} className="h-[56px] px-8 rounded-full bg-white text-[#0A2A6B] font-black text-[14px] shadow-xl active:scale-[0.98] transition flex items-center justify-center gap-2">VER CATÁLOGO PREMIUM <span>↓</span></button>
-                    <button onClick={()=>{setAuthMode("montador"); setIsLogin(false); setShowAuth(true);}} className="h-[56px] px-8 rounded-full bg-[#FF7A00] text-white font-black text-[14px] shadow-xl active:scale-[0.98] transition">SOU MONTADOR • 90% PIX</button>
+                    <button onClick={()=>{ const el=document.getElementById('catalogo-premium'); el?.scrollIntoView({behavior:'smooth'}); }} className="h-[58px] px-8 rounded-full bg-white text-[#0A2A6B] font-black text-[14px] shadow-[0_12px_32px_-8px_rgba(255,255,255,0.4)] active:scale-[0.98] transition flex items-center justify-center gap-2">🔍 ENCONTRAR MONTADOR AGORA <span className="text-[18px]">↓</span></button>
+                    <button onClick={()=>{setAuthMode("montador"); setIsLogin(false); setShowAuth(true);}} className="h-[58px] px-8 rounded-full bg-[#FF7A00] hover:bg-[#e66e00] text-white font-black text-[14px] shadow-[0_12px_32px_-8px_rgba(255,122,0,0.5)] active:scale-[0.98] transition">SOU MONTADOR • GANHE 90% + BÔNUS</button>
                   </div>
                   <div className="mt-10 grid grid-cols-3 gap-3 max-w-[440px]">
                     <div className="bg-white/10 backdrop-blur border border-white/10 rounded-[1.5rem] p-4"><div className="text-2xl font-black">{users.filter(u=>u.role==="montador").length || 12}</div><div className="text-[10px] font-bold tracking-widest opacity-60 mt-1">MONTADORES VERIFICADOS</div></div>
@@ -332,7 +337,7 @@ export default function App() {
                     <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#0A2A6B] to-[#FF7A00] flex items-center justify-center shadow">🧠</div>
                     <div>
                       <div className="flex items-center gap-2"><h2 className="font-black text-[18px] sm:text-[22px] tracking-tight">CATÁLOGO <span className="text-[#FF7A00]">COMPLETO</span></h2><span className="px-2.5 py-1 rounded-full bg-[#0A2A6B] text-white text-[10px] font-black">{CATALOGO.length}</span></div>
-                      <div className="text-[11px] text-slate-500 mt-1">{filteredCatalog.length} serviços encontrados • {cart.reduce((s,i)=>s+i.qtd,0)} no carrinho • 🟢 Montadores online</div>
+                      <div className="text-[11px] text-slate-500 mt-1">{filteredCatalog.length} móveis para montar • {cart.reduce((s,i)=>s+i.qtd,0)} no carrinho • 🟢 {users.filter(u=>u.role==="montador").length||12} montadores online</div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
