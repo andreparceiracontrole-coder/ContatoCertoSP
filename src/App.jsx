@@ -275,9 +275,9 @@ export default function App() {
                   <div className="inline-flex px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-[10px] font-bold tracking-widest">🟢 330 SERVIÇOS • REALTIME 2S • WATCHDOG 5S • TODO SP</div>
                   <h1 className="mt-4 text-[34px] sm:text-[52px] font-black leading-[0.9] tracking-tight">MONTADOR<br/><span className="text-[#FF7A00]">VERIFICADO</span><br/>EM 30 MIN</h1>
                   <p className="mt-4 text-white/70 text-[14px] sm:text-[16px] leading-relaxed max-w-xl">Foto obrigatória galeria sem câmera • 300x300 ~30KB • Supabase realtime • Pagamento 10% + 90% PIX • Som e vibração</p>
-                  <div className="mt-6 flex flex-col sm:flex-row gap-3">
-                    <button onClick={()=>setShowOrderFlow(true)} className="h-14 px-8 rounded-full bg-white text-[#0A2A6B] font-black text-[14px] shadow-xl active:scale-[0.98] transition">SOLICITAR MONTADOR →</button>
-                    <button onClick={()=>{setAuthMode("montador"); setIsLogin(false); setShowAuth(true);}} className="h-14 px-8 rounded-full bg-[#FF7A00] text-white font-black text-[14px] shadow-xl">SOU MONTADOR • 90% PIX</button>
+                  <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-[420px]">
+                    <button onClick={()=>setShowOrderFlow(true)} className="h-[54px] sm:h-14 px-6 sm:px-8 rounded-full bg-white text-[#0A2A6B] font-black text-[13px] sm:text-[14px] shadow-xl active:scale-[0.98] transition flex items-center justify-center gap-2">SOLICITAR MONTADOR <span>→</span></button>
+                    <button onClick={()=>{setAuthMode("montador"); setIsLogin(false); setShowAuth(true);}} className="h-[54px] sm:h-14 px-6 sm:px-8 rounded-full bg-[#FF7A00] text-white font-black text-[13px] sm:text-[14px] shadow-xl active:scale-[0.98] transition flex items-center justify-center">SOU MONTADOR • 90% PIX</button>
                   </div>
                   <div className="mt-8 grid grid-cols-3 gap-3 max-w-[420px]">
                     <div className="bg-white/10 backdrop-blur border border-white/10 rounded-2xl p-4"><div className="text-xl font-black">{users.filter(u=>u.role==="montador").length || 12}</div><div className="text-[9px] font-bold tracking-widest opacity-60">MONTADORES</div></div>
@@ -568,13 +568,27 @@ export default function App() {
         </div>
       )}
 
-      {/* AUTH PREMIUM MOBILE SEM CORTAR */}
+      {/* AUTH PREMIUM MOBILE SEM CORTAR - FIX BOTÕES */}
       {showAuth && (
-        <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center">
+        <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center p-0 sm:p-4">
           <div className="absolute inset-0 bg-slate-900/70 backdrop-blur-xl" onClick={()=>setShowAuth(false)}></div>
-          <div className="relative w-full sm:max-w-md bg-white rounded-t-[2rem] sm:rounded-[2rem] shadow-2xl max-h-[94vh] flex flex-col">
-            <div className="p-6 bg-gradient-to-br from-[#0A2A6B] to-[#1e40af] text-white rounded-t-[2rem] flex justify-between shrink-0"><div><div className="font-black text-lg leading-none">{isLogin?"Bem-vindo de volta":"Criar conta premium"}</div><div className="text-xs opacity-70 mt-1">{authMode.toUpperCase()} • AO VIVO 🟢 • GALERIA SEM CAMERA</div></div><button onClick={()=>setShowAuth(false)} className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center">✕</button></div>
-            <div className="p-5 overflow-y-auto flex-1">{!isLogin ? <RegisterForm mode={authMode} onSubmit={handleRegister}/> : <LoginForm onSubmit={handleLogin}/>} <button onClick={()=>setIsLogin(!isLogin)} className="w-full mt-4 h-11 rounded-full bg-slate-100 font-bold text-sm">{isLogin?"Criar conta →":"Já tenho conta"}</button></div>
+          <div className="relative w-full sm:max-w-md bg-white rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-[0_-20px_80px_-10px_rgba(0,0,0,0.5)] max-h-[96vh] sm:max-h-[90vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-300">
+            <div className="sm:hidden w-12 h-1.5 bg-slate-200 rounded-full mx-auto mt-4 mb-2 shrink-0"></div>
+            <div className="p-5 sm:p-6 bg-gradient-to-br from-[#0A2A6B] via-[#112a7d] to-[#1e40af] text-white flex justify-between items-start shrink-0">
+              <div className="min-w-0 flex-1">
+                <div className="font-black text-[18px] sm:text-[20px] leading-none tracking-tight">{isLogin?"Bem-vindo de volta 👋":"Criar conta premium"}</div>
+                <div className="text-[11px] opacity-80 mt-1.5 font-medium flex flex-wrap items-center gap-2">
+                  <span className="px-2.5 py-1 rounded-full bg-white/15 border border-white/10 text-[10px] font-black tracking-widest">{authMode.toUpperCase()} • AO VIVO 🟢</span>
+                  <span className="hidden sm:inline">GALERIA SEM CÂMERA • 300x300</span>
+                </div>
+              </div>
+              <button onClick={()=>setShowAuth(false)} className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center shrink-0 ml-3 active:scale-95 transition">✕</button>
+            </div>
+            <div className="flex-1 overflow-y-auto overscroll-contain p-5 sm:p-6 pb-[calc(20px+env(safe-area-inset-bottom))] scrollbar-none">
+              {!isLogin ? <RegisterForm mode={authMode} onSubmit={handleRegister}/> : <LoginForm onSubmit={handleLogin}/>}
+              <button onClick={()=>setIsLogin(!isLogin)} className="w-full mt-6 h-12 rounded-full bg-slate-100 hover:bg-slate-200 font-bold text-[13px] active:scale-[0.98] transition border border-slate-200">{isLogin?"Criar conta premium →":"Já tenho conta • Entrar"}</button>
+              <div className="h-4 sm:h-0"></div>
+            </div>
           </div>
         </div>
       )}
@@ -619,11 +633,13 @@ function RegisterForm({mode,onSubmit}){
     }catch{ alert("Erro ao compactar"); }
     setUploadingFoto(false);
   };
-  return <div className="space-y-3">
-    <input placeholder="Nome completo" value={f.nome} onChange={e=>setF({...f,nome:e.target.value})} className="w-full h-12 bg-slate-100 rounded-2xl px-4 text-[15px] outline-none focus:bg-white focus:ring-2 focus:ring-[#0A2A6B]/20"/>
-    <input placeholder="Cidade SP" value={f.cidade} onChange={e=>setF({...f,cidade:e.target.value})} className="w-full h-12 bg-slate-100 rounded-2xl px-4 text-[15px] outline-none focus:bg-white focus:ring-2 focus:ring-[#0A2A6B]/20"/>
-    <input placeholder="WhatsApp (18) 9xxxx-xxxx" value={f.telefone} onChange={e=>setF({...f,telefone:e.target.value})} inputMode="tel" className="w-full h-12 bg-slate-100 rounded-2xl px-4 text-[15px] outline-none focus:bg-white focus:ring-2 focus:ring-[#0A2A6B]/20"/>
-    <input placeholder="E-mail" value={f.email} onChange={e=>setF({...f,email:e.target.value})} inputMode="email" className="w-full h-12 bg-slate-100 rounded-2xl px-4 text-[15px] outline-none focus:bg-white focus:ring-2 focus:ring-[#0A2A6B]/20"/>
+  return <div className="space-y-4">
+    <div className="grid grid-cols-1 gap-3">
+      <input placeholder="Nome completo *" value={f.nome} onChange={e=>setF({...f,nome:e.target.value})} className="w-full h-[52px] bg-slate-100 rounded-2xl px-5 text-[15px] outline-none focus:bg-white focus:ring-2 focus:ring-[#0A2A6B]/20 border border-transparent focus:border-[#0A2A6B]/20 transition font-medium"/>
+      <input placeholder="Cidade SP *" value={f.cidade} onChange={e=>setF({...f,cidade:e.target.value})} className="w-full h-[52px] bg-slate-100 rounded-2xl px-5 text-[15px] outline-none focus:bg-white focus:ring-2 focus:ring-[#0A2A6B]/20 border border-transparent focus:border-[#0A2A6B]/20 transition font-medium"/>
+      <input placeholder="WhatsApp (18) 9xxxx-xxxx *" value={f.telefone} onChange={e=>setF({...f,telefone:e.target.value})} inputMode="tel" className="w-full h-[52px] bg-slate-100 rounded-2xl px-5 text-[15px] outline-none focus:bg-white focus:ring-2 focus:ring-[#0A2A6B]/20 border border-transparent focus:border-[#0A2A6B]/20 transition font-medium"/>
+      <input placeholder="E-mail *" value={f.email} onChange={e=>setF({...f,email:e.target.value})} inputMode="email" className="w-full h-[52px] bg-slate-100 rounded-2xl px-5 text-[15px] outline-none focus:bg-white focus:ring-2 focus:ring-[#0A2A6B]/20 border border-transparent focus:border-[#0A2A6B]/20 transition font-medium"/>
+    </div>
     {mode==="montador" && <>
       <div className="bg-gradient-to-br from-amber-50 to-yellow-50 border-2 border-amber-200 rounded-[1.5rem] p-4">
         <div className="font-black text-[12px] tracking-widest text-amber-900">📸 FOTO PERFIL OBRIGATÓRIA • GALERIA SEM CÂMERA</div>
@@ -647,9 +663,17 @@ function RegisterForm({mode,onSubmit}){
       <div className="flex gap-2"><input placeholder="Cidade que atende (máx 3)" value={ci} onChange={e=>setCi(e.target.value)} className="flex-1 h-12 bg-slate-100 rounded-2xl px-4 text-[15px] outline-none"/><button type="button" onClick={()=>{ if(f.cidades.length<3 && ci){ setF({...f,cidades:[...f.cidades,ci]}); setCi(""); } }} className="w-12 h-12 rounded-2xl bg-slate-900 text-white font-black">+</button></div>
       {f.cidades.length>0 && <div className="flex gap-2 flex-wrap">{f.cidades.map(c=><span key={c} className="bg-[#0A2A6B] text-white text-xs px-3 py-1.5 rounded-full font-bold">{c} <button onClick={()=>setF({...f,cidades:f.cidades.filter(x=>x!==c)})} className="ml-1 w-4 h-4 rounded-full bg-white/20">x</button></span>)}</div>}
     </>}
-    <input placeholder="Usuário" value={f.usuario} onChange={e=>setF({...f,usuario:e.target.value})} className="w-full h-12 bg-slate-100 rounded-2xl px-4 text-[15px] outline-none"/>
-    <input type="password" placeholder="Senha" value={f.senha} onChange={e=>setF({...f,senha:e.target.value})} className="w-full h-12 bg-slate-100 rounded-2xl px-4 text-[15px] outline-none"/>
-    <button type="button" onClick={()=>{ if(mode==="montador" && !f.foto){ alert("Foto obrigatória! Escolha da galeria"); return; } onSubmit(f); }} className="w-full h-[52px] rounded-full bg-gradient-to-r from-[#FF7A00] to-[#ff9500] text-white font-black text-[14px] tracking-widest shadow-lg active:scale-[0.98] transition">FINALIZAR CADASTRO PREMIUM 🟢 {mode==="montador" && !f.foto?"• FOTO OBRIG":""}</button>
+    <div className="pt-2 space-y-3">
+      <input placeholder="Usuário (sem espaços)" value={f.usuario} onChange={e=>setF({...f,usuario:e.target.value})} className="w-full h-[52px] bg-slate-100 rounded-2xl px-5 text-[15px] outline-none focus:bg-white focus:ring-2 focus:ring-[#0A2A6B]/20 border border-transparent focus:border-[#0A2A6B]/20 transition font-medium" autoCapitalize="off" autoCorrect="off"/>
+      <input type="password" placeholder="Senha (mín 6 caracteres)" value={f.senha} onChange={e=>setF({...f,senha:e.target.value})} className="w-full h-[52px] bg-slate-100 rounded-2xl px-5 text-[15px] outline-none focus:bg-white focus:ring-2 focus:ring-[#0A2A6B]/20 border border-transparent focus:border-[#0A2A6B]/20 transition font-medium"/>
+    </div>
+    <div className="pt-2 pb-2">
+      <button type="button" onClick={()=>{ if(mode==="montador" && !f.foto){ alert("Foto obrigatória! Toque em ESCOLHER DA GALERIA"); return; } onSubmit(f); }} className="w-full h-[56px] rounded-full bg-gradient-to-r from-[#FF7A00] to-[#ff9500] text-white font-black text-[13px] sm:text-[14px] tracking-widest shadow-[0_12px_24px_-8px_rgba(255,122,0,0.4)] active:scale-[0.98] hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2">
+        <span>FINALIZAR CADASTRO PREMIUM</span><span className="text-[18px]">🟢</span>
+      </button>
+      {mode==="montador" && !f.foto && <div className="mt-3 p-3 rounded-xl bg-red-50 border-2 border-red-200 text-[11px] font-black text-red-700 text-center animate-pulse">⚠️ FOTO OBRIGATÓRIA PARA CONTINUAR</div>}
+      <div className="mt-3 text-[10px] text-center text-slate-400 font-medium leading-relaxed">Ao clicar você concorda com os termos<br/>Realtime 2s • Galeria sem câmera • Touch 44px</div>
+    </div>
   </div>;
 }
 function LoginForm({onSubmit}){
