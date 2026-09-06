@@ -55,8 +55,8 @@ export default function App() {
   const [supportMessages, setSupportMessages] = useState(()=> JSON.parse(localStorage.getItem("ccs_support")||"[]"));
   const [couponInput, setCouponInput] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState(null);
-  const [newCoupon, setNewCoupon] = useState({ code:"", desconto:10, validade:"", limite:100 });
-  const [currentUser, setCurrentUser] = useState(() => JSON.parse(localStorage.getItem("ccs_current") || "null"));
+  const [newCoupon, setNewCoupon] = useState({ code:"", desconto:10 });
+  const [currentUser, setCurrentUser] = useState(()=> JSON.parse(localStorage.getItem("ccs_current")||"null"));
   const [view, setView] = useState("home");
   const [menuOpen, setMenuOpen] = useState(false);
   const [authMode, setAuthMode] = useState("cliente");
@@ -87,6 +87,22 @@ export default function App() {
   const supportEndRef = useRef(null);
   const lastFetchRef = useRef(Date.now());
 
+  const categoriaIcons = {
+    "GUARDA-ROUPA": "👗",
+    "ARMARIO DE COZINHA": "🍳",
+    "RACK": "📺",
+    "PAINEL": "🖼️",
+    "ESTANTE": "📚",
+    "COMODA": "🗄️",
+    "CAMA": "🛏️",
+    "MESA": "🪑",
+    "CADEIRA": "💺",
+    "ESCRIVANINHA": "💻",
+    "BALCAO": "🍷",
+    "MOVEIS PARA ESCRITORIO": "🏢",
+    "MANUTENCAO DE MOVEIS": "🔧"
+  };
+
   const notify = (msg, type="info", sound=1) => {
     setToast(msg); setToastType(type);
     if(sound>0) playBeep(sound);
@@ -104,14 +120,14 @@ export default function App() {
         if(prevOrdersRef.current.length>0 && currentUser){
           mapped.forEach(novo=>{
             const antigo = prevOrdersRef.current.find(a=>a.id===novo.id);
-            if(!antigo && currentUser.role==="admin") notify(`🔔 NOVO PEDIDO #${novo.id} - ${novo.cidade}`, "success", 4);
+            if(!antigo && currentUser.role==="admin") notify(`NOVO PEDIDO #${novo.id} - ${novo.cidade}`, "success", 4);
             if(antigo && antigo.status!==novo.status){
               if(novo.cliente_id==currentUser.id){
-                if(novo.status==="aguardando_montador") notify(`✅ Pagamento confirmado #${novo.id}`, "success", 3);
-                if(novo.status==="aceito") notify(`🔧 Montador aceitou #${novo.id} - 30min`, "success", 4);
-                if(novo.status==="finalizado") notify(`🎉 Finalizado #${novo.id} - Avalie`, "success", 4);
+                if(novo.status==="aguardando_montador") notify(`Pagamento confirmado #${novo.id}`, "success", 3);
+                if(novo.status==="aceito") notify(`Montador aceitou #${novo.id} - 30min`, "success", 4);
+                if(novo.status==="finalizado") notify(`Finalizado #${novo.id} - Avalie`, "success", 4);
               }
-              if(novo.status==="aguardando_montador" && currentUser.role==="montador") notify(`🔔 NOVO PEDIDO #${novo.id} em ${novo.cidade}`, "success", 4);
+              if(novo.status==="aguardando_montador" && currentUser.role==="montador") notify(`NOVO PEDIDO #${novo.id} em ${novo.cidade}`, "success", 4);
             }
           });
         }
@@ -130,7 +146,7 @@ export default function App() {
 
   useEffect(()=>{ fetchData(); },[]);
   useEffect(()=>{
-    let channel = supabase.channel("contato-certo-premium-full-v9")
+    let channel = supabase.channel("contato-certo-premium-v10-final")
       .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, ()=>fetchData())
       .on("postgres_changes", { event: "*", schema: "public", table: "users" }, ()=>fetchData())
       .on("postgres_changes", { event: "*", schema: "public", table: "coupons" }, ()=>fetchData())
@@ -142,7 +158,7 @@ export default function App() {
         setIsLive(false);
         fetchData();
         try{ supabase.removeChannel(channel); }catch{}
-        channel = supabase.channel("contato-certo-premium-full-v9-"+Date.now())
+        channel = supabase.channel("contato-certo-premium-v10-"+Date.now())
           .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, ()=>fetchData())
           .on("postgres_changes", { event: "*", schema: "public", table: "users" }, ()=>fetchData())
           .subscribe();
@@ -153,22 +169,13 @@ export default function App() {
 
   useEffect(()=>{ localStorage.setItem("ccs_current", JSON.stringify(currentUser)); },[currentUser]);
   useEffect(()=>{ supportEndRef.current?.scrollIntoView({behavior:"smooth"}); },[supportMessages]);
+  useEffect(()=>{ localStorage.setItem("ccs_fav", JSON.stringify(favoritos)); },[favoritos]);
 
-  const categoriaIcons = {
-    "GUARDA-ROUPA": "👗",
-    "ARMARIO DE COZINHA": "🍳",
-    "RACK": "📺",
-    "PAINEL": "🖼️",
-    "ESTANTE": "📚",
-    "COMODA": "🗄️",
-    "CAMA": "🛏️",
-    "MESA": "🪑",
-    "CADEIRA": "💺",
-    "ESCRIVANINHA": "💻",
-    "BALCAO": "🍷",
-    "MOVEIS PARA ESCRITORIO": "🏢",
-    "MANUTENCAO DE MOVEIS": "🔧"
-  };
+  const categoriaCounts = useMemo(()=>{
+    const counts = { TODAS: CATALOGO.length };
+    CATEGORIAS.forEach(cat=>{ counts[cat] = CATALOGO.filter(i=>i.categoria===cat).length; });
+    return counts;
+  },[]);
 
   const filteredCatalog = useMemo(()=>{
     let list = CATALOGO.filter(item=>{
@@ -185,26 +192,15 @@ export default function App() {
     if(sortBy==="menor") list = [...list].sort((a,b)=>a.preco-b.preco);
     if(sortBy==="maior") list = [...list].sort((a,b)=>b.preco-a.preco);
     if(sortBy==="nome") list = [...list].sort((a,b)=>a.nome.localeCompare(b.nome));
-    if(sortBy==="popular") list = [...list].sort((a,b)=> (a.id % 7) - (b.id % 7)); // simulando popularidade
     return list;
   },[search,catFilter,sortBy,priceFilter]);
-
-  const categoriaCounts = useMemo(()=>{
-    const counts = { TODAS: CATALOGO.length };
-    CATEGORIAS.forEach(cat=>{ counts[cat] = CATALOGO.filter(i=>i.categoria===cat).length; });
-    return counts;
-  },[]);
-
-  useEffect(()=>{ localStorage.setItem("ccs_fav", JSON.stringify(favoritos)); },[favoritos]);
-  const toggleFav = (id)=> setFavoritos(prev=> prev.includes(id) ? prev.filter(x=>x!==id) : [...prev, id]);
-
 
   const handleRegister = async (formData)=>{
     if(users.some(u=>u.usuario===formData.usuario)) return notify("Usuario ja existe","error",1);
     if(formData.role==="montador" && !validarCPF(formData.cpf)) return notify("CPF invalido","error",1);
     if(formData.role==="montador" && !formData.foto) return notify("Foto obrigatoria! Galeria","error",1);
     const newUser = { id: Date.now(), nome: formData.nome, cidade: formData.cidade, telefone: formData.telefone, email: formData.email, usuario: formData.usuario, senha: formData.senha, role: formData.role, cpf: formData.cpf||null, pix: formData.pix||null, cidades: formData.cidades||[], foto: formData.foto||"", avaliacao:5, total_servicos:0, disponivel:true };
-    try { await supabase.from("users").insert(newUser); notify("Cadastro premium! Ao vivo 🟢","success",2); } catch {}
+    try { await supabase.from("users").insert(newUser); notify("Cadastro premium! Ao vivo","success",2); } catch {}
     const all=[...users,newUser]; setUsers(all);
     setCurrentUser(newUser); setShowAuth(false); setView(newUser.role==="cliente"?"cliente":"montador");
   };
@@ -215,6 +211,7 @@ export default function App() {
     setCurrentUser(u); setShowAuth(false); setView(u.role==="cliente"?"cliente":"montador");
   };
   const addToCart = (item)=>{ const ex=cart.find(c=>c.id===item.id); if(ex) setCart(cart.map(c=>c.id===item.id?{...c,qtd:c.qtd+1}:c)); else setCart([...cart,{...item,qtd:1}]); notify(`${item.nome} adicionado`,"success",1); };
+  const toggleFav = (id)=> setFavoritos(prev=> prev.includes(id) ? prev.filter(x=>x!==id) : [...prev, id]);
   const subtotal = cart.reduce((s,i)=>s+i.preco*i.qtd,0);
   const descontoQtd = calcularDesconto(cart.reduce((s,i)=>s+i.qtd,0), subtotal);
   const totalSemCupom = subtotal - descontoQtd;
@@ -231,14 +228,14 @@ export default function App() {
     if(!base64) return notify("Selecione comprovante","error",1);
     setOrders(prev=>prev.map(o=>o.id===pedidoId?{...o, comprovante: base64, status:"aguardando_confirmacao_adm"}:o));
     try { await supabase.from("orders").update({ comprovante: base64, status:"aguardando_confirmacao_adm" }).eq("id", pedidoId); } catch {}
-    notify("Comprovante enviado! ADM notificado 🔔","success",2);
+    notify("Comprovante enviado! ADM notificado","success",2);
   };
-  const confirmarPagamentoADM = async (id)=>{ setOrders(prev=>prev.map(o=>o.id===id?{...o,status:"aguardando_montador"}:o)); try{ await supabase.from("orders").update({ status:"aguardando_montador" }).eq("id", id); }catch{} notify("Pagamento confirmado! Liberado 🔔","success",3); };
+  const confirmarPagamentoADM = async (id)=>{ setOrders(prev=>prev.map(o=>o.id===id?{...o,status:"aguardando_montador"}:o)); try{ await supabase.from("orders").update({ status:"aguardando_montador" }).eq("id", id); }catch{} notify("Pagamento confirmado!","success",3); };
   const aceitarPedido = async (id)=>{
     const agora = new Date().toISOString();
     setOrders(prev=>prev.map(o=>o.id===id?{...o,status:"aceito", montadorId: currentUser.id, montador_id: currentUser.id, aceiteAt: agora}:o));
     try{ await supabase.from("orders").update({ status:"aceito", montador_id: currentUser.id, aceite_at: agora }).eq("id", id); }catch{}
-    notify("Pedido aceito! Cliente notificado 🔔","success",3);
+    notify("Pedido aceito! Cliente notificado","success",3);
   };
   const finalizarPedido = async (id)=>{
     const agora = new Date().toISOString();
@@ -248,11 +245,11 @@ export default function App() {
     const ganho = ehBonus ? pedido.total : pedido.total*0.9;
     setOrders(prev=>prev.map(o=>o.id===id?{...o,status:"finalizado", finalizadoAt: agora, bonus_montador: ehBonus, ganho_montador: ganho}:o));
     try{ await supabase.from("orders").update({ status:"finalizado", finalizado_at: agora, bonus_montador: ehBonus, ganho_montador: ganho }).eq("id", id); }catch{}
-    if(ehBonus) notify(`🎉 BONUS 6o servico 100%! ${formatBRL(ganho)}`,"success",4);
+    if(ehBonus) notify(`BONUS 6o servico 100%! ${formatBRL(ganho)}`,"success",4);
   };
   const cancelarPedido = async (id)=>{ if(!window.confirm("Cancelar pedido?")) return; setOrders(prev=>prev.map(o=>o.id===id?{...o,status:"cancelado"}:o)); try{ const list=JSON.parse(localStorage.getItem("ccs_cancelados")||"[]"); localStorage.setItem("ccs_cancelados", JSON.stringify([...list, id])); await supabase.from("orders").update({ status:"cancelado" }).eq("id", id); }catch{} notify("Pedido cancelado","success",2); };
   const excluirMeuCadastro = async ()=>{ if(!window.confirm("Excluir cadastro permanente?")) return; const id=currentUser.id; try{ await supabase.from("users").delete().eq("id", id); }catch{} setUsers(p=>p.filter(u=>u.id!==id)); setCurrentUser(null); setView("home"); localStorage.removeItem("ccs_current"); notify("Cadastro excluido","success",2); };
-  const criarCupom = async ()=>{ if(!newCoupon.code) return notify("Digite codigo","error",1); const cupom={ id: Date.now(), code: newCoupon.code.toUpperCase(), desconto: Number(newCoupon.desconto), ativo:true, created_at: new Date().toISOString() }; setCoupons(prev=>[cupom,...prev]); try{ await supabase.from("coupons").insert(cupom); }catch{} setNewCoupon({ code:"", desconto:10, validade:"", limite:100 }); notify(`Cupom ${cupom.code} criado!`,"success",2); };
+  const criarCupom = async ()=>{ if(!newCoupon.code) return notify("Digite codigo","error",1); const cupom={ id: Date.now(), code: newCoupon.code.toUpperCase(), desconto: Number(newCoupon.desconto), ativo:true, created_at: new Date().toISOString() }; setCoupons(prev=>[cupom,...prev]); try{ await supabase.from("coupons").insert(cupom); }catch{} setNewCoupon({ code:"", desconto:10 }); notify(`Cupom ${cupom.code} criado!`,"success",2); };
   const enviarSuporte = async ()=>{ if(!supportInput.trim()) return; const msg={ id: Date.now(), user_id: currentUser.id, user_nome: currentUser.nome, mensagem: supportInput, from_admin: currentUser.role==="admin", created_at: new Date().toISOString() }; setSupportMessages(prev=>[...prev, msg]); setSupportInput(""); try{ await supabase.from("support_messages").insert(msg); }catch{} };
   const adicionarCidade = ()=>{ if(!novaCidade.trim()) return; if((currentUser.cidades||[]).length>=3) return notify("Max 3 cidades","error",1); const novas=[...(currentUser.cidades||[]), novaCidade.trim()]; setCurrentUser({...currentUser, cidades: novas}); setUsers(prev=>prev.map(u=>u.id==currentUser.id?{...u,cidades:novas}:u)); setNovaCidade(""); };
   const removerCidade = (c)=>{ const novas=(currentUser.cidades||[]).filter(x=>x!==c); setCurrentUser({...currentUser, cidades: novas}); setUsers(prev=>prev.map(u=>u.id==currentUser.id?{...u,cidades:novas}:u)); };
@@ -261,18 +258,17 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFF] text-slate-900 antialiased">
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap'); *{font-family:Inter,system-ui,sans-serif} .scrollbar-none::-webkit-scrollbar{display:none} .scrollbar-none{-ms-overflow-style:none; scrollbar-width:none}`}</style>
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap'); *{font-family:Inter,sans-serif} .scrollbar-none::-webkit-scrollbar{display:none} .scrollbar-none{-ms-overflow-style:none; scrollbar-width:none}`}</style>
 
-      {/* HEADER PREMIUM FIXO SEM CORTAR */}
       <header className="sticky top-0 z-40 backdrop-blur-2xl bg-white/90 border-b border-slate-200/70">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-[64px] sm:h-[72px] flex items-center justify-between gap-2">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-br from-[#0A2A6B] to-[#1e40af] flex items-center justify-center text-white font-black shadow shrink-0">CC</div>
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#0A2A6B] to-[#FF7A00] flex items-center justify-center text-white font-black shadow shrink-0">CC</div>
             <div className="min-w-0">
-              <div className="font-black text-[13px] sm:text-[15px] tracking-tight text-[#0A2A6B] leading-none truncate">CONTATO CERTO SP</div>
+              <div className="font-black text-[14px] sm:text-[16px] tracking-tight text-[#0A2A6B] leading-none">CONTATO CERTO SP</div>
               <div className="flex items-center gap-1.5 mt-1">
-                <span className="text-[8px] sm:text-[9px] font-black tracking-widest text-[#FF7A00]">PREMIUM</span>
-                <span className={`px-2 py-0.5 rounded-full text-[7px] sm:text-[8px] font-black border ${isLive ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-red-50 border-red-200 text-red-700"}`}>{isLive ? "🟢 AO VIVO" : "🔴 OFF"}</span>
+                <span className="text-[9px] font-black tracking-widest text-[#FF7A00]">PREMIUM INTELIGENTE</span>
+                <span className={`px-2 py-0.5 rounded-full text-[8px] font-black border ${isLive ? "bg-emerald-50 border-emerald-200 text-emerald-700" : "bg-red-50 border-red-200 text-red-700"}`}>{isLive ? "🟢 AO VIVO" : "🔴 OFF"}</span>
               </div>
             </div>
           </div>
@@ -287,25 +283,23 @@ export default function App() {
               <div className="flex items-center gap-2">
                 <div className="hidden sm:block text-right leading-none"><div className="text-[13px] font-bold truncate max-w-[120px]">{currentUser.nome?.split(" ")[0]}</div><div className="text-[10px] text-slate-500">{currentUser.role?.toUpperCase()}</div></div>
                 <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#0A2A6B] to-[#FF7A00] p-[2px]"><div className="w-full h-full rounded-full bg-white overflow-hidden flex items-center justify-center">{currentUser.foto ? <img src={currentUser.foto} className="w-full h-full object-cover"/> : <span className="text-xs font-black">{currentUser.nome?.[0]}</span>}</div></div>
-                <button onClick={()=>{setCurrentUser(null); setView("home"); localStorage.removeItem("ccs_current");}} className="w-8 h-8 rounded-full bg-slate-100 text-[12px]">↪</button>
+                <button onClick={()=>{setCurrentUser(null); setView("home"); localStorage.removeItem("ccs_current");}} className="w-8 h-8 rounded-full bg-slate-100">↪</button>
               </div>
             )}
           </div>
         </div>
         {menuOpen && (
           <div className="sm:hidden bg-white border-t p-4 space-y-3">
-            <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar mesa, guarda-roupa..." className="w-full h-12 bg-slate-100 rounded-full px-5 text-[15px] outline-none focus:bg-white focus:ring-2 focus:ring-[#0A2A6B]/20"/>
+            <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar mesa, guarda-roupa, estante..." className="w-full h-12 bg-slate-100 rounded-full px-5 text-[15px] outline-none focus:bg-white focus:ring-2 focus:ring-[#0A2A6B]/20"/>
             <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1">
               {["TODAS", ...CATEGORIAS].map(cat=>(
                 <button key={cat} onClick={()=>setCatFilter(cat)} className={`whitespace-nowrap h-9 px-4 rounded-full text-xs font-bold border ${catFilter===cat ? "bg-[#0A2A6B] text-white border-[#0A2A6B]" : "bg-white border-slate-200"}`}>{cat}</button>
               ))}
             </div>
-            {!currentUser && <div className="grid grid-cols-2 gap-2"><button onClick={()=>{setAuthMode("cliente"); setIsLogin(true); setShowAuth(true); setMenuOpen(false);}} className="h-12 rounded-full border font-bold">Entrar</button><button onClick={()=>{setAuthMode("cliente"); setIsLogin(false); setShowAuth(true); setMenuOpen(false);}} className="h-12 rounded-full bg-[#0A2A6B] text-white font-bold">Criar conta</button></div>}
           </div>
         )}
       </header>
 
-      {/* HOME */}
       {view==="home" && (
         <>
           <section className="relative overflow-hidden bg-gradient-to-br from-[#0A2A6B] via-[#112a7d] to-[#1e3a8a] text-white">
@@ -313,93 +307,64 @@ export default function App() {
             <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-16">
               <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-8 items-start">
                 <div>
-                  <div className="inline-flex px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-[10px] font-bold tracking-widest">🟢 330 SERVIÇOS • REALTIME 2S • WATCHDOG 5S • TODO SP</div>
-                  <h1 className="mt-4 text-[34px] sm:text-[52px] font-black leading-[0.9] tracking-tight">MONTADOR<br/><span className="text-[#FF7A00]">VERIFICADO</span><br/>EM 30 MIN</h1>
-                  <p className="mt-4 text-white/70 text-[14px] sm:text-[16px] leading-relaxed max-w-xl">Foto obrigatória galeria sem câmera • 300x300 ~30KB • Supabase realtime • Pagamento 10% + 90% PIX • Som e vibração</p>
+                  <div className="inline-flex px-3 py-1.5 rounded-full bg-white/10 border border-white/15 text-[10px] font-bold tracking-widest">🧠 CATÁLOGO INTELIGENTE • 330 SERVIÇOS • REALTIME 2S • TODO SP</div>
+                  <h1 className="mt-4 text-[36px] sm:text-[56px] font-black leading-[0.9] tracking-tight">MONTADOR<br/><span className="text-[#FF7A00]">VERIFICADO</span><br/>EM 30 MIN</h1>
+                  <p className="mt-4 text-white/70 text-[14px] sm:text-[16px] leading-relaxed max-w-xl">Foto obrigatória galeria sem câmera 300x300 ~30KB • Supabase realtime 2s • Watchdog 5s • Pagamento 10% + 90% PIX • Inspirado no seu estoque real</p>
                   <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-[420px]">
-                    <button onClick={()=>setShowOrderFlow(true)} className="h-[54px] sm:h-14 px-6 sm:px-8 rounded-full bg-white text-[#0A2A6B] font-black text-[13px] sm:text-[14px] shadow-xl active:scale-[0.98] transition flex items-center justify-center gap-2">SOLICITAR MONTADOR <span>→</span></button>
-                    <button onClick={()=>{setAuthMode("montador"); setIsLogin(false); setShowAuth(true);}} className="h-[54px] sm:h-14 px-6 sm:px-8 rounded-full bg-[#FF7A00] text-white font-black text-[13px] sm:text-[14px] shadow-xl active:scale-[0.98] transition flex items-center justify-center">SOU MONTADOR • 90% PIX</button>
+                    <button onClick={()=>setShowOrderFlow(true)} className="h-[54px] px-6 rounded-full bg-white text-[#0A2A6B] font-black text-[14px] shadow-xl active:scale-[0.98] transition">SOLICITAR MONTADOR →</button>
+                    <button onClick={()=>{setAuthMode("montador"); setIsLogin(false); setShowAuth(true);}} className="h-[54px] px-6 rounded-full bg-[#FF7A00] text-white font-black text-[14px] shadow-xl">SOU MONTADOR • 90% PIX</button>
                   </div>
                   <div className="mt-8 grid grid-cols-3 gap-3 max-w-[420px]">
                     <div className="bg-white/10 backdrop-blur border border-white/10 rounded-2xl p-4"><div className="text-xl font-black">{users.filter(u=>u.role==="montador").length || 12}</div><div className="text-[9px] font-bold tracking-widest opacity-60">MONTADORES</div></div>
-                    <div className="bg-white/10 backdrop-blur border border-white/10 rounded-2xl p-4"><div className="text-xl font-black">{orders.length || 24}</div><div className="text-[9px] font-bold tracking-widest opacity-60">AO VIVO 🟢</div></div>
+                    <div className="bg-white/10 backdrop-blur border border-white/10 rounded-2xl p-4"><div className="text-xl font-black">{orders.length || 24}</div><div className="text-[9px] font-bold tracking-widest opacity-60">AO VIVO</div></div>
                     <div className="bg-[#FF7A00] rounded-2xl p-4 shadow"><div className="text-xl font-black text-white">4.9</div><div className="text-[9px] font-bold tracking-widest text-white/80">PREMIUM</div></div>
                   </div>
                 </div>
                 <div className="relative">
-                  <div className="bg-white rounded-[2.2rem] p-5 sm:p-6 shadow-[0_24px_80px_-16px_rgba(0,0,0,0.4)] border border-white/50 overflow-hidden">
+                  <div className="bg-white rounded-[2.2rem] p-5 sm:p-6 shadow-[0_24px_80px_-16px_rgba(0,0,0,0.4)] border">
                     <div className="flex justify-between items-center">
-                      <div className="font-black text-[16px] tracking-tight text-[#0A2A6B] flex items-center gap-2">Catálogo Premium <span className="text-[11px] px-2.5 py-1 rounded-full bg-[#0A2A6B] text-white">{CATALOGO.length}</span></div>
-                      <div className="flex items-center gap-2"><span className={`w-2 h-2 rounded-full ${isLive ? "bg-emerald-500 animate-pulse" : "bg-red-500"}`}></span><span className="text-[10px] font-black tracking-widest text-slate-500">{isLive ? "AO VIVO" : "OFF"}</span></div>
+                      <div className="font-black text-[16px] text-[#0A2A6B]">Catálogo Inteligente</div>
+                      <span className="text-[10px] px-2 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold">{isLive ? "🟢 AO VIVO" : "🔴 OFF"}</span>
                     </div>
-                    <div className="mt-4 relative">
-                      <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="O que precisa montar?" className="w-full h-[48px] bg-slate-100 rounded-full pl-5 pr-12 text-[15px] font-medium outline-none focus:bg-white focus:ring-2 focus:ring-[#0A2A6B]/20 border border-transparent transition"/>
-                      <div className="absolute right-1 top-1 w-10 h-10 rounded-full bg-[#0A2A6B] text-white flex items-center justify-center">⌕</div>
-                    </div>
-                    <div className="mt-4 flex gap-2 overflow-x-auto scrollbar-none pb-1 -mx-1 px-1 snap-x">
-                      {["TODAS", ...CATEGORIAS.slice(0,6)].map(cat=>(
-                        <button key={cat} onClick={()=>setCatFilter(cat)} className={`snap-start whitespace-nowrap h-9 px-4 rounded-full text-[11px] font-bold border flex items-center gap-1.5 active:scale-95 transition ${catFilter===cat ? "bg-[#0A2A6B] text-white border-[#0A2A6B] shadow-md" : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-white"}`}><span>{categoriaIcons[cat]||"📦"}</span>{cat.slice(0,12)}{cat.length>12?"..":""} <span className={`text-[9px] px-1.5 py-0.5 rounded-full ${catFilter===cat ? "bg-white/20" : "bg-slate-200"}`}>{categoriaCounts[cat]||0}</span></button>
-                      ))}
-                    </div>
-                    <div className="mt-4 bg-slate-50 rounded-[1.5rem] p-2 space-y-2 max-h-[320px] overflow-auto scrollbar-none">
-                      {filteredCatalog.slice(0,7).map(item=>(
-                        <div key={item.id} className="group flex items-center gap-3 p-3 rounded-2xl bg-white border border-slate-100 hover:border-[#0A2A6B]/15 hover:shadow-md active:scale-[0.99] transition-all">
-                          <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#0A2A6B]/5 to-[#FF7A00]/5 border border-[#0A2A6B]/10 flex items-center justify-center text-[16px]">{categoriaIcons[item.categoria]||"📦"}</div>
-                          <div className="flex-1 min-w-0"><div className="text-[13px] font-bold leading-tight truncate">{item.nome}</div><div className="flex items-center gap-2 mt-0.5"><span className="text-[12px] font-black text-[#FF7A00]">{formatBRL(item.preco)}</span><span className="text-[10px] text-slate-400">• 30min</span><span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-600 font-bold">✓ Verificado</span></div></div>
-                          <button onClick={()=>addToCart(item)} className="w-9 h-9 rounded-full bg-[#0A2A6B] text-white flex items-center justify-center font-black text-[16px] group-active:scale-90 transition">+</button>
+                    <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="O que precisa montar?" className="mt-4 w-full h-[48px] bg-slate-100 rounded-full px-5 text-[15px] outline-none focus:bg-white focus:ring-2 focus:ring-[#0A2A6B]/20"/>
+                    <div className="mt-4 bg-slate-50 rounded-[1.5rem] p-2 space-y-2 max-h-[320px] overflow-auto">
+                      {filteredCatalog.slice(0,6).map(item=>(
+                        <div key={item.id} className="flex justify-between items-center p-3 rounded-2xl bg-white border hover:shadow-md transition">
+                          <div className="flex items-center gap-3"><div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0A2A6B]/5 to-[#FF7A00]/5 border flex items-center justify-center">{categoriaIcons[item.categoria]||"📦"}</div><div><div className="text-[13px] font-bold">{item.nome}</div><div className="text-[12px] text-[#FF7A00] font-black">{formatBRL(item.preco)}</div></div></div>
+                          <button onClick={()=>addToCart(item)} className="w-9 h-9 rounded-full bg-[#0A2A6B] text-white font-black">+</button>
                         </div>
                       ))}
                     </div>
-                    {cart.length>0 && (
-                      <div className="mt-3 p-3">
-                        <div className="rounded-[1.5rem] bg-gradient-to-br from-[#0A2A6B] to-[#1e40af] p-4 text-white shadow-lg">
-                          <div className="flex justify-between items-center"><span className="text-[13px] font-bold opacity-80">{cart.reduce((s,i)=>s+i.qtd,0)} itens • Frete grátis SP</span><span className="text-[18px] font-black">{formatBRL(total)}</span></div>
-                          <button onClick={()=>{setOrderStep(1); setShowOrderFlow(true);}} className="mt-3 w-full h-11 rounded-full bg-white text-[#0A2A6B] font-black text-[13px] active:scale-[0.98] transition">CONTINUAR • {formatBRL(total)} →</button>
-                        </div>
-                      </div>
-                    )}
+                    {cart.length>0 && <div className="mt-4 p-4 rounded-2xl bg-[#0A2A6B] text-white flex justify-between font-black"><span>{cart.length} itens</span><span>{formatBRL(total)}</span></div>}
                   </div>
                 </div>
               </div>
             </div>
           </section>
 
-
-          {/* CATÁLOGO INTELIGENTE ULTRA PREMIUM - MANTENDO TODAS FUNÇÕES */}
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
-            {/* HEADER INTELIGENTE COM BUSCA IA */}
-            <div className="relative overflow-hidden rounded-[2rem] sm:rounded-[2.5rem] bg-gradient-to-br from-[#0A2A6B] via-[#102a7d] to-[#1e3a8a] p-[1px] shadow-[0_20px_60px_-20px_rgba(10,42,107,0.4)]">
-              <div className="bg-white rounded-[1.9rem] sm:rounded-[2.4rem] overflow-hidden">
-                {/* Top bar inteligente */}
-                <div className="bg-gradient-to-r from-slate-50 to-white border-b border-slate-100 p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#0A2A6B] to-[#FF7A00] flex items-center justify-center shadow-lg shadow-[#0A2A6B]/20 shrink-0">
-                      <span className="text-white text-[20px]">🧠</span>
-                    </div>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h2 className="font-black text-[18px] sm:text-[22px] tracking-tight leading-none">CATÁLOGO <span className="text-[#FF7A00]">INTELIGENTE</span></h2>
-                        <span className="px-2.5 py-1 rounded-full bg-[#0A2A6B] text-white text-[10px] font-black tracking-widest">330 SERVIÇOS</span>
-                        <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[10px] font-black">🟢 AO VIVO • REALTIME 2S</span>
-                      </div>
-                      <div className="flex items-center gap-2 mt-1.5 text-[11px] text-slate-500 font-medium">
-                        <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>{filteredCatalog.length} encontrados • {cart.reduce((s,i)=>s+i.qtd,0)} no carrinho</span>
-                        <span className="hidden sm:inline">• Foto galeria 300x300 • Touch 44px</span>
-                      </div>
+            <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#0A2A6B] via-[#102a7d] to-[#1e3a8a] p-[1px] shadow-[0_20px_60px_-20px_rgba(10,42,107,0.4)]">
+              <div className="bg-white rounded-[1.9rem] overflow-hidden">
+                <div className="bg-gradient-to-r from-slate-50 to-white border-b border-slate-100 p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#0A2A6B] to-[#FF7A00] flex items-center justify-center shadow">🧠</div>
+                    <div>
+                      <div className="flex items-center gap-2"><h2 className="font-black text-[18px] sm:text-[22px] tracking-tight">CATÁLOGO <span className="text-[#FF7A00]">INTELIGENTE</span></h2><span className="px-2.5 py-1 rounded-full bg-[#0A2A6B] text-white text-[10px] font-black">{CATALOGO.length}</span></div>
+                      <div className="text-[11px] text-slate-500 mt-1">{filteredCatalog.length} encontrados • {cart.reduce((s,i)=>s+i.qtd,0)} no carrinho • 🟢 {isLive ? "Ao vivo" : "Offline"}</div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1.5 bg-slate-100 rounded-full p-1">
-                      <button onClick={()=>setViewMode("grid")} className={`w-9 h-9 rounded-full flex items-center justify-center text-[14px] transition-all ${viewMode==="grid" ? "bg-white shadow text-[#0A2A6B] shadow-sm" : "text-slate-400 hover:text-slate-600"}`}>◫</button>
-                      <button onClick={()=>setViewMode("list")} className={`w-9 h-9 rounded-full flex items-center justify-center text-[14px] transition-all ${viewMode==="list" ? "bg-white shadow text-[#0A2A6B]" : "text-slate-400"}`}>☰</button>
+                  <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
+                    <div className="flex items-center gap-1 bg-slate-100 rounded-full p-1 shrink-0">
+                      <button onClick={()=>setViewMode("grid")} className={`w-9 h-9 rounded-full flex items-center justify-center ${viewMode==="grid" ? "bg-white shadow text-[#0A2A6B]" : "text-slate-400"}`}>◫</button>
+                      <button onClick={()=>setViewMode("list")} className={`w-9 h-9 rounded-full flex items-center justify-center ${viewMode==="list" ? "bg-white shadow text-[#0A2A6B]" : "text-slate-400"}`}>☰</button>
                     </div>
-                    <select value={sortBy} onChange={e=>setSortBy(e.target.value)} className="h-10 px-4 rounded-full bg-slate-900 text-white border-0 text-[12px] font-bold outline-none focus:ring-2 focus:ring-[#0A2A6B]/30 cursor-pointer">
-                      <option value="popular">🔥 Mais pedidos</option>
-                      <option value="menor">💰 Menor preço</option>
-                      <option value="maior">💎 Maior preço</option>
+                    <select value={sortBy} onChange={e=>setSortBy(e.target.value)} className="h-10 px-4 rounded-full bg-slate-900 text-white text-[12px] font-bold outline-none shrink-0">
+                      <option value="popular">🔥 Popular</option>
+                      <option value="menor">💰 Menor</option>
+                      <option value="maior">💎 Maior</option>
                       <option value="nome">🔤 A-Z</option>
                     </select>
-                    <select value={priceFilter} onChange={e=>setPriceFilter(e.target.value)} className="h-10 px-4 rounded-full bg-white border border-slate-200 text-[12px] font-bold outline-none focus:ring-2 focus:ring-[#0A2A6B]/20 cursor-pointer">
+                    <select value={priceFilter} onChange={e=>setPriceFilter(e.target.value)} className="h-10 px-4 rounded-full bg-white border text-[12px] font-bold outline-none shrink-0">
                       <option value="todos">💵 Todos</option>
                       <option value="ate100">Até R$100</option>
                       <option value="100a200">R$100-200</option>
@@ -409,94 +374,67 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* BUSCA INTELIGENTE + CATEGORIAS */}
-                <div className="p-4 sm:p-5 space-y-4">
-                  {/* Busca com sugestões inteligentes */}
+                <div className="p-5 space-y-4">
                   <div className="relative max-w-2xl">
-                    <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar: guarda-roupa, mesa, estante, cômoda, rack... (como no seu estoque da foto)" className="w-full h-[56px] bg-slate-100 rounded-full pl-6 pr-[140px] text-[15px] font-medium outline-none focus:bg-white focus:ring-2 focus:ring-[#0A2A6B]/20 border-2 border-transparent focus:border-[#0A2A6B]/10 transition-all"/>
-                    <div className="absolute right-1.5 top-1.5 flex items-center gap-1.5">
-                      {search && <button onClick={()=>setSearch("")} className="w-10 h-10 rounded-full bg-slate-200 hover:bg-slate-300 flex items-center justify-center text-slate-500 transition">✕</button>}
-                      <div className="w-11 h-11 rounded-full bg-[#0A2A6B] text-white flex items-center justify-center shadow-lg">⌕</div>
+                    <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar: guarda-roupa, mesa, estante, cômoda... (seu estoque real)" className="w-full h-[56px] bg-slate-100 rounded-full pl-6 pr-[120px] text-[15px] font-medium outline-none focus:bg-white focus:ring-2 focus:ring-[#0A2A6B]/20 border-2 border-transparent"/>
+                    <div className="absolute right-1.5 top-1.5 flex gap-1">
+                      {search && <button onClick={()=>setSearch("")} className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center">✕</button>}
+                      <div className="w-11 h-11 rounded-full bg-[#0A2A6B] text-white flex items-center justify-center">⌕</div>
                     </div>
-                    {search && (
-                      <div className="absolute top-full mt-2 w-full bg-white rounded-2xl border shadow-xl p-2 z-10">
-                        <div className="text-[10px] font-black tracking-widest text-slate-400 px-3 py-1">SUGESTÕES INTELIGENTES</div>
-                        {CATEGORIAS.filter(c=> normalize(c).includes(normalize(search))).slice(0,3).map(c=>(
-                          <button key={c} onClick={()=>{setCatFilter(c); setSearch("");}} className="w-full text-left px-3 py-2 rounded-xl hover:bg-slate-50 flex items-center gap-2 text-sm font-bold"><span>{categoriaIcons[c]||"📦"}</span>{c} <span className="ml-auto text-xs text-slate-400">{categoriaCounts[c]} itens</span></button>
-                        ))}
-                      </div>
-                    )}
                   </div>
 
-                  {/* CATEGORIAS PREMIUM COM VISUAL INTELIGENTE */}
-                  <div className="flex gap-2.5 overflow-x-auto scrollbar-none pb-2 -mx-1 px-1 snap-x">
+                  <div className="flex gap-2.5 overflow-x-auto scrollbar-none pb-2 -mx-1 px-1">
                     {["TODAS", ...CATEGORIAS].map(cat=>{
                       const isActive = catFilter===cat;
-                      const isPopular = ["GUARDA-ROUPA","MESA","ESTANTE","RACK"].includes(cat);
                       return (
-                        <button key={cat} onClick={()=>setCatFilter(cat)} className={`snap-start group relative whitespace-nowrap h-[48px] px-5 rounded-full text-[12px] font-black border flex items-center gap-2.5 active:scale-95 transition-all shrink-0 ${isActive ? "bg-[#0A2A6B] text-white border-[#0A2A6B] shadow-[0_8px_20px_-8px_rgba(10,42,107,0.5)]" : "bg-white text-slate-700 border-slate-200 hover:border-[#0A2A6B]/20 hover:shadow-md"}`}>
-                          <span className={`w-7 h-7 rounded-full flex items-center justify-center text-[14px] ${isActive ? "bg-white/20" : "bg-slate-100 group-hover:bg-[#0A2A6B]/10"} transition`}>{categoriaIcons[cat]||"📦"}</span>
-                          <span className="tracking-tight">{cat}</span>
-                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-black ${isActive ? "bg-white text-[#0A2A6B]" : "bg-slate-100 text-slate-600"}`}>{categoriaCounts[cat]||0}</span>
-                          {isPopular && !isActive && <span className="absolute -top-1.5 -right-1.5 w-2.5 h-2.5 bg-[#FF7A00] rounded-full border-2 border-white animate-pulse"></span>}
+                        <button key={cat} onClick={()=>setCatFilter(cat)} className={`whitespace-nowrap h-[46px] px-5 rounded-full text-[12px] font-black border flex items-center gap-2 active:scale-95 transition shrink-0 ${isActive ? "bg-[#0A2A6B] text-white border-[#0A2A6B] shadow-lg" : "bg-white text-slate-700 border-slate-200 hover:border-[#0A2A6B]/20"}`}>
+                          <span className={`w-7 h-7 rounded-full flex items-center justify-center ${isActive ? "bg-white/20" : "bg-slate-100"}`}>{categoriaIcons[cat]||"📦"}</span>
+                          {cat}
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-black ${isActive ? "bg-white text-[#0A2A6B]" : "bg-slate-100"}`}>{categoriaCounts[cat]||0}</span>
                         </button>
                       );
                     })}
                   </div>
 
-                  {/* FILTROS INTELIGENTES ATIVOS */}
                   {(catFilter!=="TODAS" || priceFilter!=="todos" || search) && (
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-[10px] font-black tracking-widest text-slate-400">FILTROS:</span>
-                      {catFilter!=="TODAS" && <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#0A2A6B] text-white text-[11px] font-bold">{categoriaIcons[catFilter]} {catFilter} <button onClick={()=>setCatFilter("TODAS")} className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center">✕</button></span>}
-                      {priceFilter!=="todos" && <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#FF7A00] text-white text-[11px] font-bold">💰 {priceFilter} <button onClick={()=>setPriceFilter("todos")} className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center">✕</button></span>}
-                      {search && <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-900 text-white text-[11px] font-bold">🔍 "{search}" <button onClick={()=>setSearch("")} className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center">✕</button></span>}
-                      <button onClick={()=>{setCatFilter("TODAS"); setPriceFilter("todos"); setSearch("");}} className="px-3 py-1.5 rounded-full bg-slate-100 border text-[11px] font-bold hover:bg-white transition">Limpar tudo</button>
+                      {catFilter!=="TODAS" && <span className="px-3 py-1.5 rounded-full bg-[#0A2A6B] text-white text-[11px] font-bold">{catFilter} <button onClick={()=>setCatFilter("TODAS")} className="ml-1 w-4 h-4 rounded-full bg-white/20">✕</button></span>}
+                      {priceFilter!=="todos" && <span className="px-3 py-1.5 rounded-full bg-[#FF7A00] text-white text-[11px] font-bold">{priceFilter} <button onClick={()=>setPriceFilter("todos")} className="ml-1 w-4 h-4 rounded-full bg-white/20">✕</button></span>}
+                      {search && <span className="px-3 py-1.5 rounded-full bg-slate-900 text-white text-[11px] font-bold">"{search}" <button onClick={()=>setSearch("")} className="ml-1 w-4 h-4 rounded-full bg-white/20">✕</button></span>}
+                      <button onClick={()=>{setCatFilter("TODAS"); setPriceFilter("todos"); setSearch("");}} className="px-3 py-1.5 rounded-full bg-slate-100 border text-[11px] font-bold">Limpar tudo</button>
                     </div>
                   )}
                 </div>
               </div>
             </div>
 
-            {/* GRID INTELIGENTE ULTRA PREMIUM */}
-            <div className={`mt-6 grid gap-4 sm:gap-5 ${viewMode==="grid" ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"}`}>
+            <div className={`mt-6 grid gap-5 ${viewMode==="grid" ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" : "grid-cols-1"}`}>
               {filteredCatalog.slice(0, showCount).map(item=>{
                 const isFav = favoritos.includes(item.id);
-                const qtdNoCarrinho = cart.find(c=>c.id===item.id)?.qtd || 0;
+                const qtd = cart.find(c=>c.id===item.id)?.qtd || 0;
                 const isPopular = item.id % 3 === 0;
                 const isNovo = item.id > 300;
                 const temDesconto = item.id % 6 === 0;
-                const descontoValor = temDesconto ? Math.round(item.preco * 0.15) : 0;
                 return (
-                  <div key={item.id} className={`group relative bg-white rounded-[1.9rem] border border-slate-200/60 shadow-[0_8px_30px_-16px_rgba(0,0,0,0.15)] hover:shadow-[0_24px_70px_-20px_rgba(10,42,107,0.3)] hover:-translate-y-1.5 active:scale-[0.99] transition-all duration-500 overflow-hidden flex ${viewMode==="list" ? "flex-row items-stretch" : "flex-col"}`}>
-                    {/* IMAGEM PREMIUM INTELIGENTE */}
-                    <div className={`${viewMode==="list" ? "w-[112px] sm:w-[140px] shrink-0" : "h-[120px]"} relative overflow-hidden bg-gradient-to-br from-[#0A2A6B]/[0.03] via-white to-[#FF7A00]/[0.08] flex items-center justify-center`}>
+                  <div key={item.id} className="group relative bg-white rounded-[1.9rem] border border-slate-200/60 shadow-[0_8px_30px_-16px_rgba(0,0,0,0.15)] hover:shadow-[0_24px_70px_-20px_rgba(10,42,107,0.3)] hover:-translate-y-1.5 active:scale-[0.99] transition-all duration-500 overflow-hidden flex flex-col">
+                    <div className="h-[112px] relative overflow-hidden bg-gradient-to-br from-[#0A2A6B]/[0.03] via-white to-[#FF7A00]/[0.08] flex items-center justify-center">
                       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(255,122,0,0.12),_transparent_50%)]"></div>
-                      <div className="absolute inset-0 opacity-[0.03]" style={{backgroundImage: `repeating-linear-gradient(45deg, #0A2A6B 0, #0A2A6B 1px, transparent 0, transparent 50%)`}}></div>
-                      
-                      {/* Ícone com efeito 3D */}
-                      <div className="relative z-10">
+                      <div className="relative">
                         <div className="absolute inset-0 blur-xl bg-gradient-to-br from-[#0A2A6B]/20 to-[#FF7A00]/20 rounded-full scale-150 group-hover:scale-[1.8] transition-transform duration-700"></div>
-                        <div className="relative w-[64px] h-[64px] rounded-[1.3rem] bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 shadow-[0_8px_20px_-8px_rgba(0,0,0,0.15)] flex items-center justify-center text-[30px] group-hover:scale-110 group-hover:rotate-[-3deg] transition-all duration-500">
-                          {categoriaIcons[item.categoria]||"📦"}
-                        </div>
+                        <div className="relative w-[64px] h-[64px] rounded-[1.3rem] bg-gradient-to-br from-white to-slate-50 border shadow-[0_8px_20px_-8px_rgba(0,0,0,0.15)] flex items-center justify-center text-[30px] group-hover:scale-110 group-hover:rotate-[-3deg] transition-all duration-500">{categoriaIcons[item.categoria]||"📦"}</div>
                       </div>
-
-                      {/* Badges inteligentes */}
-                      <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-20">
-                        {isPopular && <span className="px-2.5 py-1 rounded-full bg-gradient-to-r from-[#FF7A00] to-[#ff9500] text-white text-[8px] font-black tracking-widest shadow-lg shadow-[#FF7A00]/20 flex items-center gap-1">🔥 MAIS PEDIDO</span>}
-                        {isNovo && <span className="px-2.5 py-1 rounded-full bg-emerald-500 text-white text-[8px] font-black tracking-widest shadow">✨ NOVO</span>}
+                      <div className="absolute top-3 left-3 flex flex-col gap-1.5">
+                        {isPopular && <span className="px-2.5 py-1 rounded-full bg-gradient-to-r from-[#FF7A00] to-[#ff9500] text-white text-[8px] font-black tracking-widest shadow">🔥 MAIS PEDIDO</span>}
+                        {isNovo && <span className="px-2.5 py-1 rounded-full bg-emerald-500 text-white text-[8px] font-black tracking-widest">✨ NOVO</span>}
                       </div>
-                      <div className="absolute top-3 right-3 flex flex-col gap-1.5 z-20 items-end">
-                        {temDesconto && <span className="px-2.5 py-1 rounded-full bg-slate-900 text-white text-[9px] font-black shadow">-{formatBRL(descontoValor)} OFF</span>}
-                        <button onClick={()=>toggleFav(item.id)} className={`w-8 h-8 rounded-full backdrop-blur-xl border shadow-sm flex items-center justify-center text-[14px] active:scale-90 transition-all ${isFav ? "bg-red-500 border-red-500 text-white shadow-red-500/20 shadow-lg" : "bg-white/90 border-white text-slate-400 hover:text-red-500 hover:bg-white"}`}>{isFav ? "♥" : "♡"}</button>
+                      <div className="absolute top-3 right-3 flex flex-col gap-1.5 items-end">
+                        {temDesconto && <span className="px-2.5 py-1 rounded-full bg-slate-900 text-white text-[9px] font-black">-15% OFF</span>}
+                        <button onClick={()=>toggleFav(item.id)} className={`w-8 h-8 rounded-full backdrop-blur-xl border shadow-sm flex items-center justify-center text-[14px] active:scale-90 transition ${isFav ? "bg-red-500 border-red-500 text-white shadow-lg" : "bg-white/90 border-white text-slate-400"}`}>{isFav ? "♥" : "♡"}</button>
                       </div>
-
-                      {/* ID discreto */}
-                      <div className="absolute bottom-2 left-3 px-2 py-0.5 rounded-full bg-white/80 backdrop-blur border border-slate-200/50 text-[8px] font-black tracking-widest text-slate-500">ID {item.id} • 30-60min • Garantia</div>
+                      <div className="absolute bottom-2 left-3 px-2 py-0.5 rounded-full bg-white/80 backdrop-blur border text-[8px] font-black tracking-widest text-slate-500">ID {item.id} • 30-60min • Garantia</div>
                     </div>
 
-                    {/* CONTEÚDO PREMIUM */}
                     <div className="p-5 flex-1 flex flex-col min-w-0">
                       <div className="flex items-start justify-between gap-2 mb-3">
                         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0A2A6B]/[0.06] border border-[#0A2A6B]/10">
@@ -508,166 +446,113 @@ export default function App() {
                           <span className="text-[9px] font-black tracking-widest text-emerald-600">VERIFICADO</span>
                         </div>
                       </div>
-
-                      <h3 className="font-black text-[16px] sm:text-[17px] leading-[1.15] tracking-tight line-clamp-2 min-h-[40px] group-hover:text-[#0A2A6B] transition-colors">{item.nome}</h3>
-                      
+                      <h3 className="font-black text-[16px] leading-[1.15] tracking-tight line-clamp-2 min-h-[38px] group-hover:text-[#0A2A6B] transition-colors">{item.nome}</h3>
                       <div className="mt-3 flex flex-wrap gap-1.5">
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-100 text-[10px] font-bold text-emerald-700">✓ Montador verificado</span>
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-50 border border-blue-100 text-[10px] font-bold text-blue-700">⏱️ 30min chegada</span>
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 border border-amber-100 text-[10px] font-bold text-amber-700">🛡️ 12 meses garantia</span>
+                        <span className="px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-100 text-[10px] font-bold text-emerald-700">✓ Verificado</span>
+                        <span className="px-2.5 py-1 rounded-full bg-blue-50 border border-blue-100 text-[10px] font-bold text-blue-700">⏱️ 30min</span>
+                        <span className="px-2.5 py-1 rounded-full bg-amber-50 border border-amber-100 text-[10px] font-bold text-amber-700">🛡️ 12 meses</span>
                       </div>
-
-                      <div className="mt-3 text-[12px] leading-[1.5] text-slate-500 line-clamp-2 min-h-[36px]">Montagem profissional com ferramentas inclusas, limpeza pós-montagem e teste completo. Foto obrigatória galeria 300x300. Como seu estoque real MESA, GUARDA-ROUPA, ESTANTE.</div>
-
-                      {/* Preço inteligente */}
-                      <div className="mt-auto pt-4">
-                        <div className="flex items-end justify-between gap-3">
-                          <div className="min-w-0 flex-1">
-                            <div className="text-[10px] font-black tracking-[0.2em] text-slate-400">A PARTIR DE</div>
-                            <div className="flex items-baseline gap-2 flex-wrap">
-                              <div className="text-[24px] font-black tracking-tight text-[#FF7A00] leading-none">{formatBRL(item.preco)}</div>
-                              {temDesconto && <div className="text-[12px] font-bold text-slate-400 line-through">{formatBRL(item.preco + descontoValor)}</div>}
-                              {temDesconto && <span className="px-2 py-0.5 rounded-full bg-emerald-500 text-white text-[9px] font-black">ECONOMIA {formatBRL(descontoValor)}</span>}
-                            </div>
-                            <div className="text-[11px] font-medium text-slate-500 mt-1.5 leading-tight">
-                              <span className="font-bold text-slate-700">💳 12x de {formatBRL(item.preco/12)} sem juros</span> • <span className="text-emerald-600 font-bold">Pix 10% OFF</span><br/>
-                              <span className="text-[10px]">90% vai para montador verificado • 10% plataforma</span>
-                            </div>
+                      <div className="mt-3 text-[12px] leading-[1.5] text-slate-500 line-clamp-2 min-h-[36px]">Montagem profissional com ferramentas inclusas, limpeza pós-montagem e teste completo. Como seu estoque MESA, GUARDA-ROUPA, ESTANTE.</div>
+                      <div className="mt-auto pt-4 flex items-end justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <div className="text-[10px] font-black tracking-[0.2em] text-slate-400">A PARTIR DE</div>
+                          <div className="flex items-baseline gap-2">
+                            <div className="text-[22px] font-black tracking-tight text-[#FF7A00] leading-none">{formatBRL(item.preco)}</div>
+                            {temDesconto && <div className="text-[11px] font-bold text-slate-400 line-through">{formatBRL(item.preco*1.15)}</div>}
                           </div>
-                          <div className="shrink-0">
-                            {qtdNoCarrinho>0 ? (
-                              <div className="flex flex-col items-center gap-2">
-                                <div className="flex items-center gap-1 bg-slate-900 text-white rounded-full p-1 shadow-lg">
-                                  <button onClick={()=>{ const c=cart.find(x=>x.id===item.id); if(c && c.qtd>1) setCart(prev=>prev.map(x=>x.id===item.id?{...x,qtd:x.qtd-1}:x)); else setCart(prev=>prev.filter(x=>x.id!==item.id)); }} className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center font-black text-[16px] active:scale-90 transition">-</button>
-                                  <span className="w-8 text-center text-[14px] font-black">{qtdNoCarrinho}</span>
-                                  <button onClick={()=>addToCart(item)} className="w-9 h-9 rounded-full bg-[#FF7A00] text-white flex items-center justify-center font-black text-[16px] active:scale-90 transition shadow">+</button>
-                                </div>
-                                <span className="text-[10px] font-black text-emerald-600">{formatBRL(item.preco*qtdNoCarrinho)} • {qtdNoCarrinho} itens</span>
+                          <div className="text-[11px] font-medium text-slate-500 mt-1">12x {formatBRL(item.preco/12)} • <span className="text-emerald-600 font-bold">Pix 10% OFF</span></div>
+                        </div>
+                        <div className="shrink-0">
+                          {qtd>0 ? (
+                            <div className="flex flex-col items-center gap-1">
+                              <div className="flex items-center gap-1 bg-slate-900 text-white rounded-full p-1 shadow-lg">
+                                <button onClick={()=>{ const c=cart.find(x=>x.id===item.id); if(c && c.qtd>1) setCart(prev=>prev.map(x=>x.id===item.id?{...x,qtd:x.qtd-1}:x)); else setCart(prev=>prev.filter(x=>x.id!==item.id)); }} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center font-black active:scale-90">-</button>
+                                <span className="w-7 text-center text-[13px] font-black">{qtd}</span>
+                                <button onClick={()=>addToCart(item)} className="w-8 h-8 rounded-full bg-[#FF7A00] text-white flex items-center justify-center font-black active:scale-90">+</button>
                               </div>
-                            ) : (
-                              <button onClick={()=>addToCart(item)} className="group/btn relative h-[48px] px-6 rounded-full bg-[#0A2A6B] text-white text-[12px] font-black tracking-widest shadow-[0_10px_24px_-8px_rgba(10,42,107,0.4)] active:scale-95 hover:bg-black transition-all flex items-center gap-2 overflow-hidden">
-                                <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-700"></span>
-                                <span className="relative">ADD</span>
-                                <span className="relative w-6 h-6 rounded-full bg-white/15 flex items-center justify-center text-[14px]">+</span>
-                              </button>
-                            )}
-                          </div>
+                              <span className="text-[10px] font-black text-emerald-600">{formatBRL(item.preco*qtd)}</span>
+                            </div>
+                          ) : (
+                            <button onClick={()=>addToCart(item)} className="h-[44px] px-5 rounded-full bg-[#0A2A6B] text-white text-[11px] font-black tracking-widest shadow-lg active:scale-95 hover:bg-black transition flex items-center gap-1.5">ADD <span className="w-5 h-5 rounded-full bg-white/15 flex items-center justify-center">+</span></button>
+                          )}
                         </div>
                       </div>
                     </div>
-
-                    {/* Borda premium hover */}
-                    <div className="absolute inset-0 rounded-[1.9rem] border-2 border-transparent group-hover:border-[#0A2A6B]/10 pointer-events-none transition-colors"></div>
-                    <div className="absolute bottom-0 left-6 right-6 h-[3px] bg-gradient-to-r from-[#0A2A6B] via-[#1e40af] to-[#FF7A00] opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-full"></div>
+                    <div className="absolute bottom-0 left-6 right-6 h-[3px] bg-gradient-to-r from-[#0A2A6B] via-[#1e40af] to-[#FF7A00] opacity-0 group-hover:opacity-100 transition-opacity rounded-full"></div>
                   </div>
                 );
               })}
             </div>
 
-            {/* LOAD MORE INTELIGENTE */}
             {showCount < filteredCatalog.length ? (
               <div className="mt-10 flex flex-col items-center gap-4">
-                <div className="bg-white rounded-full border shadow-sm px-5 py-2.5 flex items-center gap-3">
-                  <div className="text-[11px] font-bold tracking-widest text-slate-500">Mostrando <span className="text-[#0A2A6B] font-black">{Math.min(showCount, filteredCatalog.length)}</span> de <span className="text-[#0A2A6B] font-black">{filteredCatalog.length}</span> • {CATALOGO.length} total</div>
-                  <div className="w-px h-4 bg-slate-200"></div>
-                  <div className="text-[11px] font-bold text-emerald-600">🟢 {users.filter(u=>u.role==="montador").length || 12} montadores online</div>
-                </div>
-                <button onClick={()=>setShowCount(prev=>prev+24)} className="group h-14 px-10 rounded-full bg-slate-900 text-white font-black text-[13px] tracking-widest shadow-xl hover:bg-black active:scale-[0.98] transition-all flex items-center gap-3">
-                  <span>CARREGAR MAIS +24 SERVIÇOS</span>
-                  <span className="w-7 h-7 rounded-full bg-white/15 flex items-center justify-center group-hover:translate-y-0.5 transition">↓</span>
-                </button>
-                <div className="w-full max-w-md h-1.5 bg-slate-100 rounded-full overflow-hidden p-1">
-                  <div className="h-full bg-gradient-to-r from-[#0A2A6B] to-[#FF7A00] rounded-full transition-all duration-700" style={{width: `${(Math.min(showCount, filteredCatalog.length)/filteredCatalog.length)*100}%`}}></div>
-                </div>
-                <div className="text-[10px] font-bold tracking-widest text-slate-400">{Math.round((Math.min(showCount, filteredCatalog.length)/filteredCatalog.length)*100)}% carregado • {filteredCatalog.length - showCount} restantes</div>
+                <button onClick={()=>setShowCount(prev=>prev+24)} className="h-14 px-10 rounded-full bg-slate-900 text-white font-black text-[13px] tracking-widest shadow-xl hover:bg-black active:scale-[0.98] transition flex items-center gap-3">CARREGAR MAIS +24 <span className="w-7 h-7 rounded-full bg-white/15 flex items-center justify-center">↓</span></button>
+                <div className="w-full max-w-md h-1.5 bg-slate-100 rounded-full overflow-hidden p-1"><div className="h-full bg-gradient-to-r from-[#0A2A6B] to-[#FF7A00] rounded-full transition-all duration-700" style={{width: `${(Math.min(showCount, filteredCatalog.length)/filteredCatalog.length)*100}%`}}></div></div>
               </div>
             ) : filteredCatalog.length>0 ? (
-              <div className="mt-10 text-center">
-                <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[12px] font-black">✅ Todos os {filteredCatalog.length} serviços carregados • Catálogo completo</div>
-              </div>
+              <div className="mt-10 text-center"><div className="inline-flex px-5 py-2.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[12px] font-black">✅ Todos os {filteredCatalog.length} serviços carregados</div></div>
             ) : null}
 
             {filteredCatalog.length===0 && (
-              <div className="mt-8 bg-white rounded-[2rem] border-2 border-dashed border-slate-200 p-8 sm:p-12 text-center shadow-sm">
-                <div className="w-20 h-20 mx-auto rounded-full bg-slate-50 border flex items-center justify-center text-[32px]">🔍</div>
-                <div className="font-black text-[18px] mt-4 tracking-tight">Nenhum serviço encontrado</div>
-                <div className="text-[14px] text-slate-500 mt-2 max-w-md mx-auto leading-relaxed">Tente buscar por <span className="font-bold text-[#0A2A6B]">"guarda-roupa"</span>, <span className="font-bold">"mesa"</span>, <span className="font-bold">"estante"</span> como no seu estoque real da foto, ou limpe os filtros</div>
-                <div className="mt-6 flex flex-wrap justify-center gap-2">
-                  {["GUARDA-ROUPA","MESA","ESTANTE","RACK"].map(cat=>(
-                    <button key={cat} onClick={()=>{setCatFilter(cat); setSearch("");}} className="px-4 py-2 rounded-full bg-slate-100 hover:bg-[#0A2A6B] hover:text-white border font-bold text-xs transition">{categoriaIcons[cat]} {cat}</button>
-                  ))}
-                </div>
-                <button onClick={()=>{setSearch(""); setCatFilter("TODAS"); setPriceFilter("todos");}} className="mt-6 h-12 px-8 rounded-full bg-[#0A2A6B] text-white font-black text-sm shadow-lg hover:bg-black transition">Limpar tudo • Ver {CATALOGO.length} serviços premium</button>
+              <div className="mt-8 bg-white rounded-[2rem] border-2 border-dashed border-slate-200 p-10 text-center">
+                <div className="text-[40px]">🔍</div>
+                <div className="font-black text-[16px] mt-3">Nenhum serviço encontrado</div>
+                <div className="text-[13px] text-slate-500 mt-1">Tente "guarda-roupa", "mesa", "estante" como no seu estoque</div>
+                <button onClick={()=>{setSearch(""); setCatFilter("TODAS"); setPriceFilter("todos");}} className="mt-4 h-11 px-6 rounded-full bg-[#0A2A6B] text-white font-bold text-sm">Limpar filtros • Ver {CATALOGO.length}</button>
               </div>
             )}
           </div>
+        </>
+      )}
 
-
-      {/* PAINEL CLIENTE PREMIUM */}
       {view==="cliente" && currentUser && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
           <div className="flex flex-wrap gap-2 mb-6">
             {["pedidos","suporte","perfil"].map(tab=>(
-              <button key={tab} onClick={()=>setClienteTab(tab)} className={`h-10 px-5 rounded-full text-sm font-bold border transition ${clienteTab===tab ? "bg-[#0A2A6B] text-white border-[#0A2A6B]" : "bg-white border-slate-200"}`}>{tab.toUpperCase()}</button>
+              <button key={tab} onClick={()=>setClienteTab(tab)} className={`h-10 px-5 rounded-full text-sm font-bold border ${clienteTab===tab ? "bg-[#0A2A6B] text-white border-[#0A2A6B]" : "bg-white border-slate-200"}`}>{tab.toUpperCase()}</button>
             ))}
           </div>
-
           {clienteTab==="pedidos" && (
             <div className="space-y-4">
-              <div className="flex justify-between items-center"><h3 className="font-black text-lg">📦 Meus Pedidos • Ao Vivo 🟢 {orders.filter(o=>o.cliente_id==currentUser.id).length}</h3><button onClick={()=>setShowOrderFlow(true)} className="h-10 px-5 rounded-full bg-[#0A2A6B] text-white text-sm font-bold">+ Novo Pedido</button></div>
-              {orders.filter(o=>o.cliente_id==currentUser.id).length===0 ? (
-                <div className="bg-white rounded-[1.7rem] p-10 text-center border shadow-sm"><div className="text-4xl">📦</div><div className="font-bold mt-2">Nenhum pedido</div><div className="text-xs text-slate-400 mt-1">Faça seu primeiro pedido premium</div><button onClick={()=>setShowOrderFlow(true)} className="mt-4 h-12 px-8 rounded-full bg-[#0A2A6B] text-white font-bold">Solicitar montador</button></div>
-              ) : orders.filter(o=>o.cliente_id==currentUser.id).map(p=>{
-                const montador = users.find(u=>u.id==p.montador_id);
-                return (
-                  <div key={p.id} className="bg-white rounded-[1.7rem] p-5 border shadow-sm">
-                    <div className="flex justify-between"><span className="font-black text-[#0A2A6B]">Pedido #{p.id}</span><span className={`text-xs px-3 py-1 rounded-full font-bold ${p.status==="finalizado"?"bg-green-100 text-green-700":p.status==="aceito"?"bg-blue-100 text-blue-700":p.status==="cancelado"?"bg-red-100 text-red-700":"bg-yellow-100 text-yellow-700"}`}>{p.status?.toUpperCase()}</span></div>
-                    <div className="mt-3 text-sm bg-slate-50 p-3 rounded-xl"><div className="font-bold">Itens: {(p.itens||[]).map(i=>`${i.nome} x${i.qtd}`).join(", ")}</div><div className="font-black mt-1 text-[#FF7A00]">Total {formatBRL(p.total)} • {p.cidade}</div><div className="text-xs text-slate-500 mt-1">{p.endereco} • {p.data} {p.horario}</div></div>
-                    {p.status==="aguardando_comprovante" && (
-                      <div className="mt-3 p-4 bg-yellow-50 border-2 border-yellow-300 rounded-2xl">
-                        <div className="text-sm font-bold">📤 Envie comprovante PIX • {formatBRL(p.total)}</div>
-                        <div className="text-xs mt-1">Chave: <b>{PIX_KEY}</b></div>
-                        <input type="file" accept="image/*" onChange={e=>{ const r=new FileReader(); r.onload=()=>setComprovante(r.result); r.readAsDataURL(e.target.files[0]); }} className="mt-3 w-full text-xs"/>
-                        <button onClick={()=>enviarComprovante(p.id, comprovante)} className="w-full mt-3 h-12 rounded-full bg-[#0A2A6B] text-white font-bold">ENVIAR COMPROVANTE 🔔</button>
-                      </div>
-                    )}
-                    {p.status==="aceito" && montador && (
-                      <div className="mt-3 p-4 bg-blue-50 border-2 border-blue-300 rounded-2xl">
-                        <div className="font-bold text-[#0A2A6B]">🔧 Montador a caminho • {montador.nome} ⭐{Number(montador.avaliacao||5).toFixed(1)}</div>
-                        <div className="text-sm mt-1">📱 {montador.telefone}</div>
-                        <div className="flex gap-2 mt-3"><a href={`https://wa.me/55${(montador.telefone||"").replace(/\D/g,"")}?text=Olá ${montador.nome} pedido #${p.id}`} target="_blank" className="flex-1 h-11 rounded-full bg-green-600 text-white flex items-center justify-center font-bold text-sm">WhatsApp</a><a href={`tel:${montador.telefone}`} className="flex-1 h-11 rounded-full bg-[#0A2A6B] text-white flex items-center justify-center font-bold text-sm">Ligar</a></div>
-                      </div>
-                    )}
-                    {(p.status==="aguardando_comprovante" || p.status==="aguardando_confirmacao_adm" || p.status==="aguardando_montador") && <button onClick={()=>cancelarPedido(p.id)} className="mt-3 w-full h-11 rounded-full bg-red-50 border border-red-200 text-red-600 font-bold text-sm">Cancelar pedido</button>}
-                  </div>
-                );
-              })}
+              <div className="flex justify-between items-center"><h3 className="font-black text-lg">Meus Pedidos • {orders.filter(o=>o.cliente_id==currentUser.id).length}</h3><button onClick={()=>setShowOrderFlow(true)} className="h-10 px-5 rounded-full bg-[#0A2A6B] text-white text-sm font-bold">+ Novo Pedido</button></div>
+              {orders.filter(o=>o.cliente_id==currentUser.id).map(p=>(
+                <div key={p.id} className="bg-white rounded-[1.7rem] p-5 border shadow-sm">
+                  <div className="flex justify-between"><span className="font-black">Pedido #{p.id}</span><span className={`text-xs px-3 py-1 rounded-full font-bold ${p.status==="finalizado"?"bg-green-100 text-green-700":p.status==="aceito"?"bg-blue-100 text-blue-700":"bg-yellow-100 text-yellow-700"}`}>{p.status?.toUpperCase()}</span></div>
+                  <div className="mt-3 text-sm bg-slate-50 p-3 rounded-xl"><div className="font-bold">{(p.itens||[]).map(i=>`${i.nome} x${i.qtd}`).join(", ")}</div><div className="font-black mt-1 text-[#FF7A00]">{formatBRL(p.total)} • {p.cidade}</div></div>
+                  {p.status==="aguardando_comprovante" && (
+                    <div className="mt-3 p-4 bg-yellow-50 border-2 border-yellow-300 rounded-2xl">
+                      <div className="text-sm font-bold">Envie comprovante PIX • {formatBRL(p.total)}</div>
+                      <div className="text-xs mt-1">Chave: <b>{PIX_KEY}</b></div>
+                      <input type="file" accept="image/*" onChange={e=>{ const r=new FileReader(); r.onload=()=>setComprovante(r.result); r.readAsDataURL(e.target.files[0]); }} className="mt-3 w-full text-xs"/>
+                      <button onClick={()=>enviarComprovante(p.id, comprovante)} className="w-full mt-3 h-12 rounded-full bg-[#0A2A6B] text-white font-bold">ENVIAR COMPROVANTE</button>
+                    </div>
+                  )}
+                  {(p.status==="aguardando_comprovante" || p.status==="aguardando_confirmacao_adm" || p.status==="aguardando_montador") && <button onClick={()=>cancelarPedido(p.id)} className="mt-3 w-full h-11 rounded-full bg-red-50 border border-red-200 text-red-600 font-bold text-sm">Cancelar pedido</button>}
+                </div>
+              ))}
             </div>
           )}
-
           {clienteTab==="suporte" && (
             <div className="bg-white rounded-[1.7rem] border shadow-sm overflow-hidden flex flex-col h-[70vh]">
-              <div className="p-4 border-b font-black">💬 Suporte 24h • Ao Vivo 🟢</div>
+              <div className="p-4 border-b font-black">Suporte 24h • Ao Vivo</div>
               <div className="flex-1 overflow-auto p-4 space-y-3">
                 {supportMessages.filter(m=>m.user_id==currentUser.id).map(m=>(
-                  <div key={m.id} className={`max-w-[80%] p-3 rounded-2xl text-sm ${m.from_admin ? "bg-[#0A2A6B] text-white self-start" : "bg-slate-100 self-end ml-auto"}`}><div className="font-bold text-[11px] opacity-70">{m.from_admin ? "ADM" : "Você"}</div>{m.mensagem}</div>
+                  <div key={m.id} className={`max-w-[80%] p-3 rounded-2xl text-sm ${m.from_admin ? "bg-[#0A2A6B] text-white" : "bg-slate-100 ml-auto"}`}>{m.mensagem}</div>
                 ))}
                 <div ref={supportEndRef}></div>
               </div>
               <div className="p-4 border-t flex gap-2"><input value={supportInput} onChange={e=>setSupportInput(e.target.value)} placeholder="Digite mensagem..." className="flex-1 h-12 bg-slate-100 rounded-full px-5 outline-none"/><button onClick={enviarSuporte} className="w-12 h-12 rounded-full bg-[#0A2A6B] text-white font-bold">➤</button></div>
             </div>
           )}
-
           {clienteTab==="perfil" && (
             <div className="space-y-4 max-w-xl">
-              <div className="bg-white rounded-[1.7rem] p-6 border shadow-sm"><div className="font-black text-lg">{currentUser.nome}</div><div className="text-sm text-slate-500 mt-1">📱 {currentUser.telefone} • {currentUser.email}</div><div className="text-sm mt-1">📍 {currentUser.cidade}</div></div>
-              <button onClick={excluirMeuCadastro} className="w-full h-12 rounded-full bg-red-50 border border-red-200 text-red-600 font-bold">Excluir cadastro LGPD</button>
+              <div className="bg-white rounded-[1.7rem] p-6 border shadow-sm"><div className="font-black text-lg">{currentUser.nome}</div><div className="text-sm text-slate-500 mt-1">{currentUser.telefone} • {currentUser.email}</div></div>
+              <button onClick={excluirMeuCadastro} className="w-full h-12 rounded-full bg-red-50 border border-red-200 text-red-600 font-bold">Excluir cadastro</button>
             </div>
           )}
         </div>
       )}
 
-      {/* PAINEL MONTADOR PREMIUM */}
       {view==="montador" && currentUser && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
           <div className="flex flex-wrap gap-2 mb-6">
@@ -675,63 +560,55 @@ export default function App() {
               <button key={tab} onClick={()=>setMontadorTab(tab)} className={`h-10 px-5 rounded-full text-sm font-bold border ${montadorTab===tab ? "bg-[#0A2A6B] text-white border-[#0A2A6B]" : "bg-white border-slate-200"}`}>{tab.toUpperCase()}</button>
             ))}
           </div>
-
           {montadorTab==="disponiveis" && (
             <div className="space-y-3">
-              <h3 className="font-black">🔔 Pedidos Disponíveis • Ao Vivo 🟢 {orders.filter(o=>o.status==="aguardando_montador" && (currentUser.cidades||[]).some(c=> o.cidade?.toLowerCase().includes(c.toLowerCase()))).length}</h3>
-              {orders.filter(o=>o.status==="aguardando_montador").filter(o=> (currentUser.cidades||[]).length===0 || (currentUser.cidades||[]).some(c=> o.cidade?.toLowerCase().includes(c.toLowerCase()))).map(p=>(
+              <h3 className="font-black">Pedidos Disponíveis • {orders.filter(o=>o.status==="aguardando_montador").length}</h3>
+              {orders.filter(o=>o.status==="aguardando_montador").map(p=>(
                 <div key={p.id} className="bg-white rounded-[1.7rem] p-5 border shadow-sm">
                   <div className="flex justify-between"><span className="font-black">Pedido #{p.id} • {p.cidade}</span><span className="text-sm font-black text-[#FF7A00]">{formatBRL(p.total)}</span></div>
                   <div className="mt-2 text-sm bg-slate-50 p-3 rounded-xl">{(p.itens||[]).map(i=>i.nome).join(", ")} • {p.endereco}</div>
-                  <button onClick={()=>aceitarPedido(p.id)} className="mt-3 w-full h-12 rounded-full bg-[#0A2A6B] text-white font-bold">ACEITAR PEDIDO 🔧</button>
+                  <button onClick={()=>aceitarPedido(p.id)} className="mt-3 w-full h-12 rounded-full bg-[#0A2A6B] text-white font-bold">ACEITAR PEDIDO</button>
                 </div>
               ))}
-              {orders.filter(o=>o.status==="aguardando_montador").length===0 && <div className="bg-white rounded-[1.7rem] p-10 text-center border"><div className="font-bold">Nenhum pedido disponível no momento</div><div className="text-xs text-slate-400 mt-1">Aguarde som 🔔 ao vivo • {isLive ? "Online 🟢" : "Offline 🔴"}</div></div>}
             </div>
           )}
-
           {montadorTab==="meus" && (
             <div className="space-y-3">
               {orders.filter(o=>o.montador_id==currentUser.id).map(p=>(
                 <div key={p.id} className="bg-white rounded-[1.7rem] p-5 border shadow-sm">
                   <div className="flex justify-between"><span className="font-black">#{p.id} • {p.cidade}</span><span className={`text-xs px-3 py-1 rounded-full font-bold ${p.status==="finalizado"?"bg-green-100 text-green-700":"bg-blue-100 text-blue-700"}`}>{p.status.toUpperCase()}</span></div>
                   <div className="mt-2 text-sm">{p.endereco} • {formatBRL(p.total)}</div>
-                  {p.status==="aceito" && <button onClick={()=>finalizarPedido(p.id)} className="mt-3 w-full h-12 rounded-full bg-green-600 text-white font-bold">FINALIZAR SERVIÇO ✅</button>}
-                  {p.status==="finalizado" && <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-xl text-sm font-bold">🎉 Finalizado • Ganho {formatBRL(p.ganho_montador||p.total*0.9)} {p.bonus_montador ? "• BONUS 100% 🎁" : ""}</div>}
+                  {p.status==="aceito" && <button onClick={()=>finalizarPedido(p.id)} className="mt-3 w-full h-12 rounded-full bg-green-600 text-white font-bold">FINALIZAR SERVIÇO</button>}
                 </div>
               ))}
             </div>
           )}
-
           {montadorTab==="ganhos" && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div className="bg-[#0A2A6B] text-white p-4 rounded-2xl"><div className="text-xs opacity-70">Total Bruto</div><div className="text-xl font-black">{formatBRL(orders.filter(o=>o.montador_id==currentUser.id && o.status==="finalizado").reduce((s,o)=>s+(o.total||0),0))}</div></div>
-                <div className="bg-green-600 text-white p-4 rounded-2xl"><div className="text-xs opacity-80">Seu Ganho 90%+100%</div><div className="text-xl font-black">{formatBRL(orders.filter(o=>o.montador_id==currentUser.id && o.status==="finalizado").reduce((s,o)=>s+(o.ganho_montador||o.total*0.9),0))}</div></div>
+                <div className="bg-green-600 text-white p-4 rounded-2xl"><div className="text-xs opacity-80">Seu Ganho</div><div className="text-xl font-black">{formatBRL(orders.filter(o=>o.montador_id==currentUser.id && o.status==="finalizado").reduce((s,o)=>s+(o.ganho_montador||o.total*0.9),0))}</div></div>
                 <div className="bg-[#FF7A00] text-white p-4 rounded-2xl"><div className="text-xs opacity-80">Finalizados</div><div className="text-xl font-black">{orders.filter(o=>o.montador_id==currentUser.id && o.status==="finalizado").length}</div></div>
                 <div className="bg-slate-900 text-white p-4 rounded-2xl"><div className="text-xs opacity-70">Avaliação</div><div className="text-xl font-black">⭐ {Number(currentUser.avaliacao||5).toFixed(1)}</div></div>
               </div>
-              <div className="bg-white rounded-[1.7rem] p-5 border shadow-sm"><div className="font-black">Como funciona pagamento • Ao Vivo 🟢</div><div className="text-xs mt-2 leading-relaxed">Cliente paga 100% para ADM (contatocerto.prestadores@gmail.com). ADM confirma. Você aceita e finaliza. Você recebe 90% via PIX {currentUser.pix} em até 24h. No 6º serviço recebe 100% bonus!</div></div>
             </div>
           )}
-
           {montadorTab==="perfil" && (
             <div className="space-y-4 max-w-xl">
               <div className="bg-white rounded-[1.7rem] p-6 border shadow-sm">
-                <div className="flex items-center gap-4"><div className="w-16 h-16 rounded-full bg-slate-100 overflow-hidden border-2 border-[#0A2A6B]">{currentUser.foto ? <img src={currentUser.foto} className="w-full h-full object-cover"/> : <span className="flex items-center justify-center w-full h-full font-black">{currentUser.nome?.[0]}</span>}</div><div><div className="font-black">{currentUser.nome}</div><div className="text-xs text-slate-500">{currentUser.telefone} • {currentUser.email}</div><div className="text-xs">PIX {currentUser.pix}</div></div></div>
+                <div className="flex items-center gap-4"><div className="w-16 h-16 rounded-full bg-slate-100 overflow-hidden border-2 border-[#0A2A6B]">{currentUser.foto ? <img src={currentUser.foto} className="w-full h-full object-cover"/> : <span className="flex items-center justify-center w-full h-full font-black">{currentUser.nome?.[0]}</span>}</div><div><div className="font-black">{currentUser.nome}</div><div className="text-xs text-slate-500">{currentUser.telefone}</div><div className="text-xs">PIX {currentUser.pix}</div></div></div>
               </div>
               <div className="bg-white rounded-[1.7rem] p-6 border shadow-sm">
-                <div className="font-bold">📍 Cidades que atende (máx 3) • Ao Vivo 🟢</div>
-                <div className="flex flex-wrap gap-2 mt-3">{(currentUser.cidades||[]).map(c=><span key={c} className="bg-[#0A2A6B] text-white text-xs px-3 py-1.5 rounded-full font-bold flex items-center gap-2">{c} <button onClick={()=>removerCidade(c)} className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center">x</button></span>)}</div>
+                <div className="font-bold">Cidades que atende (máx 3)</div>
+                <div className="flex flex-wrap gap-2 mt-3">{(currentUser.cidades||[]).map(c=><span key={c} className="bg-[#0A2A6B] text-white text-xs px-3 py-1.5 rounded-full font-bold flex items-center gap-2">{c} <button onClick={()=>removerCidade(c)} className="w-4 h-4 rounded-full bg-white/20">x</button></span>)}</div>
                 <div className="flex gap-2 mt-4"><input value={novaCidade} onChange={e=>setNovaCidade(e.target.value)} placeholder="Nova cidade" className="flex-1 h-12 bg-slate-100 rounded-full px-5 outline-none"/><button onClick={adicionarCidade} className="h-12 px-6 rounded-full bg-[#FF7A00] text-white font-bold">Add</button></div>
               </div>
-              <button onClick={excluirMeuCadastro} className="w-full h-12 rounded-full bg-red-50 border border-red-200 text-red-600 font-bold">Excluir cadastro LGPD</button>
+              <button onClick={excluirMeuCadastro} className="w-full h-12 rounded-full bg-red-50 border border-red-200 text-red-600 font-bold">Excluir cadastro</button>
             </div>
           )}
         </div>
       )}
 
-      {/* PAINEL ADMIN PREMIUM */}
       {view==="admin" && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
           <div className="flex flex-wrap gap-2 mb-6">
@@ -739,67 +616,57 @@ export default function App() {
               <button key={tab} onClick={()=>setAdminTab(tab)} className={`h-10 px-5 rounded-full text-sm font-bold border ${adminTab===tab ? "bg-[#0A2A6B] text-white border-[#0A2A6B]" : "bg-white border-slate-200"}`}>{tab.toUpperCase()}</button>
             ))}
           </div>
-
           {adminTab==="pedidos" && (
             <div className="space-y-3">
-              <h3 className="font-black">📦 Todos Pedidos • Ao Vivo 🟢 {orders.length}</h3>
-              {orders.map(p=>{
-                const cliente = users.find(u=>u.id==p.cliente_id);
-                const montador = users.find(u=>u.id==p.montador_id);
-                return (
-                  <div key={p.id} className="bg-white rounded-[1.7rem] p-5 border shadow-sm">
-                    <div className="flex justify-between flex-wrap gap-2"><span className="font-black">#{p.id} • {p.cidade} • {formatBRL(p.total)} {p.cupom && <span className="text-xs bg-yellow-100 px-2 py-1 rounded-full">🎟️ {p.cupom}</span>}</span><span className={`text-xs px-3 py-1 rounded-full font-bold ${p.status==="finalizado"?"bg-green-100 text-green-700":p.status==="aceito"?"bg-blue-100 text-blue-700":p.status==="cancelado"?"bg-red-100 text-red-700":"bg-yellow-100 text-yellow-700"}`}>{p.status?.toUpperCase()}</span></div>
-                    <div className="mt-2 text-xs bg-slate-50 p-3 rounded-xl"><div>Cliente: {cliente?.nome} • {cliente?.telefone} • {p.endereco}</div><div>Itens: {(p.itens||[]).map(i=>i.nome).join(", ")}</div>{montador && <div>Montador: {montador.nome} • {montador.telefone}</div>}</div>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {p.status==="aguardando_confirmacao_adm" && <button onClick={()=>confirmarPagamentoADM(p.id)} className="h-10 px-5 rounded-full bg-green-600 text-white font-bold text-sm">Confirmar Pagamento ✅</button>}
-                      {p.status!=="cancelado" && p.status!=="finalizado" && <button onClick={()=>cancelarPedido(p.id)} className="h-10 px-5 rounded-full bg-red-50 border border-red-200 text-red-600 font-bold text-sm">Cancelar</button>}
-                      {p.comprovante && <a href={p.comprovante} target="_blank" className="h-10 px-5 rounded-full bg-slate-100 flex items-center font-bold text-sm">Ver Comprovante</a>}
-                    </div>
+              <h3 className="font-black">Todos Pedidos • {orders.length}</h3>
+              {orders.map(p=>(
+                <div key={p.id} className="bg-white rounded-[1.7rem] p-5 border shadow-sm">
+                  <div className="flex justify-between"><span className="font-black">#{p.id} • {p.cidade} • {formatBRL(p.total)}</span><span className={`text-xs px-3 py-1 rounded-full font-bold ${p.status==="finalizado"?"bg-green-100 text-green-700":"bg-yellow-100 text-yellow-700"}`}>{p.status?.toUpperCase()}</span></div>
+                  <div className="mt-2 text-xs bg-slate-50 p-3 rounded-xl">{(p.itens||[]).map(i=>i.nome).join(", ")} • {p.endereco}</div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {p.status==="aguardando_confirmacao_adm" && <button onClick={()=>confirmarPagamentoADM(p.id)} className="h-10 px-5 rounded-full bg-green-600 text-white font-bold text-sm">Confirmar Pagamento</button>}
+                    <button onClick={()=>cancelarPedido(p.id)} className="h-10 px-5 rounded-full bg-red-50 border border-red-200 text-red-600 font-bold text-sm">Cancelar</button>
+                    {p.comprovante && <a href={p.comprovante} target="_blank" className="h-10 px-5 rounded-full bg-slate-100 flex items-center font-bold text-sm">Ver Comprovante</a>}
                   </div>
-                );
-              })}
-            </div>
-          )}
-
-          {adminTab==="montadores" && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {users.filter(u=>u.role==="montador").map(m=>(
-                <div key={m.id} className="bg-white rounded-[1.7rem] p-5 border shadow-sm">
-                  <div className="flex gap-3"><div className="w-12 h-12 rounded-full bg-slate-100 overflow-hidden border">{m.foto ? <img src={m.foto} className="w-full h-full object-cover"/> : <span className="flex items-center justify-center w-full h-full font-black">{m.nome?.[0]}</span>}</div><div><div className="font-bold">{m.nome} ⭐{Number(m.avaliacao||5).toFixed(1)}</div><div className="text-xs text-slate-500">{m.cidade} • {m.telefone}</div><div className="text-[10px] mt-1">{(m.cidades||[]).join(", ")}</div></div></div>
-                  <div className="mt-3 text-xs bg-slate-50 p-2 rounded-xl">CPF {m.cpf} • PIX {m.pix} • {m.total_servicos||0} serviços</div>
                 </div>
               ))}
             </div>
           )}
-
-          {adminTab==="clientes" && (
+          {adminTab==="montadores" && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {users.filter(u=>u.role==="cliente").map(c=>(
-                <div key={c.id} className="bg-white rounded-[1.7rem] p-5 border shadow-sm"><div className="font-bold">{c.nome}</div><div className="text-xs text-slate-500 mt-1">{c.cidade} • {c.telefone} • {c.email}</div><div className="text-xs mt-2">Pedidos: {orders.filter(o=>o.cliente_id==c.id).length}</div></div>
+              {users.filter(u=>u.role==="montador").map(m=>(
+                <div key={m.id} className="bg-white rounded-[1.7rem] p-5 border shadow-sm">
+                  <div className="flex gap-3"><div className="w-12 h-12 rounded-full bg-slate-100 overflow-hidden border">{m.foto ? <img src={m.foto} className="w-full h-full object-cover"/> : <span className="flex items-center justify-center w-full h-full font-black">{m.nome?.[0]}</span>}</div><div><div className="font-bold">{m.nome}</div><div className="text-xs text-slate-500">{m.cidade} • {m.telefone}</div></div></div>
+                </div>
               ))}
             </div>
           )}
-
+          {adminTab==="clientes" && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {users.filter(u=>u.role==="cliente").map(c=>(
+                <div key={c.id} className="bg-white rounded-[1.7rem] p-5 border shadow-sm"><div className="font-bold">{c.nome}</div><div className="text-xs text-slate-500 mt-1">{c.cidade} • {c.telefone}</div></div>
+              ))}
+            </div>
+          )}
           {adminTab==="cupons" && (
             <div className="space-y-4 max-w-xl">
               <div className="bg-white rounded-[1.7rem] p-5 border shadow-sm">
-                <div className="font-black">🎟️ Criar Cupom Premium</div>
+                <div className="font-black">Criar Cupom Premium</div>
                 <div className="mt-4 space-y-3">
                   <input value={newCoupon.code} onChange={e=>setNewCoupon({...newCoupon, code: e.target.value.toUpperCase()})} placeholder="CODIGO ex: PREMIUM20" className="w-full h-12 bg-slate-100 rounded-full px-5 font-bold tracking-widest outline-none"/>
                   <input type="number" value={newCoupon.desconto} onChange={e=>setNewCoupon({...newCoupon, desconto: e.target.value})} placeholder="Desconto %" className="w-full h-12 bg-slate-100 rounded-full px-5 outline-none"/>
-                  <button onClick={criarCupom} className="w-full h-12 rounded-full bg-[#0A2A6B] text-white font-black">CRIAR CUPOM 🟢 AO VIVO</button>
+                  <button onClick={criarCupom} className="w-full h-12 rounded-full bg-[#0A2A6B] text-white font-black">CRIAR CUPOM</button>
                 </div>
               </div>
               <div className="space-y-2">{coupons.map(c=><div key={c.id} className="bg-white rounded-2xl p-4 border flex justify-between"><span className="font-black">{c.code} • {c.desconto}% OFF</span><span className="text-xs text-slate-500">{new Date(c.created_at||Date.now()).toLocaleDateString()}</span></div>)}</div>
             </div>
           )}
-
           {adminTab==="suporte" && (
             <div className="bg-white rounded-[1.7rem] border shadow-sm overflow-hidden h-[70vh] flex flex-col">
-              <div className="p-4 border-b font-black">💬 Suporte 24h • Ao Vivo 🟢 {supportMessages.length} mensagens</div>
+              <div className="p-4 border-b font-black">Suporte 24h • {supportMessages.length} mensagens</div>
               <div className="flex-1 overflow-auto p-4 space-y-2">
                 {supportMessages.map(m=>(
-                  <div key={m.id} className={`p-3 rounded-2xl text-sm max-w-[80%] ${m.from_admin ? "bg-[#0A2A6B] text-white ml-auto" : "bg-slate-100"}`}><div className="text-[10px] font-bold opacity-60">{m.user_nome} • {m.from_admin ? "ADM" : "CLIENTE"}</div>{m.mensagem}<div className="text-[9px] opacity-50 mt-1">{m.created_at ? new Date(m.created_at).toLocaleString() : ""}</div></div>
+                  <div key={m.id} className={`p-3 rounded-2xl text-sm max-w-[80%] ${m.from_admin ? "bg-[#0A2A6B] text-white ml-auto" : "bg-slate-100"}`}><div className="text-[10px] font-bold opacity-60">{m.user_nome}</div>{m.mensagem}</div>
                 ))}
                 <div ref={supportEndRef}></div>
               </div>
@@ -809,12 +676,11 @@ export default function App() {
         </div>
       )}
 
-      {/* CHECKOUT PREMIUM MOBILE - SEM CORTAR */}
       {showOrderFlow && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-xl" onClick={()=>setShowOrderFlow(false)}></div>
           <div className="relative w-full sm:max-w-xl bg-white rounded-t-[2rem] sm:rounded-[2rem] shadow-2xl max-h-[92vh] flex flex-col">
-            <div className="p-5 border-b flex justify-between items-center shrink-0"><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-full bg-[#0A2A6B] text-white flex items-center justify-center font-black">{orderStep}</div><div><div className="font-black">Checkout Premium</div><div className="text-xs text-slate-500">{isLive ? "🟢 Ao Vivo" : "🔴 Offline"} • Mobile otimizado</div></div></div><button onClick={()=>setShowOrderFlow(false)} className="w-10 h-10 rounded-full bg-slate-100">✕</button></div>
+            <div className="p-5 border-b flex justify-between items-center shrink-0"><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-full bg-[#0A2A6B] text-white flex items-center justify-center font-black">{orderStep}</div><div><div className="font-black">Checkout Premium</div><div className="text-xs text-slate-500">{isLive ? "🟢 Ao Vivo" : "🔴 Offline"}</div></div></div><button onClick={()=>setShowOrderFlow(false)} className="w-10 h-10 rounded-full bg-slate-100">✕</button></div>
             <div className="p-5 overflow-y-auto flex-1">
               {orderStep===1 && (
                 <div className="space-y-3">
@@ -828,7 +694,7 @@ export default function App() {
                   <input value={orderForm.endereco} onChange={e=>setOrderForm({...orderForm,endereco:e.target.value})} placeholder="Endereço completo" className="w-full h-12 bg-slate-100 rounded-2xl px-4 outline-none focus:bg-white focus:ring-2 focus:ring-[#0A2A6B]/20"/>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3"><input value={orderForm.bairro} onChange={e=>setOrderForm({...orderForm,bairro:e.target.value})} placeholder="Bairro" className="h-12 bg-slate-100 rounded-2xl px-4 outline-none"/><input value={orderForm.cidade} onChange={e=>setOrderForm({...orderForm,cidade:e.target.value})} placeholder="Cidade SP" className="h-12 bg-slate-100 rounded-2xl px-4 outline-none"/></div>
                   <div className="grid grid-cols-2 gap-3"><input type="date" value={orderForm.data} onChange={e=>setOrderForm({...orderForm,data:e.target.value})} className="h-12 bg-slate-100 rounded-2xl px-4 outline-none"/><input type="time" value={orderForm.horario} onChange={e=>setOrderForm({...orderForm,horario:e.target.value})} className="h-12 bg-slate-100 rounded-2xl px-4 outline-none"/></div>
-                  <button onClick={criarPedido} className="w-full h-14 rounded-full bg-[#0A2A6B] text-white font-black">CRIAR PEDIDO • AO VIVO 🟢</button>
+                  <button onClick={criarPedido} className="w-full h-14 rounded-full bg-[#0A2A6B] text-white font-black">CRIAR PEDIDO • AO VIVO</button>
                 </div>
               )}
               {orderStep===3 && (
@@ -838,7 +704,7 @@ export default function App() {
                   <div className="p-4 rounded-2xl bg-slate-900 text-white font-mono text-sm">PIX: {PIX_KEY}<br/><span className="text-[#FF7A00] font-black">{formatBRL(total)}</span></div>
                   <button onClick={()=>{navigator.clipboard.writeText(PIX_KEY); notify("PIX copiado!");}} className="w-full h-12 rounded-full bg-[#0A2A6B] text-white font-bold">COPIAR CHAVE PIX</button>
                   <a href={`https://wa.me/${WHATSAPP}?text=Pedido ${formatBRL(total)} - ${orderForm.cidade}`} target="_blank" className="block w-full h-12 rounded-full bg-[#25D366] text-white font-black flex items-center justify-center">WHATSAPP (18) 99148-8302</a>
-                  <button onClick={()=>{setShowOrderFlow(false); setView("cliente"); setClienteTab("pedidos");}} className="w-full h-12 rounded-full bg-slate-100 font-bold">VER MEUS PEDIDOS 🟢</button>
+                  <button onClick={()=>{setShowOrderFlow(false); setView("cliente"); setClienteTab("pedidos");}} className="w-full h-12 rounded-full bg-slate-100 font-bold">VER MEUS PEDIDOS</button>
                 </div>
               )}
             </div>
@@ -846,32 +712,28 @@ export default function App() {
         </div>
       )}
 
-      {/* AUTH PREMIUM MOBILE SEM CORTAR - FIX BOTÕES */}
       {showAuth && (
         <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center p-0 sm:p-4">
           <div className="absolute inset-0 bg-slate-900/70 backdrop-blur-xl" onClick={()=>setShowAuth(false)}></div>
-          <div className="relative w-full sm:max-w-md bg-white rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-[0_-20px_80px_-10px_rgba(0,0,0,0.5)] max-h-[96vh] sm:max-h-[90vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-300">
+          <div className="relative w-full sm:max-w-md bg-white rounded-t-[2.5rem] sm:rounded-[2.5rem] shadow-[0_-20px_80px_-10px_rgba(0,0,0,0.5)] max-h-[96vh] sm:max-h-[90vh] flex flex-col overflow-hidden">
             <div className="sm:hidden w-12 h-1.5 bg-slate-200 rounded-full mx-auto mt-4 mb-2 shrink-0"></div>
             <div className="p-5 sm:p-6 bg-gradient-to-br from-[#0A2A6B] via-[#112a7d] to-[#1e40af] text-white flex justify-between items-start shrink-0">
               <div className="min-w-0 flex-1">
                 <div className="font-black text-[18px] sm:text-[20px] leading-none tracking-tight">{isLogin?"Bem-vindo de volta 👋":"Criar conta premium"}</div>
-                <div className="text-[11px] opacity-80 mt-1.5 font-medium flex flex-wrap items-center gap-2">
+                <div className="text-[11px] opacity-80 mt-1.5 flex flex-wrap items-center gap-2">
                   <span className="px-2.5 py-1 rounded-full bg-white/15 border border-white/10 text-[10px] font-black tracking-widest">{authMode.toUpperCase()} • AO VIVO 🟢</span>
-                  <span className="hidden sm:inline">GALERIA SEM CÂMERA • 300x300</span>
                 </div>
               </div>
-              <button onClick={()=>setShowAuth(false)} className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center shrink-0 ml-3 active:scale-95 transition">✕</button>
+              <button onClick={()=>setShowAuth(false)} className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center shrink-0 ml-3">✕</button>
             </div>
             <div className="flex-1 overflow-y-auto overscroll-contain p-5 sm:p-6 pb-[calc(20px+env(safe-area-inset-bottom))] scrollbar-none">
               {!isLogin ? <RegisterForm mode={authMode} onSubmit={handleRegister}/> : <LoginForm onSubmit={handleLogin}/>}
-              <button onClick={()=>setIsLogin(!isLogin)} className="w-full mt-6 h-12 rounded-full bg-slate-100 hover:bg-slate-200 font-bold text-[13px] active:scale-[0.98] transition border border-slate-200">{isLogin?"Criar conta premium →":"Já tenho conta • Entrar"}</button>
-              <div className="h-4 sm:h-0"></div>
+              <button onClick={()=>setIsLogin(!isLogin)} className="w-full mt-6 h-12 rounded-full bg-slate-100 hover:bg-slate-200 font-bold text-[13px] border">{isLogin?"Criar conta premium →":"Já tenho conta • Entrar"}</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* BOTTOM NAV MOBILE PREMIUM - SEM CORTAR */}
       <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-30 pointer-events-none">
         <div className="mx-3 mb-[max(12px,env(safe-area-inset-bottom))] pointer-events-auto">
           <div className="rounded-[1.7rem] bg-white/95 backdrop-blur-2xl border border-slate-200/70 shadow-[0_12px_40px_-12px_rgba(0,0,0,0.3)] overflow-hidden">
@@ -885,10 +747,10 @@ export default function App() {
         </div>
       </nav>
 
-      {toast && <div className="fixed top-4 left-4 right-4 sm:left-1/2 sm:-translate-x-1/2 sm:max-w-md z-[80]"><div className={`px-4 py-3 rounded-2xl backdrop-blur-xl border shadow-2xl flex items-center gap-3 ${toastType==="success"?"bg-emerald-600 text-white border-emerald-500":toastType==="error"?"bg-red-600 text-white border-red-500":"bg-slate-900 text-white border-slate-700"}`}><div className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center">🔔</div><div className="flex-1 text-[13px] font-semibold">{toast}</div><button onClick={()=>setToast("")} className="w-7 h-7 rounded-full bg-white/10">✕</button></div></div>}
+      {toast && <div className="fixed top-4 left-4 right-4 sm:left-1/2 sm:-translate-x-1/2 sm:max-w-md z-[90]"><div className={`px-4 py-3 rounded-2xl backdrop-blur-xl border shadow-2xl flex items-center gap-3 ${toastType==="success"?"bg-emerald-600 text-white border-emerald-500":toastType==="error"?"bg-red-600 text-white border-red-500":"bg-slate-900 text-white border-slate-700"}`}><div className="w-8 h-8 rounded-full bg-white/15 flex items-center justify-center">🔔</div><div className="flex-1 text-[13px] font-semibold">{toast}</div><button onClick={()=>setToast("")} className="w-7 h-7 rounded-full bg-white/10">✕</button></div></div>}
 
       <footer className="mt-8 border-t bg-white pb-[88px] sm:pb-0">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 flex flex-col sm:flex-row justify-between gap-3"><div><div className="font-black">CONTATO CERTO SP • PREMIUM MOBILE</div><div className="text-[11px] text-slate-500 mt-1 leading-relaxed">Realtime Supabase 2s • Watchdog 5s • Foto galeria 300x300 sem câmera • Touch 44px • Safe area<br/>Painéis completos: cliente, montador, admin • {isLive ? "🟢 Online Ao Vivo" : "🔴 Reconectando"}</div></div><div className="text-xs text-slate-500">contatocerto.prestadores@gmail.com<br/>(18) 99148-8302</div></div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 flex flex-col sm:flex-row justify-between gap-3"><div><div className="font-black">CONTATO CERTO SP • PREMIUM INTELIGENTE</div><div className="text-[11px] text-slate-500 mt-1 leading-relaxed">Realtime Supabase 2s • Watchdog 5s • Foto galeria 300x300 sem câmera • Touch 44px • Safe area<br/>Painéis completos: cliente, montador, admin • Inspirado estoque MESA/GUARDA-ROUPA/ESTANTE • {isLive ? "🟢 Online Ao Vivo" : "🔴 Reconectando"}</div></div><div className="text-xs text-slate-500">contatocerto.prestadores@gmail.com<br/>(18) 99148-8302</div></div>
       </footer>
     </div>
   );
@@ -946,7 +808,7 @@ function RegisterForm({mode,onSubmit}){
       <input type="password" placeholder="Senha (mín 6 caracteres)" value={f.senha} onChange={e=>setF({...f,senha:e.target.value})} className="w-full h-[52px] bg-slate-100 rounded-2xl px-5 text-[15px] outline-none focus:bg-white focus:ring-2 focus:ring-[#0A2A6B]/20 border border-transparent focus:border-[#0A2A6B]/20 transition font-medium"/>
     </div>
     <div className="pt-2 pb-2">
-      <button type="button" onClick={()=>{ if(mode==="montador" && !f.foto){ alert("Foto obrigatória! Toque em ESCOLHER DA GALERIA"); return; } onSubmit(f); }} className="w-full h-[56px] rounded-full bg-gradient-to-r from-[#FF7A00] to-[#ff9500] text-white font-black text-[13px] sm:text-[14px] tracking-widest shadow-[0_12px_24px_-8px_rgba(255,122,0,0.4)] active:scale-[0.98] hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2">
+      <button type="button" onClick={()=>{ if(mode==="montador" && !f.foto){ alert("Foto obrigatória! Toque em ESCOLHER DA GALERIA"); return; } onSubmit(f); }} className="w-full h-[56px] rounded-full bg-gradient-to-r from-[#FF7A00] to-[#ff9500] text-white font-black text-[13px] sm:text-[14px] tracking-widest shadow-[0_12px_24px_-8px_rgba(255,122,0,0.4)] active:scale-[0.98] transition flex items-center justify-center gap-2">
         <span>FINALIZAR CADASTRO PREMIUM</span><span className="text-[18px]">🟢</span>
       </button>
       {mode==="montador" && !f.foto && <div className="mt-3 p-3 rounded-xl bg-red-50 border-2 border-red-200 text-[11px] font-black text-red-700 text-center animate-pulse">⚠️ FOTO OBRIGATÓRIA PARA CONTINUAR</div>}
