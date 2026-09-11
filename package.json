@@ -1,19 +1,16 @@
 {
   "name": "contato-certo-sp-beta",
-  "version": "16.0.0",
+  "version": "19.0.0",
   "private": true,
   "supabase_url": "https://kgxiqrfacjfdrfibopdi.supabase.co",
-  "supabase_anon_key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtneGlxcmZhY2pmZHJmaWJvcGRpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkxNDc5NjYsImV4cCI6MjEwNDcyMzk2Nn0.y5YWDPczGT0bAnuf_1h5iMgrWK53anBOn15ss0MmSYk",
   "adm_user": "AndreSousa84",
+  "fix": "adm-5-toques-corrigido-feedback-60x60-long-press",
   "features": [
-    "novo-supabase-oficial",
+    "layout-corrigido",
+    "catalogo-2026-exato",
+    "busca-inteligente",
     "numero-separado",
-    "auto-reconhece-editavel",
-    "taxa-10-pix",
-    "mais-proximo",
-    "data-hora",
-    "catalogo-2026",
-    "offline-fallback",
-    "anti-42710"
+    "realtime-100-ws-poll-2s",
+    "adm-5-toques-feedback"
   ]
 }
