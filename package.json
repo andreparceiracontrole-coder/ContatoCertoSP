@@ -1,5 +1,8 @@
 {
   "name": "contato-certo-sp-beta",
-  "version": "6.0.0",
-  "private": true
+  "version": "11.0.0",
+  "private": true,
+  "supabase_url": "https://cxiagwicspzstmhiltkt.supabase.co",
+  "adm_user": "AndreSousa84",
+  "fix": "editar-servicos-nome-valor"
 }
