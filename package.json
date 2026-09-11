@@ -1,16 +1,5 @@
 {
   "name": "contato-certo-sp-beta",
-  "version": "19.0.0",
-  "private": true,
-  "supabase_url": "https://kgxiqrfacjfdrfibopdi.supabase.co",
-  "adm_user": "AndreSousa84",
-  "fix": "adm-5-toques-corrigido-feedback-60x60-long-press",
-  "features": [
-    "layout-corrigido",
-    "catalogo-2026-exato",
-    "busca-inteligente",
-    "numero-separado",
-    "realtime-100-ws-poll-2s",
-    "adm-5-toques-feedback"
-  ]
+  "version": "8.0.0",
+  "private": true
 }
