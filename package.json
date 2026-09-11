@@ -1,8 +1,15 @@
 {
   "name": "contato-certo-sp-beta",
-  "version": "11.0.0",
+  "version": "14.0.0",
   "private": true,
   "supabase_url": "https://cxiagwicspzstmhiltkt.supabase.co",
   "adm_user": "AndreSousa84",
-  "fix": "editar-servicos-nome-valor"
+  "features": [
+    "numero-separado",
+    "auto-reconhece-dados-editavel",
+    "taxa-10-pix",
+    "mais-proximo",
+    "data-hora",
+    "catalogo-2026-oficial"
+  ]
 }
